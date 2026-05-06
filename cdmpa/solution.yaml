@@ -1,0 +1,15 @@
+apiVersion: solution.sap/v1
+kind: Solution
+
+metadata:
+  name: cdmpa
+  version: 2.0.0
+  description: >
+    CDM Additional Services Tracker v2 — agent-native workspace for SAP Customer
+    Delivery Managers. CAP Node.js backend + Python multi-agent AI shell (Claude).
+    Merges the agent-native shell, conversation memory, Client→Contract hierarchy,
+    Inbox/PendingActions, and 7 reminder rules of v1 onto the CDMPA BTP-ready stack.
+
+assets:
+  - ref: ./assets/cdm-as-tracker-cap/asset.yaml
+  - ref: ./assets/cdm-as-tracker-agent/asset.yaml

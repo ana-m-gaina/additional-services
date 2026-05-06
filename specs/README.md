@@ -2,7 +2,29 @@
 
 Three-phase spec suite for an internal SAP tool that helps CDMs (Customer Delivery Managers) and dCEMs track chargeable Additional Services requests across 6+ SAP systems.
 
-## Documents
+---
+
+## Spec file index
+
+| File | What it is |
+|---|---|
+| [current_state.md](current_state.md) | Live architecture reference. Describes what is actually built and running: stack, data model, service API, orchestrator, tool dispatcher, reminder rules, frontend shell, open questions. Updated as the build progresses. Start here if you want to understand the current system. |
+| [v2_architecture.md](v2_architecture.md) | v2 target architecture. Python multi-agent service + CAP backend + Beacon v2 shell. Covers agent hierarchy, nav structure, SSE streaming, A2A readiness, schema additions needed, and the prioritised build backlog for v2. |
+| [phase_1.md](phase_1.md) | Dev-ready spec for the Classic process MVP: intake form, shared tracker, 5 AI touchpoints, reminder banners, SharePoint checklist. Zero external integrations. |
+| [phase_2.md](phase_2.md) | Draft spec for Phase 2: email reminders, ATLAS/Calypso process path, approval + delivery detection agents, mocked external clients, XSUAA auth, admin UI. |
+| [phase_3_roadmap.md](phase_3_roadmap.md) | Roadmap only (not a dev spec). Real external integrations via BTP Destinations, Event Mesh reactive layer, MCP producer wrapper, Fiori Launchpad tile. |
+| [cdm_assistant_spec.md](cdm_assistant_spec.md) | Assistant behaviour spec: how the orchestrator should talk, what it knows about the CDM role, conversational patterns, persona settings (including rename). |
+| [multi_agent_architecture_rationale.md](multi_agent_architecture_rationale.md) | Architecture decision record: why multi-agent over single LLM call, how subagents are scoped, A2A readiness rationale, tradeoffs considered. |
+| [gap_analysis_v1.md](gap_analysis_v1.md) | Gap analysis between v1 implementation and the full v2 target. Lists what is present, what is missing, and what is explicitly out of scope. |
+| [mvp_demo_plan.md](mvp_demo_plan.md) | Demo script and acceptance criteria for the MVP stakeholder demo. Walk-through steps, talking points, edge cases to avoid. |
+| [oana_process_v1.md](oana_process_v1.md) | Oana's original CDM process document (v1). Primary source for the AS billing workflow, field semantics, and status machine. |
+| [btp_deployment_prompt.md](btp_deployment_prompt.md) | Prompt used to generate the BTP deployment configuration (mta.yaml, xs-app.json, manifest). Reference if re-running or updating the deployment setup. |
+| [build_from_scratch_prompt.md](build_from_scratch_prompt.md) | Original prompt used to generate the Phase A–F implementation. Reference for re-running against a fresh repo or starting a parallel build. |
+| [joule_integration_prompt.md](joule_integration_prompt.md) | Prompt for the Joule integration path: registering the orchestrator as a Joule tool via MCP or BAIP agent registry. |
+
+---
+
+## Documents (phase specs)
 
 | Doc | Status | What it covers |
 |---|---|---|
@@ -114,6 +136,7 @@ Three specs mirror three deployment stages. Each phase ships value on its own. P
 
 ## Change log
 
+- **2026-05-06** — Added spec file index. Updated `current_state.md` with lazy-loading orchestrator, new tools (`rr_lookup`, `price_lookup`, `template_read`, `template_write`, `notes_read`, `inject_document`), permissions-gated tool list, `load_session_context()` replacing Profile Agent, and Architecture decisions section.
 - **2026-04-24** — Initial spec suite (Phase 1 v3.1, Phase 2 v1.0, Phase 3 roadmap v0.1) based on Oana's v2.0 + v3.0 dev briefs and real CDM tracker (June 2025).
 
 ---

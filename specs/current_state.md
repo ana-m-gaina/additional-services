@@ -1,5 +1,5 @@
 # CDM Additional Services Tracker — Current State
-**Date:** 2026-04-28  
+**Date:** 2026-05-06 (updated; originally 2026-04-28)  
 **Author:** Ana Gaina  
 **Status:** Demo-ready prototype. Phases A–F + H–I complete. Phase J (acceptance sweep) not started.
 
@@ -146,25 +146,23 @@ All endpoints under `@path: '/api/v1'`.
 
 The core of the product. Every CDM message goes here.
 
-**What it does on each call:**
+**What it does on each call (minimum startup — lazy loading):**
 1. Loads last 20 `ConversationTurns` for this session (conversation memory)
-2. Loads CDM's open requests as ambient context
-3. Loads saved `PersonaLayout`
-4. Loads active `PendingActions` for this user
-5. Evaluates all 7 `REMINDER_RULES` server-side — fires banners for any that match
-6. Loads full R&R reference + pricing data
-7. Resolves `assistantName` from: request param → `AdminConfig.assistant_name` → default `'Beacon'`
-8. Runs `chatWithTools` loop (Anthropic tool_use API, Opus 4.7, 4096 tokens, 10-iteration cap, adaptive thinking)
-9. Saves user + assistant `ConversationTurns` tagged with `agentName: 'main_orchestrator'`
-10. Returns `{ reply, panels?, proposedLayout?, renameAssistant? }`
+2. Calls `load_session_context()` — a plain function (not an agent) that returns: CDM identity + assistant name, roles + permissions (used to build the tool list, not injected as text), open AS requests, active reminders
+3. Builds the tool list for this session based on the CDM's roles — CDMs without pricing access do not get `price_lookup` in their tool list; no context is burned explaining what they can't do
+4. Runs `chatWithTools` loop (Anthropic tool_use API, Opus 4.7, 4096 tokens, 10-iteration cap, adaptive thinking)
+5. Saves user + assistant `ConversationTurns` tagged with `agentName: 'main_orchestrator'`
+6. Returns `{ reply, panels?, proposedLayout?, renameAssistant? }`
 
-**Tool dispatcher — 12 tools:**
+R&R reference data, pricing data, and templates are **not** loaded on every call. They are fetched on demand via tools when Claude needs them.
+
+**Tool dispatcher — 16 tools:**
 
 | Tool | What the dispatcher does |
 |---|---|
 | `fetch_records` | `SELECT` from `Requests` with optional filters, limit, field projection |
 | `render_panel` | Pushes a panel config object to the `panels[]` response array |
-| `invoke_subagent` | Dispatches to `email_parse`, `rr_match`, `price_lookup`, `draft_price_email`, `generate_o2i`, `create_o2i_ticket` |
+| `invoke_subagent` | Dispatches to `email_parse`, `rr_match`, `draft_price_email`, `generate_o2i`, `create_o2i_ticket` |
 | `update_record` | `UPDATE Requests` via CAP |
 | `propose_layout_change` | Sets `proposedLayout` in response — FE shows a confirm dialog |
 | `get_reminder_status` | Re-evaluates reminder rules for a specific CDM owner |
@@ -174,6 +172,20 @@ The core of the product. Every CDM message goes here.
 | `register_client` | Creates `ClientAgent` row |
 | `register_contract` | Creates `ContractSubagent` row |
 | `rename_assistant` | Sets `renamedTo` in response — FE updates `PersonaStore` and page title |
+| `rr_lookup` | Lazy: fetches R&R reference data on demand (was ambient preload — removed) |
+| `price_lookup` | Lazy: looks up price for an R&R code on demand (was ambient preload — removed; gated by permissions) |
+| `template_read(name)` | Reads a shared (CAP DB, admin-maintained) or private (per-CDM DB/localStorage) template by name |
+| `template_write(name)` | Saves or updates a personal template for this CDM |
+| `notes_read()` | Reads the CDM's personal reference snippets |
+| `inject_document()` | Injects an ephemeral document into context for one turn only — no persistence |
+
+> Note: the tool count above is 16 base tools. The actual tool list served to Claude on any given session is a subset determined by the CDM's permissions at startup.
+
+**Routing priority** (orchestrator decides silently on each message):
+1. CDM replying to a pending action → resolve it
+2. Message mentions a customer name → `route_to_agent` (client_orchestrator)
+3. Clear task (email, price, O2I) → `invoke_subagent`
+4. Everything else → answer directly
 
 **Routing priority** (orchestrator decides silently on each message):
 1. CDM replying to a pending action → resolve it
@@ -351,6 +363,62 @@ Two structured log streams written to stdout (no external dependency):
 | `chat` action is redundant | Code confusion | Remove or redirect to `orchestrate` |
 | No seed data loaded by default | Empty DB on fresh `cds watch` | Add `db/data/*.csv` seed files |
 | `spcExecutionRef` field shape unconfirmed (Q1/Oana) | Schema may need update | Confirm with Oana |
+| `template_read`, `template_write`, `notes_read`, `inject_document` tools not yet implemented | New tools are in the design but have no dispatcher handlers or backing storage | Build in order per the 2026-05-06 build plan (see Architecture decisions below) |
+| Permissions-based tool list not yet enforced | All CDMs get the same tool list regardless of role | Implement `load_session_context()` + role-gated tool list builder at startup |
+| `load_session_context()` not yet extracted | Startup context is assembled inline in the orchestrator handler | Refactor into a named function that returns `{ identity, permissions, openRequests, reminders }` |
+
+---
+
+## Architecture decisions (2026-05-06)
+
+Decisions made in design session. Applied to this spec on 2026-05-06.
+
+### Orchestrator startup — minimum viable context only
+
+The orchestrator no longer loads all reference data on every call. Startup loads exactly what Claude needs to decide what to do next: CDM identity + assistant name, roles + permissions, open AS requests, active reminders. Everything else is lazy.
+
+Rationale: full R&R catalogue + full pricing table were loaded on every turn. That burns context tokens and adds latency even when the CDM's message has nothing to do with R&R or pricing. Lazy loading via tools means Claude only pays that cost when it actually needs the data.
+
+### Permissions gate the tool list, not the context
+
+At session startup, roles are resolved → Claude receives the tool list for those roles. CDMs without pricing access do not get `price_lookup` in their tool list. No text is injected explaining what they cannot do. The tool simply does not exist from Claude's perspective.
+
+This is cleaner than injecting permission checks as system prompt text: it uses the API correctly (tools are capabilities, not instructions) and costs zero tokens for absent capabilities.
+
+### load_session_context() — plain function, not an agent
+
+The Profile Agent design is dropped. Startup context assembly is a plain function: `load_session_context()`. It runs once, returns a struct, and is done. No agent overhead, no extra LLM call.
+
+### Templates — two DBs, no agent
+
+Shared templates: CAP DB table, admin-maintained, read-only for CDMs.  
+Private templates: per-CDM storage (localStorage or personal DB table).  
+Both are accessed via `template_read(name)` and `template_write(name)` tools. There is no separate template agent.
+
+### Lazy tools — R&R, pricing, templates, notes, ephemeral docs
+
+| Tool | What changed |
+|---|---|
+| `rr_lookup` | Was a preloaded ambient block in the system prompt. Now a tool — fetched only when Claude calls it. |
+| `price_lookup` | Same — removed from ambient preload, lazy on-demand, gated by permissions. |
+| `template_read(name)` | New. Reads a template by name (shared or private). |
+| `template_write(name)` | New. Saves/updates a personal template. |
+| `notes_read()` | New. Returns CDM's personal reference snippets. |
+| `inject_document()` | New. Injects an ephemeral document into context for the current turn only. No persistence. Covers the small-doc case; large/sensitive docs are parked for now. |
+
+### Sidebar nav — Reference data and Templates split into Public / Private
+
+The nav sidebar Reference data and Templates sections each split into two subsections:
+- **Public** — shared, CAP DB, admin-maintained
+- **Private** — per-CDM, personal DB or localStorage
+
+### Build order (next steps)
+
+1. Refactor orchestrator startup — remove ambient R&R/pricing preload, extract `load_session_context()`
+2. `template_read` / `template_write` tools + shared/private template DB tables
+3. `notes_read()` — personal reference snippets
+4. Permissions-based tool list at session load
+5. `inject_document()` — ephemeral doc context injection
 
 ---
 

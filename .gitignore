@@ -1,0 +1,27 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+build/
+
+# DB & OS
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.DS_Store
+
+# Playwright logs
+.playwright-mcp/
+
+# PNG screenshots (working directory)
+*.png
+
+# Misc
+*.zip
