@@ -1,0 +1,11 @@
+ID,serviceCode,serviceName,price,currency,effectiveFrom,active,lastUpdatedBy,rrId,lastUpdated
+price-sc01,SC-01,System Conversion Support,3500.00,EUR,2024-01-01,true,pricingadmin,SC-01,2024-01-01
+price-sc02,SC-02,Migration Support,4000.00,EUR,2024-01-01,true,pricingadmin,SC-02,2024-01-01
+price-sc03,SC-03,Special Onboarding,2500.00,EUR,2024-01-01,true,pricingadmin,SC-03,2024-01-01
+price-sc04,SC-04,ATLAS Contract Setup,1500.00,EUR,2024-01-01,true,pricingadmin,SC-04,2024-01-01
+price-sc05,SC-05,Custom Reporting Setup,2000.00,EUR,2024-01-01,true,pricingadmin,SC-05,2024-01-01
+price-sc06,SC-06,Integration Advisory,4500.00,EUR,2024-01-01,true,pricingadmin,SC-06,2024-01-01
+price-sc07,SC-07,Post-Go-Live Support,3000.00,EUR,2024-01-01,true,pricingadmin,SC-07,2024-01-01
+price-sc09,SC-09,Upgrade Advisory,2800.00,EUR,2024-01-01,true,pricingadmin,SC-09,2024-01-01
+price-sc10,SC-10,Security Review,1800.00,EUR,2024-01-01,true,pricingadmin,SC-10,2024-01-01
+price-sc42,SC-42,System Conversion Support Premium,5000.00,EUR,2024-01-01,true,pricingadmin,SC-42,2024-01-01

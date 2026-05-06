@@ -1,0 +1,47 @@
+{
+  "xsappname": "cdm-as-tracker",
+  "tenant-mode": "dedicated",
+  "scopes": [
+    { "name": "$XSAPPNAME.CDM",     "description": "CDM user — manage own AS requests" },
+    { "name": "$XSAPPNAME.Manager", "description": "CDM manager — view all requests" },
+    { "name": "$XSAPPNAME.Admin",   "description": "Administrator — manage configuration" }
+  ],
+  "role-templates": [
+    {
+      "name": "CDM",
+      "description": "CDM user role",
+      "scope-references": ["$XSAPPNAME.CDM"]
+    },
+    {
+      "name": "Manager",
+      "description": "Manager role with read access to all CDM requests",
+      "scope-references": ["$XSAPPNAME.Manager"]
+    },
+    {
+      "name": "Admin",
+      "description": "Administrator role for pricing, R&R, and config management",
+      "scope-references": ["$XSAPPNAME.Admin"]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "CDM-User",
+      "description": "Default role collection for CDM users",
+      "role-template-references": ["$XSAPPNAME.CDM"]
+    },
+    {
+      "name": "CDM-Manager",
+      "description": "Role collection for CDM managers",
+      "role-template-references": ["$XSAPPNAME.CDM", "$XSAPPNAME.Manager"]
+    },
+    {
+      "name": "CDM-Admin",
+      "description": "Full administrator role collection",
+      "role-template-references": ["$XSAPPNAME.CDM", "$XSAPPNAME.Manager", "$XSAPPNAME.Admin"]
+    }
+  ],
+  "oauth2-configuration": {
+    "token-validity": 900,
+    "refresh-token-validity": 1800
+  }
+}

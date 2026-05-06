@@ -1,0 +1,28 @@
+ID,serviceType,templateBody,active
+jira-tpl-default,default,"Hello ECS Global Engagement Support (ECS GES),
+
+Please initiate the invoicing process at O2I Teams as per details below.
+
+Customer: {{customerName}}
+Customer Account ID: {{customerAccountId}}
+Service Code: {{serviceCode}}
+Service Type: {{serviceType}}
+SID: {{sid}}
+
+- Total amount with currency: {{price}} {{currency}}
+  ({{priceInWords}})
+- Sales order no. / Provider contract no.: {{salesOrderNumber}}
+- SAP4Me Ticket ID: {{sap4MeTicketId}}
+- SPC Ticket ID: {{spcTicketId}}
+- BTP Ticket ID: {{btpTicketId}}
+- AMS Ticket ID: {{amsTicketId}}
+- ServiceNow Ticket ID: {{serviceNowTicketId}}
+- PO no. (if provided): {{poNumber}}
+- Activity performed: {{activityPerformed}}
+- Approval date: {{approvalDate}}
+- Delivery date: {{deliveryDate}}
+
+JIRA queue: ECSBO
+
+Best regards,
+CDM Team",true

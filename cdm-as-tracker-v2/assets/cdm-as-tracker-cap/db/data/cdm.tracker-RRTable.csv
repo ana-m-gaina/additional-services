@@ -1,0 +1,12 @@
+ID,serviceCode,serviceName,category,chargeable,notes,active,rrId,description,isActive
+rrId-sc01,SC-01,System Conversion Support,SystemConversion,true,Standard S/4HANA conversion support,true,SC-01,System Conversion Support,true
+rrId-sc02,SC-02,Migration Support,MigrationSupport,true,Data and process migration assistance,true,SC-02,Migration Support,true
+rrId-sc03,SC-03,Special Onboarding,SpecialOnboarding,true,Custom onboarding for enterprise customers,true,SC-03,Special Onboarding,true
+rrId-sc04,SC-04,ATLAS Contract Setup,ContractSetup,true,ATLAS-specific contract configuration,true,SC-04,ATLAS Contract Setup,true
+rrId-sc05,SC-05,Custom Reporting Setup,Reporting,true,Custom analytics and reporting configuration,true,SC-05,Custom Reporting Setup,true
+rrId-sc06,SC-06,Integration Advisory,Integration,true,SAP integration architecture advisory,true,SC-06,Integration Advisory,true
+rrId-sc07,SC-07,Post-Go-Live Support,Support,true,Extended hypercare and stabilization support,true,SC-07,Post-Go-Live Support,true
+rrId-sc08,SC-08,Standard Consulting,Consulting,false,In-scope standard consulting — not chargeable,true,SC-08,Standard Consulting,true
+rrId-sc09,SC-09,Upgrade Advisory,Upgrade,true,SAP release upgrade planning and execution,true,SC-09,Upgrade Advisory,true
+rrId-sc10,SC-10,Security Review,Security,true,Custom security configuration review,true,SC-10,Security Review,true
+rrId-sc42,SC-42,System Conversion Support Premium,SystemConversion,true,Premium system conversion with dedicated CDM,true,SC-42,System Conversion Support Premium,true

@@ -1,0 +1,8 @@
+import { registerThemePropertiesLoader } from "@ui5/webcomponents-base/dist/asset-registries/Themes.js";
+import defaultThemeBase from "@ui5/webcomponents-theming/dist/generated/themes/sap_horizon/parameters-bundle.css.js";
+import defaultTheme from "./sap_horizon/parameters-bundle.css.js";
+registerThemePropertiesLoader("@" + "ui5" + "/" + "webcomponents-theming", "sap_horizon", async () => defaultThemeBase);
+registerThemePropertiesLoader("@" + "u" + "i" + "5" + "/" + "w" + "e" + "b" + "c" + "o" + "m" + "p" + "o" + "n" + "e" + "n" + "t" + "s", "sap_horizon", async () => defaultTheme, "host");
+export default `:host{display:grid;grid-template-columns:subgrid;grid-column:1 / -1;min-height:var(--_ui5_list_item_base_height);box-sizing:content-box;overflow:clip}:host([tabindex]:focus){outline:var(--sapContent_FocusWidth) var(--sapContent_FocusStyle) var(--sapContent_FocusColor);outline-offset:calc(-1 * var(--sapContent_FocusWidth))}:host([tabindex]:focus) #selection-cell,:host([tabindex]:focus) #actions-cell{clip-path:inset(var(--sapContent_FocusWidth))}::slotted([ui5-table-cell-base]:first-of-type){padding-inline-start:var(--_ui5_first_table_cell_horizontal_padding)}#selection-cell+::slotted([ui5-table-cell-base]:first-of-type){padding-inline-start:var(--_ui5_table_cell_horizontal_padding)}#selection-cell,#actions-cell{background-color:inherit;clip-path:inset(0px 0px 1px 0px);position:sticky;z-index:1}#selection-cell{padding:0;inset-inline-start:0;min-width:auto}#actions-cell{inset-inline-end:0}#selection-cell[tabindex]:focus,#actions-cell[tabindex]:focus{clip-path:inset(0px)}
+`;
+//# sourceMappingURL=TableRowBase.css.js.map
