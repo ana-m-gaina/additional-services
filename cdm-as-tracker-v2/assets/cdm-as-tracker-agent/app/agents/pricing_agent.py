@@ -49,6 +49,10 @@ Rules:
 - Return ONLY the JSON object, no markdown fences."""
 
 
+def capabilities() -> list[str]:
+    return ["price_lookup: retrieve current price and effort type for a service code"]
+
+
 async def _embed(text: str) -> np.ndarray:
     async with httpx.AsyncClient(timeout=30.0) as c:
         resp = await c.post(
