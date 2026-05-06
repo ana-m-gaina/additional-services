@@ -252,6 +252,25 @@ entity PendingAction : cuid {
   resolvedAt       : DateTime;
 }
 
+// ── Personal templates — per-CDM reusable text snippets ──────────────────────
+
+entity PersonalTemplate : cuid, managed {
+  cdmEmail    : String(200) not null;
+  templateKey : String(100) not null;
+  description : String(500);
+  content     : LargeString not null;
+}
+
+// ── Personal notes — CDM freeform notes tied to a session/request ─────────────
+
+entity PersonalNote : cuid, managed {
+  cdmEmail      : String(200)  not null;
+  content       : LargeString  not null;
+  tags          : String(500);          // comma-separated for lightweight search
+  relatedRequest: String(50);           // FK → ASRequest.ID (nullable)
+  sessionId     : String(100);
+}
+
 // ── Admin-editable reference data ─────────────────────────────────────────────
 
 entity EmailTemplate : cuid {

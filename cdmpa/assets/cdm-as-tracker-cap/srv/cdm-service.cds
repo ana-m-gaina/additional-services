@@ -52,6 +52,26 @@ service CDMService @(path: '/CDMService') {
   @readonly
   entity RetiredAgents       as projection on db.RetiredAgent;
 
+  // ── Personal templates & notes (per-CDM, scoped by auth) ─────────────────────
+  entity PersonalTemplates as projection on db.PersonalTemplate
+    where cdmEmail = $user;
+
+  action savePersonalTemplate(
+    templateKey : String,
+    description : String,
+    content     : String
+  ) returns Boolean;
+
+  entity PersonalNotes as projection on db.PersonalNote
+    where cdmEmail = $user;
+
+  action savePersonalNote(
+    content        : String,
+    tags           : String,
+    relatedRequest : String,
+    sessionId      : String
+  ) returns Boolean;
+
   // ── Admin config (read-only for CDMs) ──────────────────────────────────────
   @readonly
   entity EmailTemplates as projection on db.EmailTemplate;

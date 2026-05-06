@@ -348,6 +348,20 @@ ORCHESTRATOR_TOOLS = [
         }
     },
     {
+        "name": "notes_write",
+        "description": "Save a personal note for the CDM. Use when CDM says 'remember this', 'save this', 'note that', or wants to store process info or reference text for later.",
+        "input_schema": {
+            "type": "object",
+            "required": ["content"],
+            "properties": {
+                "content": {"type": "string", "description": "The note content to save"},
+                "tags": {"type": "string", "description": "Optional comma-separated tags for searching later"},
+                "relatedRequest": {"type": "string", "description": "Optional AS request ID this note is about"},
+                "sessionId": {"type": "string", "description": "Current session ID"}
+            }
+        }
+    },
+    {
         "name": "inject_document",
         "description": "Load a document into context for this turn only. Content is ephemeral — not stored anywhere. Use when CDM uploads or pastes a document they want to ask questions about.",
         "input_schema": {
@@ -981,6 +995,22 @@ async def _dispatch(
             return {"found": True, "count": len(notes), "notes": notes}
         except Exception as e:
             return {"found": False, "error": str(e)}
+
+    if tool_name == "notes_write":
+        content = tool_input.get("content", "").strip()
+        if not content:
+            return {"saved": False, "error": "content is required"}
+        try:
+            await cap_client.save_personal_note(
+                user_id,
+                content,
+                tags=tool_input.get("tags", ""),
+                related_request=tool_input.get("relatedRequest", ""),
+                session_id=tool_input.get("sessionId", "")
+            )
+            return {"saved": True, "message": "Note saved to your personal notes."}
+        except Exception as e:
+            return {"saved": False, "error": str(e)}
 
     if tool_name == "inject_document":
         content = tool_input.get("content", "")

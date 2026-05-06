@@ -179,6 +179,7 @@ module.exports = class CDMService extends cds.ApplicationService {
       PersonaLayouts, ConversationTurns,
       ClientAgents, ContractSubagents, AutomationAgents, PendingActions,
       EmailTemplates, AdminConfigs, JiraTicketTemplates,
+      PersonalTemplates, PersonalNotes,
       StatusValues, ProcessTypes, Currencies
     } = this.entities
 
@@ -368,6 +369,43 @@ module.exports = class CDMService extends cds.ApplicationService {
       } else {
         await INSERT.into(PersonaLayouts).entries({ userId, layoutJson, updatedAt: new Date().toISOString() })
       }
+      return true
+    })
+
+    // ── savePersonalTemplate unbound action ────────────────────────────────────
+    this.on('savePersonalTemplate', async req => {
+      const { templateKey, description, content } = req.data
+      if (!templateKey || !content) return req.error(400, 'templateKey and content are required')
+      const userId = req.user?.id || 'anonymous'
+      const existing = await SELECT.one.from(PersonalTemplates)
+        .where({ cdmEmail: userId, templateKey })
+      if (existing) {
+        await UPDATE(PersonalTemplates, existing.ID).with({ description, content })
+      } else {
+        await INSERT.into(PersonalTemplates).entries({
+          ID: crypto.randomUUID(),
+          cdmEmail: userId,
+          templateKey,
+          description: description || '',
+          content
+        })
+      }
+      return true
+    })
+
+    // ── savePersonalNote unbound action ────────────────────────────────────────
+    this.on('savePersonalNote', async req => {
+      const { content, tags, relatedRequest, sessionId } = req.data
+      if (!content?.trim()) return req.error(400, 'content is required')
+      const userId = req.user?.id || 'anonymous'
+      await INSERT.into(PersonalNotes).entries({
+        ID: crypto.randomUUID(),
+        cdmEmail: userId,
+        content,
+        tags: tags || '',
+        relatedRequest: relatedRequest || null,
+        sessionId: sessionId || null
+      })
       return true
     })
 

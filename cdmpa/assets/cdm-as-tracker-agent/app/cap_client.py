@@ -584,7 +584,7 @@ async def get_pricing_chunks() -> list:
 async def get_personal_template(cdm_email: str, key: str) -> dict | None:
     try:
         async with await _client() as c:
-            url = _url(f"{CAP_SERVICE_URL}/PersonalTemplate", {"$filter": f"cdmEmail eq '{cdm_email}' and key eq '{key}'", "$top": 1})
+            url = _url(f"{CAP_SERVICE_URL}/PersonalTemplates", {"$filter": f"templateKey eq '{key}'", "$top": 1})
             resp = await c.get(url)
             _raise(resp, "get_personal_template")
             items = resp.json().get("value", [])
@@ -596,7 +596,7 @@ async def get_personal_template(cdm_email: str, key: str) -> dict | None:
 async def get_shared_template(key: str) -> dict | None:
     try:
         async with await _client() as c:
-            url = _url(f"{CAP_SERVICE_URL}/EmailTemplate", {"$filter": f"key eq '{key}'", "$top": 1})
+            url = _url(f"{CAP_SERVICE_URL}/EmailTemplates", {"$filter": f"templateKey eq '{key}'", "$top": 1})
             resp = await c.get(url)
             _raise(resp, "get_shared_template")
             items = resp.json().get("value", [])
@@ -608,7 +608,10 @@ async def get_shared_template(key: str) -> dict | None:
 async def save_personal_template(cdm_email: str, key: str, content: str, description: str = "") -> dict:
     try:
         async with await _client() as c:
-            resp = await c.post(f"{CAP_SERVICE_URL}/PersonalTemplate", json={"cdmEmail": cdm_email, "key": key, "content": content, "description": description})
+            resp = await c.post(
+                f"{CAP_SERVICE_URL}/savePersonalTemplate",
+                json={"templateKey": key, "content": content, "description": description}
+            )
             _raise(resp, "save_personal_template")
             return resp.json()
     except Exception as e:
@@ -618,14 +621,30 @@ async def save_personal_template(cdm_email: str, key: str, content: str, descrip
 async def get_personal_notes(cdm_email: str, query: str = "") -> list:
     try:
         async with await _client() as c:
-            params = {"$filter": f"cdmEmail eq '{cdm_email}'", "$orderby": "createdAt desc", "$top": 20}
-            url = _url(f"{CAP_SERVICE_URL}/PersonalNote", params)
+            params = {"$orderby": "createdAt desc", "$top": 20}
+            if query:
+                params["$filter"] = f"contains(tolower(content),'{query.lower()}')"
+            url = _url(f"{CAP_SERVICE_URL}/PersonalNotes", params)
             resp = await c.get(url)
             _raise(resp, "get_personal_notes")
-            notes = resp.json().get("value", [])
-            if query:
-                q = query.lower()
-                notes = [n for n in notes if q in (n.get("content", "") + n.get("title", "")).lower()]
-            return notes
+            return resp.json().get("value", [])
     except Exception:
         return []
+
+
+async def save_personal_note(cdm_email: str, content: str, tags: str = "", related_request: str = "", session_id: str = "") -> dict:
+    try:
+        async with await _client() as c:
+            resp = await c.post(
+                f"{CAP_SERVICE_URL}/savePersonalNote",
+                json={
+                    "content": content,
+                    "tags": tags,
+                    "relatedRequest": related_request or None,
+                    "sessionId": session_id or None
+                }
+            )
+            _raise(resp, "save_personal_note")
+            return {"saved": True}
+    except Exception as e:
+        raise Exception(f"Failed to save note: {e}")
