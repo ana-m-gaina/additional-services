@@ -1,0 +1,51 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - alert
+    - alert
+  - generic [ref=e3]:
+    - banner "Shell Bar" [ref=e5]:
+      - link "Logo" [ref=e6] [cursor=pointer]:
+        - generic "Logo" [ref=e7]:
+          - img "SAP" [ref=e8]
+        - heading "CDM Personal Assistant" [level=1] [ref=e10]
+      - generic [ref=e12]:
+        - button "New Request" [ref=e16] [cursor=pointer]:
+          - img [ref=e18]
+        - button "Chat" [ref=e23] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Dashboard" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+        - button "Inbox" [ref=e37] [cursor=pointer]:
+          - img [ref=e39]
+        - button "CDM Developer" [ref=e42] [cursor=pointer]:
+          - img "CDM Developer" [ref=e46]:
+            - img [ref=e48]
+    - generic [ref=e50]:
+      - complementary [ref=e51]:
+        - button "‹" [ref=e52] [cursor=pointer]
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - generic [ref=e55] [cursor=pointer]:
+              - generic [ref=e56]: Clients
+              - generic [ref=e57]: ›
+            - list [ref=e58]:
+              - listitem [ref=e59] [cursor=pointer]: + Add client
+          - generic [ref=e60]:
+            - generic [ref=e61] [cursor=pointer]:
+              - generic [ref=e62]: Automations
+              - generic [ref=e63]: ›
+            - list [ref=e64]:
+              - listitem [ref=e65] [cursor=pointer]: + Add automation
+      - main [ref=e66]:
+        - generic [ref=e68]: No panels pinned yet. Switch to Chat and ask your assistant to set up your workspace.
+      - generic [ref=e69]:
+        - generic:
+          - generic [ref=e70]:
+            - text: Hi — I'm
+            - strong [ref=e71]: Beacon
+            - text: . Ask me about requests, pricing, R&R codes, or paste a customer email.
+          - generic [ref=e73]:
+            - textbox "Ask anything..." [ref=e74]
+            - button "Send" [disabled] [ref=e76]:
+              - generic [ref=e78]:
+                - generic: Send

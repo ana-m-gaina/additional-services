@@ -1,0 +1,46 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - alert
+    - alert
+  - generic [ref=e3]:
+    - banner "Shell Bar" [ref=e5]:
+      - link "Logo" [ref=e6] [cursor=pointer]:
+        - generic "Logo" [ref=e7]:
+          - img "SAP" [ref=e8]
+        - heading "CDM AS Tracker" [level=1] [ref=e10]
+      - generic [ref=e11]: Logged in as alex
+      - generic [ref=e13]:
+        - button "New Request" [ref=e17] [cursor=pointer]:
+          - img [ref=e19]
+        - button "Chat" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+        - button "Dashboard" [ref=e31] [cursor=pointer]:
+          - img [ref=e33]
+        - button "Inbox" [ref=e38] [cursor=pointer]:
+          - img [ref=e40]
+    - generic [ref=e42]:
+      - complementary [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - generic [ref=e46]: Clients
+            - list [ref=e47]:
+              - listitem [ref=e48] [cursor=pointer]: + Add client
+          - generic [ref=e49]:
+            - generic [ref=e50]: Automations
+            - list [ref=e51]:
+              - listitem [ref=e52] [cursor=pointer]: + Add automation
+      - main [ref=e53]:
+        - generic [ref=e54]:
+          - generic [ref=e57]:
+            - generic [ref=e64]: hello
+            - generic [ref=e65]:
+              - paragraph [ref=e66]:
+                - text: Hi, I'm Beacon, running on
+                - strong [ref=e67]: claude-opus-4-7
+                - text: . You can change my name or switch models at any time — just ask!
+              - paragraph [ref=e68]: How can I help you today, Alex?
+          - generic [ref=e58]:
+            - textbox "Ask anything..." [ref=e59]
+            - button "Send" [disabled] [ref=e61]:
+              - generic [ref=e63]:
+                - generic: Send

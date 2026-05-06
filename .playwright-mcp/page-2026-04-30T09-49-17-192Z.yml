@@ -1,0 +1,115 @@
+- generic [ref=e1]:
+  - generic:
+    - alert
+    - alert
+  - generic [ref=e3]:
+    - banner "Shell Bar" [ref=e5]:
+      - link "Logo" [ref=e6] [cursor=pointer]:
+        - generic "Logo" [ref=e7]:
+          - img "SAP" [ref=e8]
+        - heading "CDM Personal Assistant" [level=1] [ref=e10]
+      - generic [ref=e12]:
+        - button "New Request" [ref=e16] [cursor=pointer]:
+          - img [ref=e18]
+        - button "Chat" [ref=e23] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Dashboard" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+        - button "Inbox" [ref=e37] [cursor=pointer]:
+          - img [ref=e39]
+        - button "Ana Gaina" [ref=e80] [cursor=pointer]:
+          - img "Ana Gaina" [ref=e81]:
+            - generic [ref=e82]: AG
+    - generic [ref=e50]:
+      - complementary [ref=e51]:
+        - button "‹" [ref=e52] [cursor=pointer]
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - generic [ref=e55] [cursor=pointer]:
+              - generic [ref=e56]: Clients
+              - generic [ref=e57]: ›
+            - list [ref=e58]:
+              - listitem [ref=e59] [cursor=pointer]: + Add client
+          - generic [ref=e60]:
+            - generic [ref=e61] [cursor=pointer]:
+              - generic [ref=e62]: Automations
+              - generic [ref=e63]: ›
+            - list [ref=e64]:
+              - listitem [ref=e65] [cursor=pointer]: + Add automation
+      - main [ref=e66]:
+        - generic [ref=e68]: No panels pinned yet. Switch to Chat and ask your assistant to set up your workspace.
+      - generic [ref=e69]:
+        - generic:
+          - generic [ref=e72]:
+            - generic [ref=e83]: Is custom ABAP development an additional service? What service code applies?
+            - generic [ref=e88]:
+              - paragraph:
+                - text: Based on the R&R source documents,
+                - strong [ref=e89]: custom ABAP development is not listed as a standalone Additional Service
+                - text: with its own service code.
+              - paragraph: "Here's what the R&R docs do say:"
+              - table [ref=e90]:
+                - rowgroup [ref=e91]:
+                  - row "Topic Detail" [ref=e92]:
+                    - columnheader "Topic" [ref=e93]
+                    - columnheader "Detail" [ref=e94]
+                  - row "Closest match BASIC_1.5.01 — covers customizing, configuring, maintaining, and supporting applications" [ref=e95]:
+                    - cell "Closest match" [ref=e96]:
+                      - strong [ref=e97]: Closest match
+                    - cell "BASIC_1.5.01 — covers customizing, configuring, maintaining, and supporting applications" [ref=e98]
+                  - row "Responsibility This is a customer task by default" [ref=e99]:
+                    - cell "Responsibility" [ref=e100]:
+                      - strong [ref=e101]: Responsibility
+                    - cell "This is a customer task by default" [ref=e102]:
+                      - text: This is a
+                      - strong [ref=e103]: customer task
+                      - text: by default
+                  - row "SAP option The customer can purchase the CAS / Packaged Services option (Functional Application Management, code F1) to have SAP handle it" [ref=e104]:
+                    - cell "SAP option" [ref=e105]:
+                      - strong [ref=e106]: SAP option
+                    - cell "The customer can purchase the CAS / Packaged Services option (Functional Application Management, code F1) to have SAP handle it" [ref=e107]:
+                      - text: The customer can purchase the
+                      - strong [ref=e108]: CAS / Packaged Services
+                      - text: option (Functional Application Management, code
+                      - strong [ref=e109]: F1
+                      - text: ) to have SAP handle it
+              - strong [ref=e110]: "Bottom line:"
+              - text: If a customer is asking SAP to do custom ABAP development, it would typically fall under the
+              - strong [ref=e111]: Functional Application Management (F1)
+              - text: packaged service option rather than a one-off Additional Service from the SC catalogue.
+              - paragraph: Would you like me to look up pricing or further details on the F1 packaged service, or help you draft a response to the customer?
+            - generic:
+              - generic:
+                - generic: No specific service codes found in the R&R documents for this query.
+                - generic:
+                  - generic [ref=e112]: "Confidence:"
+                  - generic [ref=e113]: LOW
+                - generic:
+                  - generic: Source documents
+                  - generic:
+                    - generic [ref=e114]:
+                      - generic: Roles_And_Responsibilities_RISE with SAP S4HANA Cloud, private edition, tailored option Roles and Responsibilities enGLOBAL.v.3.2025.pdf
+                      - generic [ref=e115]: p.30
+                      - button "Open →" [ref=e116] [cursor=pointer]
+                    - generic [ref=e117]:
+                      - generic: SAP S4HANA Cloud, private edition and SAP ERP, PCE Roles and Responsibilities enGlobal.v.03.2026.pdf
+                      - generic [ref=e118]: p.2
+                      - button "Open →" [ref=e119] [cursor=pointer]
+                    - generic [ref=e120]:
+                      - generic: Roles_And_Responsibilities_RISE with SAP S4HANA Cloud, private edition, tailored option Roles and Responsibilities enGLOBAL.v.3.2025.pdf
+                      - generic [ref=e121]: p.14
+                      - button "Open →" [ref=e122] [cursor=pointer]
+                    - generic [ref=e123]:
+                      - generic: SAP S4HANA Cloud, private edition and SAP ERP, PCE Roles and Responsibilities enGlobal.v.03.2026.pdf
+                      - generic [ref=e124]: p.31
+                      - button "Open →" [ref=e125] [cursor=pointer]
+                    - generic [ref=e126]:
+                      - generic: SAP S4HANA Cloud, private edition and SAP ERP, PCE Roles and Responsibilities enGlobal.v.03.2026.pdf
+                      - generic [ref=e127]: p.56
+                      - button "Open →" [ref=e128] [cursor=pointer]
+          - generic [ref=e73]:
+            - button "🎤" [ref=e74] [cursor=pointer]
+            - textbox "Ask anything..." [ref=e75]
+            - button "Send" [disabled] [ref=e77]:
+              - generic [ref=e79]:
+                - generic: Send

@@ -1,0 +1,134 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - alert
+    - alert
+  - generic [ref=e3]:
+    - banner "Shell Bar" [ref=e5]:
+      - link "Logo" [ref=e6] [cursor=pointer]:
+        - generic "Logo" [ref=e7]:
+          - img "SAP" [ref=e8]
+        - heading "CDM Personal Assistant" [level=1] [ref=e10]
+      - generic [ref=e12]:
+        - button "New Request" [ref=e16] [cursor=pointer]:
+          - img [ref=e18]
+        - button "Chat" [ref=e23] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Dashboard" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+        - button "Inbox" [ref=e37] [cursor=pointer]:
+          - img [ref=e39]
+        - button "Ana Gaina" [ref=e42] [cursor=pointer]:
+          - img "Ana Gaina" [ref=e46]:
+            - generic [ref=e47]: AG
+    - generic [ref=e48]:
+      - complementary [ref=e49]:
+        - button "‹" [ref=e50] [cursor=pointer]
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - generic [ref=e53] [cursor=pointer]:
+              - generic [ref=e54]: Clients
+              - generic [ref=e55]: ›
+            - list [ref=e56]:
+              - listitem [ref=e57] [cursor=pointer]: + Add client
+          - generic [ref=e58]:
+            - generic [ref=e59] [cursor=pointer]:
+              - generic [ref=e60]: Automations
+              - generic [ref=e61]: ›
+            - list [ref=e62]:
+              - listitem [ref=e63] [cursor=pointer]: + Add automation
+      - main [ref=e64]:
+        - generic [ref=e66]: No panels pinned yet. Switch to Chat and ask your assistant to set up your workspace.
+      - generic [ref=e78]:
+        - generic [ref=e70]:
+          - generic [ref=e79]: Is custom ABAP development an additional service? What service code applies?
+          - generic [ref=e84]:
+            - paragraph [ref=e85]: "Based on the R&R search, here's what I found:"
+            - strong [ref=e86]: Custom ABAP development is not a named standalone Additional Service
+            - text: "in the R&R catalogue. However, two relevant references apply:"
+            - table [ref=e87]:
+              - rowgroup [ref=e88]:
+                - row "Code Description" [ref=e89]:
+                  - columnheader "Code" [ref=e90]
+                  - columnheader "Description" [ref=e91]
+                - row "BASIC_1.5.01 Application customization/configuration — explicitly excluded from standard services and available via CAS (Customer-specific Application Support)" [ref=e92]:
+                  - cell "BASIC_1.5.01" [ref=e93]:
+                    - strong [ref=e94]: BASIC_1.5.01
+                  - cell "Application customization/configuration — explicitly excluded from standard services and available via CAS (Customer-specific Application Support)" [ref=e95]:
+                    - text: Application customization/configuration — explicitly
+                    - strong [ref=e96]: excluded
+                    - text: from standard services and available via
+                    - strong [ref=e97]: CAS
+                    - text: (Customer-specific Application Support)
+                - row "BASIC_1.15.06 Generic additional service request — covers one-off tasks not listed elsewhere" [ref=e98]:
+                  - cell "BASIC_1.15.06" [ref=e99]:
+                    - strong [ref=e100]: BASIC_1.15.06
+                  - cell "Generic additional service request — covers one-off tasks not listed elsewhere" [ref=e101]
+            - strong [ref=e102]: "Practical guidance:"
+            - list [ref=e103]:
+              - listitem [ref=e104]:
+                - text: If the customer needs ongoing or substantial custom ABAP work, it would typically fall under
+                - strong [ref=e105]: CAS
+                - text: scope (BASIC_1.5.01) and requires a separate engagement/quote.
+              - listitem [ref=e106]:
+                - text: If it's a small, one-off ABAP adjustment, it *could* be requested under
+                - strong [ref=e107]: BASIC_1.15.06
+                - text: as a generic additional service — but this should be validated with your delivery team and priced accordingly.
+            - paragraph [ref=e108]: Would you like me to look up pricing for a specific scenario, or draft a response to a customer inquiry about this?
+          - generic [ref=e110]:
+            - generic [ref=e111]: No specific service codes found in the R&R documents for this query.
+            - generic [ref=e112]:
+              - generic [ref=e113]: "Confidence:"
+              - generic [ref=e114]: LOW
+            - generic [ref=e115]:
+              - generic [ref=e116]: Source documents
+              - generic [ref=e117]:
+                - generic [ref=e118]:
+                  - generic [ref=e119]: Roles_And_Responsibilities_RISE with SAP S4HANA Cloud, private edition, tailored option Roles and Responsibilities enGLOBAL.v.3.2025.pdf
+                  - generic [ref=e120]: p.17
+                  - button "Open →" [ref=e121] [cursor=pointer]
+                - generic [ref=e122]:
+                  - generic [ref=e123]: SAP S4HANA Cloud, private edition and SAP ERP, PCE Roles and Responsibilities enGlobal.v.03.2026.pdf
+                  - generic [ref=e124]: p.18
+                  - button "Open →" [ref=e125] [cursor=pointer]
+                - generic [ref=e126]:
+                  - generic [ref=e127]: SAP S4HANA Cloud, private edition and SAP ERP, PCE Roles and Responsibilities enGlobal.v.03.2026.pdf
+                  - generic [ref=e128]: p.17
+                  - button "Open →" [ref=e129] [cursor=pointer]
+                - generic [ref=e130]:
+                  - generic [ref=e131]: Roles_And_Responsibilities_RISE with SAP S4HANA Cloud, private edition, tailored option Roles and Responsibilities enGLOBAL.v.3.2025.pdf
+                  - generic [ref=e132]: p.30
+                  - button "Open →" [ref=e133] [cursor=pointer]
+                - generic [ref=e134]:
+                  - generic [ref=e135]: Roles_And_Responsibilities_RISE with SAP S4HANA Cloud, private edition, tailored option Roles and Responsibilities enGLOBAL.v.3.2025.pdf
+                  - generic [ref=e136]: p.14
+                  - button "Open →" [ref=e137] [cursor=pointer]
+                - generic [ref=e138]:
+                  - generic [ref=e139]: SAP S4HANA Cloud, private edition and SAP ERP, PCE Roles and Responsibilities enGlobal.v.03.2026.pdf
+                  - generic [ref=e140]: p.31
+                  - button "Open →" [ref=e141] [cursor=pointer]
+                - generic [ref=e142]:
+                  - generic [ref=e143]: Roles_And_Responsibilities_RISE with SAP S4HANA Cloud, private edition, tailored option Roles and Responsibilities enGLOBAL.v.3.2025.pdf
+                  - generic [ref=e144]: p.22
+                  - button "Open →" [ref=e145] [cursor=pointer]
+                - generic [ref=e146]:
+                  - generic [ref=e147]: Roles_And_Responsibilities_RISE with SAP S4HANA Cloud, private edition, tailored option Roles and Responsibilities enGLOBAL.v.3.2025.pdf
+                  - generic [ref=e148]: p.23
+                  - button "Open →" [ref=e149] [cursor=pointer]
+                - generic [ref=e150]:
+                  - generic [ref=e151]: SAP S4HANA Cloud, private edition and SAP ERP, PCE Roles and Responsibilities enGlobal.v.03.2026.pdf
+                  - generic [ref=e152]: p.15
+                  - button "Open →" [ref=e153] [cursor=pointer]
+                - generic [ref=e154]:
+                  - generic [ref=e155]: Roles_And_Responsibilities_RISE with SAP S4HANA Cloud, private edition, tailored option Roles and Responsibilities enGLOBAL.v.3.2025.pdf
+                  - generic [ref=e156]: p.21
+                  - button "Open →" [ref=e157] [cursor=pointer]
+                - generic [ref=e158]:
+                  - generic [ref=e159]: Roles_And_Responsibilities_RISE with SAP S4HANA Cloud, private edition, tailored option Roles and Responsibilities enGLOBAL.v.3.2025.pdf
+                  - generic [ref=e160]: p.24
+                  - button "Open →" [ref=e161] [cursor=pointer]
+        - generic [ref=e71]:
+          - button "🎤" [ref=e72] [cursor=pointer]
+          - textbox "Ask anything..." [ref=e73]
+          - button "Send" [disabled] [ref=e75]:
+            - generic [ref=e77]:
+              - generic: Send

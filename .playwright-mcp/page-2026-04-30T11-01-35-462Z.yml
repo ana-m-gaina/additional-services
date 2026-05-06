@@ -1,0 +1,62 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - alert
+    - alert
+  - generic [ref=e3]:
+    - banner "Shell Bar" [ref=e5]:
+      - link "Logo" [ref=e6] [cursor=pointer]:
+        - generic "Logo" [ref=e7]:
+          - img "SAP" [ref=e8]
+        - heading "CDM Personal Assistant" [level=1] [ref=e10]
+      - generic [ref=e12]:
+        - button "New Request" [ref=e16] [cursor=pointer]:
+          - img [ref=e18]
+        - button "Chat" [ref=e23] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Dashboard" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+        - button "Inbox" [ref=e37] [cursor=pointer]:
+          - img [ref=e39]
+        - button "Ana Gaina" [ref=e42] [cursor=pointer]:
+          - img "Ana Gaina" [ref=e46]:
+            - generic [ref=e47]: AG
+    - generic [ref=e48]:
+      - complementary [ref=e49]:
+        - button "‹" [ref=e50] [cursor=pointer]
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - generic [ref=e53] [cursor=pointer]:
+              - generic [ref=e54]: Clients
+              - generic [ref=e55]: ›
+            - list [ref=e56]:
+              - listitem [ref=e57] [cursor=pointer]: + Add client
+          - generic [ref=e58]:
+            - generic [ref=e59] [cursor=pointer]:
+              - generic [ref=e60]: Automations
+              - generic [ref=e61]: ›
+            - list [ref=e62]:
+              - listitem [ref=e63] [cursor=pointer]: + Add automation
+      - main [ref=e64]:
+        - generic [ref=e66]: No panels pinned yet. Switch to Chat and ask your assistant to set up your workspace.
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]: can i get the pricing on INFRA_1.8.10?
+          - generic [ref=e82]:
+            - paragraph [ref=e83]:
+              - text: I couldn't find a match for
+              - strong [ref=e84]: INFRA_1.8.10
+              - text: "in the R&R documents. To help narrow it down, could you clarify:"
+            - paragraph [ref=e85]:
+              - text: "1."
+              - strong [ref=e86]: What type of work does this involve?
+              - text: (e.g., system conversion, migration, integration, security review, reporting, etc.)
+              - text: "2."
+              - strong [ref=e87]: Which contract type is this under?
+              - text: (Classic/PCE, RISE, or ATLAS?)
+            - paragraph [ref=e88]: With a bit more context I can match it to the right service code and pull the pricing for you.
+        - generic [ref=e75]:
+          - button "🎤" [ref=e76] [cursor=pointer]
+          - textbox "Ask anything..." [ref=e77]
+          - button "Send" [disabled] [ref=e79]:
+            - generic [ref=e81]:
+              - generic: Send

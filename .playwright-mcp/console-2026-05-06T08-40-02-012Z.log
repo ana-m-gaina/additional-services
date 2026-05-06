@@ -1,0 +1,6 @@
+[      38ms] Failed to resolve module specifier "@ui5/webcomponents-base/dist/asset-registries/Icons.js". Relative references must start with either "/", "./", or "../".
+[      38ms] Failed to resolve module specifier "@ui5/webcomponents/dist/bundle.esm.js". Relative references must start with either "/", "./", or "../".
+[   14494ms] Failed to resolve module specifier "@ui5/webcomponents-base/dist/asset-registries/Icons.js". Relative references must start with either "/", "./", or "../".
+[   14494ms] Failed to resolve module specifier "@ui5/webcomponents/dist/bundle.esm.js". Relative references must start with either "/", "./", or "../".
+[   46963ms] Failed to resolve module specifier "@ui5/webcomponents-base/dist/asset-registries/Icons.js". Relative references must start with either "/", "./", or "../".
+[   46963ms] Failed to resolve module specifier "@ui5/webcomponents/dist/bundle.esm.js". Relative references must start with either "/", "./", or "../".

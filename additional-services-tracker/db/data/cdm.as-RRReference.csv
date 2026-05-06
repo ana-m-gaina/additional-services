@@ -1,0 +1,91 @@
+rrId,description,category,isActive
+INFRA_1.2.03,Move an existing system in a Customer landscape to new subnet for the purpose of network segregation,Network Management,true
+INFRA_1.2.03A,Provision additional subnets,Network Management,true
+INFRA_1.2.03B,Configure communication restrictions between production and non-production tiers,Network Management,true
+INFRA_1.2.03C,Move existing virtual machine in a Customer landscape from non-zonal to zonal deployment - Azure only,Network Management,true
+INFRA_1.2.03D,Prepare Customer landscape for zonal migration - Azure only,Network Management,true
+INFRA_1.2.06,IP address migration - Change IP addressing of existing customer user-access network segment to new IP addressing,Network Management,true
+INFRA_1.2.06_CE,IP address migration - Change IP addressing of existing customer user-access network segment to new IP addressing,General,true
+INFRA_1.2.08,Migrate SAP domain (*.sap.biz) to customer domain or customer domain migration,Network Management,true
+INFRA_1.8.10,On-demand backup / Extension of existing on-demand backup,Backup/Restore,true
+INFRA_1.8.10A,On-demand backup - Storage - 100 GB,General,true
+INFRA_1.8.02A,"Perform data restore and recovery (file system, database) on customer request (other reasons than as a response to system failures) - additional requests",General,true
+INFRA_1.11.02A,Create and maintain sftp user accounts and groups - additional requests,File transfer capabilities: CIFS shares,true
+HANA_1.1.35,Partition tables (technical execution) - additional requests,C1 - Database Management SAP HANA,true
+HANA_1.1.45,Refresh test data,C1 - Database Management SAP HANA,true
+TO_HANA_MDC_1.2.06,Backup of individual tenants,General,true
+TO_HANA_MDC_1.2.07,Restore backup of individual tenant,General,true
+TO_HANA_PM_1.1.01A,Convert non-Pacemaker System to Pacemaker based System,SAP ASE AFA - Other Services,true
+DB_1.1.26,Shrink database,Database operations,true
+DB_1.1.26_S,Shrink database less than 50 GB,General,true
+DB_1.1.26_M,Shrink database 50 to 100 GB,General,true
+DB_1.1.26_L,Shrink database 100 to 200 GB,General,true
+DB_DB2_1.1.09,Reorganize Tables (Technical Execution) - Additional Requests,IBM Db2,true
+DB_DB2_1.1.12,Create additional tablespace and/or table movement (Technical Execution),IBM Db2,true
+BASIC_1.8.25,SAP system re-installation after system handover,System Installation,true
+BASIC_1.8.25_A,"System Rebuild – NetWeaver and other DB based solutions (e.g. S/4HANA, SAP BW, CRM, BOBJ, etc. greenfield/Skelton)",System Installation,true
+BASIC_1.8.25_B,"System Rebuild - Breakup_Small (non DB solutions e.g. DNS, Web Dispatcher, cloud Connector, etc.)",System Installation,true
+BASIC_1.8.25_C,System Rebuild - Breakup_Solman (greenfield/brownfield),System Installation,true
+BASIC_1.8.25_D,"System Rebuild - Breakup additional redo FIORI launchpad, TMS & Adobe setup",System Installation,true
+BASIC_1.8.25_E,SAP Template Solution deployments after initial build,System Installation,true
+BASIC_1.8.25_F,System Rebuild - GXP,System Installation,true
+BASIC_1.8.25_G,System Rebuild - Breakup additional redo of Best Practice enablement OR EML/MC deployment,General,true
+BASIC_1.8.03A,Integrate installed systems into cloud operations environment - additional test run requests,System Installation,true
+BASIC_1.8.20,Provide special support to customer during onboarding - general,System Installation,true
+BASIC_1.8.20A,Provide special support to customer during onboarding – Brownfield Post-Migration Downtime Optimization Service,System Installation,true
+BASIC_1.8.20B,Provide special support to customer during Enterprise Cloud Services onboarding - SAP Migration Assisted Service,System Installation,true
+BASIC_1.8.20D,Best Practice Activation for Additional Countries,General,true
+BASIC_1.8.20E,Provide Special Support during customer onboarding – Solman Configuration/Enablement,General,true
+BASIC_1.8.20_HC,Hypercare - project safeguarding service,System Installation,true
+BASIC_1.8.20_HC_HS,Hypercare - Small Package (4 Week Service),General,true
+BASIC_1.8.20_NPA,Active entitlement for Non-Productive Systems weekend support - initial system setup,System Installation,true
+BASIC_1.8.20_SRA,Service Request Acceleration,System Installation,true
+BASIC_1.8.20_SRA1,Service Request Acceleration 1: 5 Business Days  This Option does NOT cover weekend service requests.,General,true
+BASIC_1.8.20_SRA2,Service Request Acceleration 2:  Working Day & Weekend  24/7 HRS,General,true
+BASIC_1.8.13,Data handover from service provider to customer,System Installation,true
+BASIC_1.8.13A,Data handover from service provider to customer - additional requests this service include just the HANA database backup or just for FS only,General,true
+BASIC_1.3.10B1,Homogeneous system copy for ABAP systems - additional requests,SAP Infrastructure and Application Logging service (LogServ),true
+BASIC_1.3.10D,Homogeneous system copy for non-ABAP systems - additional requests,SAP Infrastructure and Application Logging service (LogServ),true
+BASIC_1.5.11,Implement updates or upgrades to the managed SAP business software - ABAP solution using Zero Downtime Option (ZDO) of SUM which is part of the Maintenance Downtime Minimization Service,Release Management,true
+BASIC_1.9.10,"Execute failover during disaster recovery test (DB, application and cnames) - additional test",Certificate Handling,true
+BASIC_1.9.09,Execute online disaster recovery tests (data center and technical system infrastructure only); primary systems remain accessible,Certificate Handling,true
+BASIC_1.9.12,Mixed High Availability (HA)/Disaster Recovery (DR): Execute productive failover for a specific SID and invert replication vector - additional customer requests,Certificate Handling,true
+BASIC_1.15.06,"Additional Service – Generic Service Request: Used for one-off tasks/services which are not covered by Standard, Optional and/or Cloud Application Services.",Certificate Handling,true
+MOVE_1.3.04,Planning and coordination of the technical system conversion of SAP ERP and SAP BW systems to SAP S/4HANA and SAP BW4/HANA,Conversion Execution for ECC and BW system,true
+MOVE_1.3.04_HCM,Planning and coordination of the technical system conversion to SAP HCM for S/4HANA (H4S4),General,true
+BASIC_1.5.20,Technical System Conversion of SAP ERP and SAP BW systems to SAP S/4HANA and SAP BW4/HANA,Conversion Execution for ECC and BW system,true
+BASIC_1.5.20A,(Re-)Enable Fiori Launchpad,General,true
+BASIC_1.5.20_HCM,Technical System Conversion of SAP HCM ERP to SAP HCM for S/4HANA  (H4S4),General,true
+MOVE_1.7.01,Planning and coordination of the technical system conversion to SAP S/4HANA Foundation,Conversion Execution for NetWeaver Based systems,true
+MOVE_1.7.02,Technical System Conversion of NetWeaver systems to SAP S/4HANA Foundation,Conversion Execution for NetWeaver Based systems,true
+TO_DBAAS_1.3.07,Test standby databases for high availability at customer request (DR failover test),General,true
+TO_DBAAS_1.5.15,Partition tables (technical execution) - additional requests,General,true
+TO_PA_1.3.02,Complex 3rd party software installation that cannot be done by Customer,Unmanaged 3rd Party ABAP add-ons,true
+TO_DS_1.1.26,Backup: On-Demand - BI Database and File Repo Sync,Operations,true
+TO_DS_1.1.27,Restore: On-Demand - BI Database and File Repo Sync,Operations,true
+TO_BI_1.1.33,Backup: On-Demand - BI Database and File Repo Sync,Operations,true
+TO_BI_1.1.34,Restore: On-Demand - BI Database and File Repo Sync,Operations,true
+TO_SCC_1.1.11,SNC Setup for SAP Cloud Connector,Installation and Configuration,true
+TO_LRP_1.1.08A,Enable X.509 certificate for ALB in Amazon Web Services (AWS) with WebDispatcher and related backends,LoadBalancer operation,true
+TO_GK_1.3.02,Implement customer specific updates to the managed GK solution (software packages not commonly available via the SAP Service Marketplace),General,true
+TO_GK_1.3.03,Upgrade of managed GK solution to the next higher major software version,General,true
+TO_BRIM_CC_1.2.03,Version upgrade,Operations,true
+TO_BRIM_CC_1.2.07,Additional instance installation,Operations,true
+TO_BRIM_CC_1.2.08,System refresh,Operations,true
+TO_BRIM_CM_1.2.09,"Install, add, and upgrade Pico instances",Operations,true
+TO_BRIM_CM_1.2.13,System refresh,Operations,true
+TO_ETD_1.2.19,Configure ETD SAP ECS supported non-Netweaver based source systems - Run Phase,Run Phase,true
+TO_RMJ_1.1.01A,Install RMJ OS Platform Agent (excluding Secure Gateway),Installation and Configuration,true
+TO_SDC_1.2.01,Installation HANA LSS and Key Migration,External Key Management (KMS) Integration,true
+TO_SDC_1.3.01,Integrate HANA to Data Custodian KMS,Integration to Data Custodian,true
+TO_SDC_1.3.01A,Install HANA LSS and Key Migration and Integrate HANA to Data Custodian KMS,Integration to Data Custodian,true
+TO_SDC_1.4.01A,Uninstall LSS and/or unlink/reverse KMS integration,Uninstall/Unlink/Reverse Integration,true
+TO_SCS_1.4.02,Technical Upgrade procedure - for releases up to 7.53,Version Upgrade,true
+TO_TC_1.1.13,Major version upgrade of Teamcenter components - technical upgrade only,Installation and Configuration,true
+TO_TC_1.1.14,License Feature Extension,Installation and Configuration,true
+TO_TC_1.1.25B,Deploy BMIDE template - Cold Deployment - additional requests,Installation and Configuration,true
+TO_TC_1.1.55,System refresh of Teamcenter - Non-Production system from Production system,Installation and Configuration,true
+TO_TC_1.1.56,Teamcenter (Single Sign On) SSO login configuration.,Installation and Configuration,true
+TO_TMVSI_AV_1.1.01,Activate TrendMicro NW-VSI license,Installation and Configuration,true
+HANA_1.1.47,SAP ASE Database to SAP HANA Database - In-Place Migration,C1 - Database Management SAP HANA,true
+TO_HANA_1.1.04,Switching Secondary Time Travel server as primary,General,true

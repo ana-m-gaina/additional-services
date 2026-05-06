@@ -1,0 +1,138 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - button "Toggle navigation" [expanded] [ref=e4] [cursor=pointer]: ☰
+    - generic [ref=e5]:
+      - generic [ref=e6]: ✦
+      - generic [ref=e7]: Beacon
+    - group "View mode" [ref=e8]:
+      - button "Chat" [pressed] [ref=e9] [cursor=pointer]
+      - button "Inbox" [ref=e10] [cursor=pointer]
+      - button "Dashboard" [ref=e11] [cursor=pointer]
+  - generic [ref=e12]:
+    - navigation "Navigation" [ref=e13]:
+      - generic [ref=e29]:
+        - link "Dashboard" [ref=e14] [cursor=pointer]:
+          - /url: "#"
+        - link "Inbox" [ref=e15] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]: Clients
+          - list [ref=e34]:
+            - listitem [ref=e35] [cursor=pointer]:
+              - generic [ref=e36]: Allianz Technology SE
+              - list [ref=e37]:
+                - listitem [ref=e38]:
+                  - generic [ref=e39]: Allianz Dev/QA (PCE)
+                  - generic [ref=e40]: AL1DEV
+                - listitem [ref=e41]:
+                  - generic [ref=e42]: Allianz Production (PCE)
+                  - generic [ref=e43]: AL1PRD
+            - listitem [ref=e44] [cursor=pointer]:
+              - generic [ref=e45]: Globex Manufacturing GmbH
+              - list [ref=e46]:
+                - listitem [ref=e47]:
+                  - generic [ref=e48]: Globex Production (S/4 PCE)
+                  - generic [ref=e49]: GX1PRD
+            - listitem [ref=e50] [cursor=pointer]:
+              - generic [ref=e51]: Initech Solutions AG
+              - list [ref=e52]:
+                - listitem [ref=e53]:
+                  - generic [ref=e54]: Initech Production (PCE)
+                  - generic [ref=e55]: IT1PRD
+            - listitem [ref=e56] [cursor=pointer]: + Add client
+        - generic [ref=e57]:
+          - generic [ref=e58]: Automations
+          - list [ref=e59]:
+            - listitem [ref=e60] [cursor=pointer]:
+              - generic [ref=e61]: Customer Acceptance
+            - listitem [ref=e62] [cursor=pointer]:
+              - generic [ref=e63]: JIRA Ticket Update
+            - listitem [ref=e64] [cursor=pointer]:
+              - generic [ref=e65]: Price Validity Expiry
+            - listitem [ref=e66] [cursor=pointer]: + Add automation
+      - generic [ref=e68]:
+        - link "Reference data" [ref=e16] [cursor=pointer]:
+          - /url: "#"
+        - link "Templates" [ref=e17] [cursor=pointer]:
+          - /url: "#"
+    - generic [ref=e19]:
+      - log "Conversation" [ref=e20]:
+        - generic [ref=e21]:
+          - paragraph [ref=e22]:
+            - text: Hi — I'm
+            - strong [ref=e23]: Beacon
+            - text: ", your CDM assistant. I can help you track AS requests, draft price emails, look up R&R codes, and more."
+          - paragraph [ref=e24]:
+            - text: "Before we start: I go by"
+            - strong [ref=e25]: Beacon
+            - text: ", but feel free to rename me anytime — just say \"call yourself X\". What would you like to work on?"
+        - generic [ref=e69]: Show me the status of contract AL1DEV — open AS requests, checklist items, and any pending actions.
+        - generic [ref=e75]:
+          - paragraph [ref=e76]:
+            - text: Here's the full picture for
+            - strong [ref=e77]: Allianz Technology SE
+            - text: "(SIDs AL1DEV / AL1PRD):"
+          - paragraph [ref=e78]: "---"
+          - paragraph [ref=e79]: "### Summary"
+          - table [ref=e80]:
+            - rowgroup [ref=e81]:
+              - row "# Request Status Next Action Needed" [ref=e82]:
+                - columnheader "#" [ref=e83]
+                - columnheader "Request" [ref=e84]
+                - columnheader "Status" [ref=e85]
+                - columnheader "Next Action Needed" [ref=e86]
+              - row "1 S/4 System Copy for Migration Testing (SC-02, 4 000 EUR) Price communicated Awaiting customer approval" [ref=e87]:
+                - cell "1" [ref=e88]
+                - cell "S/4 System Copy for Migration Testing (SC-02, 4 000 EUR)" [ref=e89]:
+                  - strong [ref=e90]: S/4 System Copy for Migration Testing
+                  - text: (SC-02, 4 000 EUR)
+                - cell "Price communicated" [ref=e91]
+                - cell "Awaiting customer approval" [ref=e92]
+              - row "2 WebDispatcher Configuration Change (OP-04, 1 200 EUR) Approval received Inform CAS/SD, then proceed to delivery" [ref=e93]:
+                - cell "2" [ref=e94]
+                - cell "WebDispatcher Configuration Change (OP-04, 1 200 EUR)" [ref=e95]:
+                  - strong [ref=e96]: WebDispatcher Configuration Change
+                  - text: (OP-04, 1 200 EUR)
+                - cell "Approval received" [ref=e97]
+                - cell "Inform CAS/SD, then proceed to delivery" [ref=e98]
+              - row "3 Cloud Connector Certificate Renewal (OP-07, 800 EUR) In delivery Awaiting AMS closure & O2I creation" [ref=e99]:
+                - cell "3" [ref=e100]
+                - cell "Cloud Connector Certificate Renewal (OP-07, 800 EUR)" [ref=e101]:
+                  - strong [ref=e102]: Cloud Connector Certificate Renewal
+                  - text: (OP-07, 800 EUR)
+                - cell "In delivery" [ref=e103]
+                - cell "Awaiting AMS closure & O2I creation" [ref=e104]
+          - text: "---"
+          - paragraph [ref=e105]: "### Pending Actions / Reminders"
+          - paragraph [ref=e106]: ✅ No reminders are currently firing and no pending inbox actions exist for these requests.
+          - paragraph [ref=e107]: "---"
+          - strong [ref=e108]: "Suggested next steps:"
+          - list [ref=e109]:
+            - listitem [ref=e110]:
+              - strong [ref=e111]: req-alz-001
+              - text: — Follow up with customer on price approval (sent 2026-03-18).
+            - listitem [ref=e112]:
+              - strong [ref=e113]: req-alz-002
+              - text: — Ready to move to delivery; CAS/SD still needs to be informed. Want me to draft that communication?
+            - listitem [ref=e114]:
+              - strong [ref=e115]: req-alz-003
+              - text: — In delivery. Once the customer closes their ticket, I can help generate the O2I invoice ticket.
+          - paragraph [ref=e116]: Let me know how you'd like to proceed on any of these.
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - generic [ref=e119]: Allianz — Open AS Requests
+            - generic [ref=e120]:
+              - generic [ref=e121]: requestTitle
+              - generic [ref=e122]: serviceCode
+              - generic [ref=e123]: Status
+              - generic [ref=e124]: Price
+              - generic [ref=e125]: creationDate
+              - generic [ref=e126]: caseNo
+          - generic [ref=e128]: Checklist — Allianz AS Requests
+          - generic [ref=e130]: Status Timeline — Allianz Requests
+      - generic [ref=e26]:
+        - textbox "Message input" [active] [ref=e27]:
+          - /placeholder: Ask about requests, paste a customer email, or say 'show my open requests'…
+          - text: Show me a summary for Allianz Technology SE — open requests, any reminders, and recent activity.
+        - button "Send message" [ref=e28] [cursor=pointer]: Send

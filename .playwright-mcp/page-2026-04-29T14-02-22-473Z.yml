@@ -1,0 +1,42 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - alert
+    - alert
+  - generic [ref=e3]:
+    - banner "Shell Bar" [ref=e5]:
+      - link "Logo" [ref=e6] [cursor=pointer]:
+        - generic "Logo" [ref=e7]:
+          - img "SAP" [ref=e8]
+        - heading "CDM Personal Assistant" [level=1] [ref=e10]
+      - generic [ref=e11]: Loading…
+      - generic [ref=e13]:
+        - button "New Request" [ref=e17] [cursor=pointer]:
+          - img [ref=e19]
+        - button "Chat" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+        - button "Dashboard" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+        - button "Inbox" [ref=e37] [cursor=pointer]:
+          - img [ref=e39]
+    - generic [ref=e41]:
+      - complementary [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - generic [ref=e45]: Clients
+            - list [ref=e46]:
+              - listitem [ref=e47] [cursor=pointer]: + Add client
+          - generic [ref=e48]:
+            - generic [ref=e49]: Automations
+            - list [ref=e50]:
+              - listitem [ref=e51] [cursor=pointer]: + Add automation
+      - main [ref=e52]:
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - text: Hi — I'm
+            - strong [ref=e55]: your CDM assistant
+            - text: . Ask me about requests, pricing, R&R codes, or paste a customer email.
+          - generic [ref=e57]:
+            - textbox "Ask anything..." [ref=e58]
+            - button "Send" [disabled] [ref=e60]:
+              - generic [ref=e62]:
+                - generic: Send

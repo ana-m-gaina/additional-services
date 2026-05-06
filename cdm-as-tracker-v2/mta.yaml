@@ -1,0 +1,100 @@
+_schema-version: "3.3"
+ID: cdm-as-tracker
+description: CDM Additional Services Tracker v2 — agent-native AI shell on BTP
+version: 2.0.0
+
+modules:
+  - name: cdm-as-tracker-cap
+    type: nodejs
+    path: assets/cdm-as-tracker-cap
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 512M
+      disk-quota: 512M
+    build-parameters:
+      builder: npm
+      build-result: .
+      ignore:
+        - node_modules/
+        - ui/node_modules/
+    properties:
+      NODE_ENV: production
+      AGENT_URL: ~{cdm-as-tracker-agent/url}
+    requires:
+      - name: cdm-as-tracker-hdi
+      - name: cdm-as-tracker-xsuaa
+      - name: cdm-as-tracker-agent
+    provides:
+      - name: cdm-as-tracker-cap
+        properties:
+          url: ${default-url}
+
+  - name: cdm-as-tracker-cap-ui
+    type: html5
+    path: assets/cdm-as-tracker-cap/ui
+    parameters:
+      memory: 64M
+    build-parameters:
+      builder: custom
+      commands:
+        - npm ci
+        - npm run build
+      build-result: dist
+    requires:
+      - name: cdm-as-tracker-cap
+
+  - name: cdm-as-tracker-hdi-deployer
+    type: hdb
+    path: assets/cdm-as-tracker-cap
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 256M
+    build-parameters:
+      builder: npm
+      build-result: gen/db
+    requires:
+      - name: cdm-as-tracker-hdi
+
+  - name: cdm-as-tracker-agent
+    type: python
+    path: assets/cdm-as-tracker-agent
+    parameters:
+      buildpack: python_buildpack
+      memory: 512M
+      disk-quota: 1G
+      command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    build-parameters:
+      builder: custom
+      commands:
+        - pip install -r requirements.txt
+    properties:
+      ANTHROPIC_MODEL: claude-opus-4-7
+      CAP_URL: ~{cdm-as-tracker-cap/url}
+    requires:
+      - name: cdm-as-tracker-xsuaa
+      - name: cdm-as-tracker-cap
+        parameters:
+          content-target: true
+    provides:
+      - name: cdm-as-tracker-agent
+        properties:
+          url: ${default-url}
+
+resources:
+  - name: cdm-as-tracker-hdi
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+    properties:
+      hdi-service-name: ${service-name}
+
+  - name: cdm-as-tracker-xsuaa
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: assets/cdm-as-tracker-cap/xs-security.json
+      config:
+        xsappname: cdm-as-tracker-${org}-${space}
+        tenant-mode: dedicated

@@ -1,0 +1,73 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - button "Toggle navigation" [ref=e4] [cursor=pointer]: ☰
+    - generic [ref=e5]:
+      - generic [ref=e6]: ✦
+      - generic [ref=e7]: Beacon
+    - group "View mode" [ref=e8]:
+      - button "Chat" [pressed] [ref=e9] [cursor=pointer]
+      - button "Inbox" [ref=e10] [cursor=pointer]
+      - button "Dashboard" [ref=e11] [cursor=pointer]
+  - generic [ref=e12]:
+    - navigation "Navigation" [ref=e13]:
+      - generic:
+        - link "Dashboard" [ref=e14] [cursor=pointer]:
+          - /url: "#"
+        - link "Inbox" [ref=e15] [cursor=pointer]:
+          - /url: "#"
+      - generic:
+        - generic:
+          - generic [ref=e16]: Clients
+          - list:
+            - listitem [ref=e17] [cursor=pointer]:
+              - generic: Allianz Technology SE
+              - list [ref=e18]:
+                - listitem [ref=e19]:
+                  - generic: Allianz Dev/QA (PCE)
+                  - generic: AL1DEV
+                - listitem [ref=e20]:
+                  - generic: Allianz Production (PCE)
+                  - generic: AL1PRD
+            - listitem [ref=e21] [cursor=pointer]:
+              - generic: Globex Manufacturing GmbH
+              - list [ref=e22]:
+                - listitem [ref=e23]:
+                  - generic: Globex Production (S/4 PCE)
+                  - generic: GX1PRD
+            - listitem [ref=e24] [cursor=pointer]:
+              - generic: Initech Solutions AG
+              - list [ref=e25]:
+                - listitem [ref=e26]:
+                  - generic: Initech Production (PCE)
+                  - generic: IT1PRD
+            - listitem [ref=e27] [cursor=pointer]: + Add client
+        - generic:
+          - generic [ref=e28]: Automations
+          - list:
+            - listitem [ref=e29] [cursor=pointer]:
+              - generic: Customer Acceptance
+            - listitem [ref=e30] [cursor=pointer]:
+              - generic: JIRA Ticket Update
+            - listitem [ref=e31] [cursor=pointer]:
+              - generic: Price Validity Expiry
+            - listitem [ref=e32] [cursor=pointer]: + Add automation
+      - generic:
+        - link "Reference data" [ref=e33] [cursor=pointer]:
+          - /url: "#"
+        - link "Templates" [ref=e34] [cursor=pointer]:
+          - /url: "#"
+    - generic [ref=e36]:
+      - log "Conversation" [ref=e37]:
+        - generic [ref=e38]:
+          - paragraph [ref=e39]:
+            - text: Hi — I'm
+            - strong [ref=e40]: Beacon
+            - text: ", your CDM assistant. I can help you track AS requests, draft price emails, look up R&R codes, and more."
+          - paragraph [ref=e41]:
+            - text: "Before we start: I go by"
+            - strong [ref=e42]: Beacon
+            - text: ", but feel free to rename me anytime — just say \"call yourself X\". What would you like to work on?"
+      - generic [ref=e43]:
+        - textbox "Message input" [active] [ref=e44]:
+          - /placeholder: Ask about requests, paste a customer email, or say 'show my open requests'…
+        - button "Send message" [ref=e45] [cursor=pointer]: Send

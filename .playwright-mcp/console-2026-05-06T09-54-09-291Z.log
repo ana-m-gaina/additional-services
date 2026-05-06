@@ -1,0 +1,23 @@
+[      56ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://[::1]:49235/livereload.js?snipver=1:0
+[      78ms] Failed to resolve module specifier "@ui5/webcomponents-base/dist/asset-registries/Icons.js". Relative references must start with either "/", "./", or "../".
+[      79ms] Failed to resolve module specifier "@ui5/webcomponents/dist/bundle.esm.js". Relative references must start with either "/", "./", or "../".
+[  500999ms] Failed to resolve module specifier "@ui5/webcomponents-base/dist/asset-registries/Icons.js". Relative references must start with either "/", "./", or "../".
+[  501000ms] Failed to resolve module specifier "@ui5/webcomponents/dist/bundle.esm.js". Relative references must start with either "/", "./", or "../".
+[  501012ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://[::1]:49235/livereload.js?snipver=1:0
+[  540419ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  541793ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  543372ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  543976ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  548177ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  549381ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  550231ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  590649ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  591056ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  680362ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  682463ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  683201ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  684022ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[  684631ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[ 1285036ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[ 1291031ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0
+[ 1293989ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/chat/stream:0

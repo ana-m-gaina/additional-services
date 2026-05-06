@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "skills": [
+    {
+      "name": "sap-fiori-guidelines",
+      "path": ".",
+      "description": "SAP Fiori design guidelines for building enterprise applications. Use this skill when designing, building, or reviewing SAP Fiori applications, implementing SAPUI5 or UI5 Web Components, working with SAP enterprise UX patterns, or needing guidance on buttons, forms, tables, object pages, list reports, navigation, messaging, colors, typography, accessibility, or any SAP Fiori UI element.",
+      "version": "1.130.0",
+      "author": "SAP",
+      "tags": ["sap", "fiori", "sapui5", "ui5", "design-system", "enterprise", "ux"]
+    }
+  ]
+}

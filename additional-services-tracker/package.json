@@ -1,0 +1,39 @@
+{
+  "name": "additional-services-tracker",
+  "version": "0.1.0",
+  "description": "CDM Additional Services Tracking Tool — CAP + Fiori Elements",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "cds run",
+    "watch": "cds watch --port 4004",
+    "deploy": "cds deploy --to sqlite",
+    "console": "node scripts/browser-console.js",
+    "console:op": "node scripts/browser-console.js --filter '[BackBtn]' --timeout 20000",
+    "design": "node scripts/design-agent.mjs",
+    "design:new": "node scripts/design-agent.mjs --new-app"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "@sap/cds": "^8"
+  },
+  "devDependencies": {
+    "@sap/cds-dk": "^8",
+    "puppeteer": "^24.42.0",
+    "sqlite3": "^5"
+  },
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sqlite",
+        "credentials": {
+          "url": "db.sqlite"
+        }
+      }
+    },
+    "fiori": {
+      "lean_draft": true
+    }
+  }
+}

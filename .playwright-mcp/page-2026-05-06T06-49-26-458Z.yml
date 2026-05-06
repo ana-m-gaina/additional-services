@@ -1,0 +1,152 @@
+- generic [ref=e2]:
+  - heading "Welcome to @sap/cds Server" [level=1] [ref=e3]
+  - paragraph [ref=e4]: Serving cdm-as-tracker-cap 2.0.0
+  - paragraph [ref=e5]: "These are the paths currently served:"
+  - heading "Web Applications:" [level=2] [ref=e6]
+  - list [ref=e7]: — none —
+  - heading "Service Endpoints:" [level=2] [ref=e8]
+  - generic [ref=e9]:
+    - heading "/AdminService / $metadata" [level=3] [ref=e10]:
+      - link "/AdminService" [ref=e11] [cursor=pointer]:
+        - /url: /AdminService
+        - generic [ref=e12]: /AdminService
+      - text: /
+      - link "$metadata" [ref=e13] [cursor=pointer]:
+        - /url: /AdminService/$metadata
+    - list [ref=e14]:
+      - listitem [ref=e15]:
+        - link "PricingTable" [ref=e17] [cursor=pointer]:
+          - /url: /AdminService/PricingTable
+        - link "Fiori preview" [ref=e19] [cursor=pointer]:
+          - /url: /$fiori-preview/AdminService/PricingTable#preview-app
+      - listitem [ref=e20]:
+        - link "RRTable" [ref=e22] [cursor=pointer]:
+          - /url: /AdminService/RRTable
+        - link "Fiori preview" [ref=e24] [cursor=pointer]:
+          - /url: /$fiori-preview/AdminService/RRTable#preview-app
+      - listitem [ref=e25]:
+        - link "JiraTicketTemplates" [ref=e27] [cursor=pointer]:
+          - /url: /AdminService/JiraTicketTemplates
+        - link "Fiori preview" [ref=e29] [cursor=pointer]:
+          - /url: /$fiori-preview/AdminService/JiraTicketTemplates#preview-app
+      - listitem [ref=e30]:
+        - link "EmailTemplates" [ref=e32] [cursor=pointer]:
+          - /url: /AdminService/EmailTemplates
+        - link "Fiori preview" [ref=e34] [cursor=pointer]:
+          - /url: /$fiori-preview/AdminService/EmailTemplates#preview-app
+      - listitem [ref=e35]:
+        - link "AdminConfigs" [ref=e37] [cursor=pointer]:
+          - /url: /AdminService/AdminConfigs
+        - link "Fiori preview" [ref=e39] [cursor=pointer]:
+          - /url: /$fiori-preview/AdminService/AdminConfigs#preview-app
+      - listitem [ref=e40]:
+        - link "RRDocuments" [ref=e42] [cursor=pointer]:
+          - /url: /AdminService/RRDocuments
+        - link "Fiori preview" [ref=e44] [cursor=pointer]:
+          - /url: /$fiori-preview/AdminService/RRDocuments#preview-app
+      - listitem [ref=e45]:
+        - link "RRChunks" [ref=e47] [cursor=pointer]:
+          - /url: /AdminService/RRChunks
+        - link "Fiori preview" [ref=e49] [cursor=pointer]:
+          - /url: /$fiori-preview/AdminService/RRChunks#preview-app
+      - listitem [ref=e50]:
+        - link "PricingChunks" [ref=e52] [cursor=pointer]:
+          - /url: /AdminService/PricingChunks
+        - link "Fiori preview" [ref=e54] [cursor=pointer]:
+          - /url: /$fiori-preview/AdminService/PricingChunks#preview-app
+    - list
+  - generic [ref=e55]:
+    - heading "/CDMService / $metadata" [level=3] [ref=e56]:
+      - link "/CDMService" [ref=e57] [cursor=pointer]:
+        - /url: /CDMService
+        - generic [ref=e58]: /CDMService
+      - text: /
+      - link "$metadata" [ref=e59] [cursor=pointer]:
+        - /url: /CDMService/$metadata
+    - list [ref=e60]:
+      - listitem [ref=e61]:
+        - link "ASRequest" [ref=e63] [cursor=pointer]:
+          - /url: /CDMService/ASRequest
+        - link "Fiori preview" [ref=e65] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/ASRequest#preview-app
+      - listitem [ref=e66]:
+        - link "ActivityLog" [ref=e68] [cursor=pointer]:
+          - /url: /CDMService/ActivityLog
+        - link "Fiori preview" [ref=e70] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/ActivityLog#preview-app
+      - listitem [ref=e71]:
+        - link "RRTable" [ref=e73] [cursor=pointer]:
+          - /url: /CDMService/RRTable
+        - link "Fiori preview" [ref=e75] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/RRTable#preview-app
+      - listitem [ref=e76]:
+        - link "PricingTable" [ref=e78] [cursor=pointer]:
+          - /url: /CDMService/PricingTable
+        - link "Fiori preview" [ref=e80] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/PricingTable#preview-app
+      - listitem [ref=e81]:
+        - link "CardLayout" [ref=e83] [cursor=pointer]:
+          - /url: /CDMService/CardLayout
+        - link "Fiori preview" [ref=e85] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/CardLayout#preview-app
+      - listitem [ref=e86]:
+        - link "PersonaLayouts" [ref=e88] [cursor=pointer]:
+          - /url: /CDMService/PersonaLayouts
+        - link "Fiori preview" [ref=e90] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/PersonaLayouts#preview-app
+      - listitem [ref=e91]:
+        - link "ConversationTurns" [ref=e93] [cursor=pointer]:
+          - /url: /CDMService/ConversationTurns
+        - link "Fiori preview" [ref=e95] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/ConversationTurns#preview-app
+      - listitem [ref=e96]:
+        - link "ClientAgents" [ref=e98] [cursor=pointer]:
+          - /url: /CDMService/ClientAgents
+        - link "Fiori preview" [ref=e100] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/ClientAgents#preview-app
+      - listitem [ref=e101]:
+        - link "ContractSubagents" [ref=e103] [cursor=pointer]:
+          - /url: /CDMService/ContractSubagents
+        - link "Fiori preview" [ref=e105] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/ContractSubagents#preview-app
+      - listitem [ref=e106]:
+        - link "AutomationAgents" [ref=e108] [cursor=pointer]:
+          - /url: /CDMService/AutomationAgents
+        - link "Fiori preview" [ref=e110] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/AutomationAgents#preview-app
+      - listitem [ref=e111]:
+        - link "PendingActions" [ref=e113] [cursor=pointer]:
+          - /url: /CDMService/PendingActions
+        - link "Fiori preview" [ref=e115] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/PendingActions#preview-app
+      - listitem [ref=e116]:
+        - link "EmailTemplates" [ref=e118] [cursor=pointer]:
+          - /url: /CDMService/EmailTemplates
+        - link "Fiori preview" [ref=e120] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/EmailTemplates#preview-app
+      - listitem [ref=e121]:
+        - link "AdminConfigs" [ref=e123] [cursor=pointer]:
+          - /url: /CDMService/AdminConfigs
+        - link "Fiori preview" [ref=e125] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/AdminConfigs#preview-app
+      - listitem [ref=e126]:
+        - link "StatusValues" [ref=e128] [cursor=pointer]:
+          - /url: /CDMService/StatusValues
+        - link "Fiori preview" [ref=e130] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/StatusValues#preview-app
+      - listitem [ref=e131]:
+        - link "ProcessTypes" [ref=e133] [cursor=pointer]:
+          - /url: /CDMService/ProcessTypes
+        - link "Fiori preview" [ref=e135] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/ProcessTypes#preview-app
+      - listitem [ref=e136]:
+        - link "Currencies" [ref=e138] [cursor=pointer]:
+          - /url: /CDMService/Currencies
+        - link "Fiori preview" [ref=e140] [cursor=pointer]:
+          - /url: /$fiori-preview/CDMService/Currencies#preview-app
+    - list
+  - contentinfo [ref=e141]:
+    - text: This is an automatically generated page.
+    - text: You can replace it with a custom
+    - code [ref=e142]: ./app/index.html
+    - text: .
