@@ -11,6 +11,13 @@ _SYSTEM_PROMPT = (
 )
 
 
+def capabilities() -> list[str]:
+    return [
+        "generate_o2i_ticket: generate a JIRA Order-to-Invoice ticket body",
+        "confirm_o2i_invoiced: mark a request as invoiced after O2I ticket is created",
+    ]
+
+
 async def run(query: str, cdm_email: str | None = None) -> str:
     all_requests = await cap_client.get_open_requests(cdm_email=cdm_email)
     invoiceable  = [r for r in all_requests if r.get("status") == "Delivered"]

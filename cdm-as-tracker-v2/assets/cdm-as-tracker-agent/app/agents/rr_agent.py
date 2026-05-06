@@ -49,6 +49,10 @@ Rules:
 - Return ONLY the JSON object, no other text, no markdown fences."""
 
 
+def capabilities() -> list[str]:
+    return ["rr_lookup: look up R&R chargeability and service category by description or code"]
+
+
 async def _embed(text: str) -> np.ndarray:
     async with httpx.AsyncClient(timeout=30.0) as c:
         resp = await c.post(

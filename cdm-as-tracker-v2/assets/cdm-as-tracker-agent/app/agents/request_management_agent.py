@@ -12,6 +12,13 @@ _SYSTEM_PROMPT = (
 )
 
 
+def capabilities() -> list[str]:
+    return [
+        "status_inquiry: explain current request status and next steps",
+        "status_advance: guide advancing a request through the approval workflow",
+    ]
+
+
 async def run(query: str, cdm_email: str | None = None) -> str:
     records = await cap_client.get_open_requests(cdm_email=cdm_email)
     context = "\n".join(

@@ -10,8 +10,23 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app import cap_client, anthropic_client
+from .models import HandoffContext
 
 logger = logging.getLogger(__name__)
+
+
+def _all_capabilities() -> str:
+    from . import rr_agent, pricing_agent, request_management_agent, o2i_agent, client_agent, contract_agent
+    all_caps = (
+        rr_agent.capabilities()
+        + pricing_agent.capabilities()
+        + request_management_agent.capabilities()
+        + o2i_agent.capabilities()
+        + client_agent.capabilities()
+        + contract_agent.capabilities()
+    )
+    return "\n".join(f"- {c}" for c in all_caps)
+
 
 # ── Tool definitions (mirrors as-service.js ORCHESTRATOR_TOOLS) ──────────────
 
@@ -39,29 +54,143 @@ ORCHESTRATOR_TOOLS = [
             },
         },
     },
+    # ── Panel tools (Rec 6) ────────────────────────────────────────────────────
     {
-        "name": "render_panel",
-        "description": "Add a UI panel to the current workspace. Rendered immediately in the shell by the React frontend.",
+        "name": "render_record_panel",
+        "description": "Render a record-card or status-timeline panel for a specific AS request.",
         "input_schema": {
             "type": "object",
-            "required": ["type", "title"],
+            "required": ["record_id", "type"],
             "properties": {
-                "type":   {"type": "string", "enum": ["record-card", "record-table", "field-form", "status-timeline", "checklist", "email-draft", "kpi-strip", "reminder-banner", "ticket-ref", "confirm-dialog", "rr-source"]},
-                "title":  {"type": "string"},
-                "config": {"type": "object", "description": "Panel-specific config. For email-draft: {emailText: string, to: string, subject: string}. For record-card/table: {recordId, filters, fields, editable, data}."},
-                "pinned": {"type": "boolean", "description": "Whether to pin to dashboard layout"},
+                "record_id": {"type": "string", "description": "The AS request ID"},
+                "type":      {"type": "string", "enum": ["record-card", "status-timeline"]},
+                "title":     {"type": "string"},
+                "pinned":    {"type": "boolean", "default": False},
             },
         },
     },
     {
-        "name": "invoke_subagent",
-        "description": "Call a specialised subagent for a specific task.",
+        "name": "render_data_panel",
+        "description": "Render a data-display panel: table, kpi-strip, checklist, or rr-source.",
         "input_schema": {
             "type": "object",
-            "required": ["name"],
+            "required": ["type", "title", "data"],
             "properties": {
-                "name":   {"type": "string", "enum": ["email_parse", "rr_match", "price_lookup", "draft_price_email", "generate_o2i", "create_o2i_ticket"]},
-                "params": {"type": "object"},
+                "type":   {"type": "string", "enum": ["table", "kpi-strip", "checklist", "rr-source"]},
+                "title":  {"type": "string"},
+                "data":   {"description": "Panel data — object or array depending on type"},
+                "pinned": {"type": "boolean"},
+            },
+        },
+    },
+    {
+        "name": "render_action_panel",
+        "description": "Render an action panel: email-draft, field-form, confirm-dialog, or ticket-ref.",
+        "input_schema": {
+            "type": "object",
+            "required": ["type", "title", "config"],
+            "properties": {
+                "type":   {"type": "string", "enum": ["email-draft", "field-form", "confirm-dialog", "ticket-ref"]},
+                "title":  {"type": "string"},
+                "config": {"type": "object", "description": "Type-specific config. For email-draft: {emailText, to, subject}. For field-form: {recordId, fields, editable}. For confirm-dialog: {message, confirmLabel, cancelLabel}. For ticket-ref: {ticketId, ticketUrl, system}."},
+                "pinned": {"type": "boolean"},
+            },
+        },
+    },
+    {
+        "name": "render_notice_panel",
+        "description": "Render a reminder-banner notice panel.",
+        "input_schema": {
+            "type": "object",
+            "required": ["title", "message"],
+            "properties": {
+                "title":      {"type": "string"},
+                "message":    {"type": "string"},
+                "severity":   {"type": "string", "enum": ["information", "warning", "error"], "default": "information"},
+                "request_id": {"type": "string"},
+                "pinned":     {"type": "boolean"},
+            },
+        },
+    },
+    # ── Subagent tools (Rec 1) ─────────────────────────────────────────────────
+    {
+        "name": "rr_lookup",
+        "description": (
+            "Search the ingested R&R PDF documents using vector search. "
+            "Use whenever a CDM asks about roles, responsibilities, who owns a task, or whether something is chargeable. "
+            "Always call rr_lookup for R&R questions rather than answering from memory. "
+            "If rr_lookup returns found:false → ask 1-2 targeted clarifying questions then call rr_lookup again. "
+            "If rr_lookup returns too_broad:true (more than 3 codes) → ask 1-2 more specific narrowing questions then call rr_lookup again. "
+            "Only show a result panel when rr_lookup returns 1-3 specific service codes."
+        ),
+        "input_schema": {
+            "type": "object",
+            "required": ["description"],
+            "properties": {
+                "description": {"type": "string", "description": "Natural-language description of the service or task to match"},
+                "codes":       {"type": "array", "items": {"type": "string"}, "description": "Optional list of candidate codes to narrow the search"},
+            },
+        },
+    },
+    {
+        "name": "price_lookup",
+        "description": (
+            "Search the ingested AS Pricing List using vector search. "
+            "Use whenever a CDM asks about price, cost, or EUR value of a service. "
+            "If the CDM provides a specific service code (e.g. INFRA_1.8.10), call price_lookup directly — do NOT call rr_lookup first for pricing questions."
+        ),
+        "input_schema": {
+            "type": "object",
+            "required": ["service_code"],
+            "properties": {
+                "service_code": {"type": "string", "description": "The R&R service code to look up (e.g. INFRA_1.8.10)"},
+            },
+        },
+    },
+    {
+        "name": "parse_email",
+        "description": "Parse a raw customer email to extract AS request fields: customer name, service identifiers, ticket numbers, PO number, urgency notes.",
+        "input_schema": {
+            "type": "object",
+            "required": ["raw_email"],
+            "properties": {
+                "raw_email": {"type": "string", "description": "The full text of the customer email to parse"},
+            },
+        },
+    },
+    {
+        "name": "draft_price_email",
+        "description": "Draft a price-communication email for an AS request.",
+        "input_schema": {
+            "type": "object",
+            "required": ["request_id", "customer_name", "service_codes", "prices"],
+            "properties": {
+                "request_id":    {"type": "string", "description": "The AS request ID"},
+                "customer_name": {"type": "string", "description": "Customer display name for the salutation"},
+                "service_codes": {"type": "array", "items": {"type": "string"}, "description": "List of service codes covered by the email"},
+                "prices":        {"type": "object", "description": "Map of service_code → price string, e.g. {\"INFRA_1.8.10\": \"1500.00 EUR\"}"},
+            },
+        },
+    },
+    {
+        "name": "generate_o2i_ticket",
+        "description": "Generate the JIRA O2I invoice ticket body for an AS request. Returns the draft ticket for CDM review before submission.",
+        "input_schema": {
+            "type": "object",
+            "required": ["request_id"],
+            "properties": {
+                "request_id": {"type": "string", "description": "The AS request ID to generate the O2I ticket for"},
+            },
+        },
+    },
+    {
+        "name": "confirm_o2i_invoiced",
+        "description": "Confirm that the O2I JIRA ticket has been submitted and mark the AS request as Invoiced.",
+        "input_schema": {
+            "type": "object",
+            "required": ["request_id"],
+            "properties": {
+                "request_id": {"type": "string", "description": "The AS request ID to mark as Invoiced"},
             },
         },
     },
@@ -111,6 +240,8 @@ ORCHESTRATOR_TOOLS = [
                 "contractId":     {"type": "string"},
                 "handoffSummary": {"type": "string"},
                 "message":        {"type": "string"},
+                "intent":         {"type": "string", "description": "the specific task being delegated"},
+                "request_ids":    {"type": "array", "items": {"type": "string"}},
             },
         },
     },
@@ -296,13 +427,19 @@ STATUS FLOW: New → PriceCommunicated → Approved → InDelivery → Delivered
 
 TOOLS AVAILABLE:
 - fetch_records: query the database for AS requests
-- render_panel: add a UI panel (record-card, record-table, field-form, checklist, email-draft, kpi-strip, reminder-banner, ticket-ref, confirm-dialog, status-timeline)
-- invoke_subagent: call email_parse, rr_match, price_lookup, draft_price_email, generate_o2i, create_o2i_ticket
-  • rr_match: searches the ingested R&R PDF documents using vector search — use this whenever a CDM asks about roles, responsibilities, who owns a task, or whether something is chargeable. Always call rr_match for R&R questions rather than answering from memory.
-    - If rr_match returns found:false → ask the CDM 1-2 targeted clarifying questions then call rr_match again.
-    - If rr_match returns too_broad:true (more than 3 codes) → ask 1-2 more specific narrowing questions then call rr_match again with the refined description.
-    - Only show a result panel when rr_match returns 1-3 specific service codes.
-  • price_lookup: searches the ingested AS Pricing List using vector search — use this whenever a CDM asks about price, cost, or EUR value of a service. If the CDM provides a specific service code (e.g. INFRA_1.8.10), call price_lookup directly with that code — do NOT call rr_match first for pricing questions.
+- render_record_panel: render record-card or status-timeline for a specific AS request
+- render_data_panel: render table, kpi-strip, checklist, or rr-source data panel
+- render_action_panel: render email-draft, field-form, confirm-dialog, or ticket-ref panel
+- render_notice_panel: render a reminder-banner notice
+- rr_lookup: search R&R PDF documents — use for roles, responsibilities, chargeability questions
+  • If rr_lookup returns found:false → ask 1-2 targeted clarifying questions then call rr_lookup again.
+  • If rr_lookup returns too_broad:true (more than 3 codes) → ask 1-2 narrowing questions then call rr_lookup again.
+  • Only show a result panel when rr_lookup returns 1-3 specific service codes.
+- price_lookup: search AS Pricing List — use for price, cost, EUR value questions. If CDM gives a specific code, call price_lookup directly — do NOT call rr_lookup first.
+- parse_email: extract AS request fields from a raw customer email
+- draft_price_email: draft a price-communication email for an AS request
+- generate_o2i_ticket: generate the JIRA O2I invoice ticket body (returns draft for CDM review)
+- confirm_o2i_invoiced: mark an AS request as Invoiced after O2I ticket is submitted
 - update_record: update fields on a request (always show what will change first)
 - propose_layout_change: suggest workspace layout changes (CDM must confirm)
 - get_reminder_status: check which reminder rules are firing
@@ -321,16 +458,19 @@ CURRENT WORKSPACE STATE:
 ROUTING PRIORITY:
 1. If CDM is replying to a pending action → resolve it via resolve_pending_action
 2. If message mentions a customer name → route_to_agent (client_orchestrator)
-3. If message is a clear task (email, price, O2I) → invoke_subagent
+3. If message is a clear task (email parse) → parse_email; (price) → price_lookup; (O2I) → generate_o2i_ticket / confirm_o2i_invoiced
 4. Otherwise handle directly
 
 RULES:
 - Be concise — CDMs are busy
 - Never greet on non-first turns
 - Always show CDM what will change before calling update_record
-- Use render_panel to surface data visually; don't just list it in text
+- Use render_record_panel / render_data_panel / render_action_panel / render_notice_panel to surface data visually; don't just list it in text
 - Proactively surface active reminders via reminder-banner panels
-- API key never goes to the browser"""
+- API key never goes to the browser
+
+## Available subagent capabilities
+{_all_capabilities()}"""
 
     # ── 4. Tool dispatcher ────────────────────────────────────────────────────
     async def tool_dispatcher(tool_name: str, tool_input: dict) -> Any:
@@ -400,6 +540,12 @@ async def _dispatch(
     open_requests: list,
     activity_callback=None,
 ) -> Any:
+    # Read-only tools — safe for concurrent dispatch:
+    #   rr_lookup, price_lookup, parse_email, fetch_records, get_reminder_status
+    # Write tools — must not be parallelised with conflicting writes:
+    #   update_record, surface_pending_action, resolve_pending_action,
+    #   register_client, register_contract, set_agent_status, route_to_agent,
+    #   render_panel (or its typed variants), draft_price_email, generate_o2i_ticket, confirm_o2i_invoiced
     import app.agents.rr_agent as rr_agent
     import app.agents.pricing_agent as pricing_agent
     import app.agents.request_management_agent as rm_agent
@@ -432,17 +578,58 @@ async def _dispatch(
         records = records[:limit]
         return {"records": records, "count": len(records)}
 
-    if tool_name == "render_panel":
-        # Skip duplicate rr-source panels — rr_match already added one
-        if tool_input["type"] == "rr-source" and any(p.get("type") == "rr-source" for p in panels):
+    if tool_name == "render_record_panel":
+        panel_type = tool_input["type"]
+        record_id  = tool_input.get("record_id", "")
+        # Guard: record-card requires a recordId
+        if panel_type == "record-card" and not record_id:
+            return {"rendered": False, "reason": "record-card requires a record_id"}
+        panel = {
+            "id":     f"panel-{len(panels)}-{uuid.uuid4().hex[:6]}",
+            "type":   panel_type,
+            "title":  tool_input.get("title", ""),
+            "pinned": tool_input.get("pinned", False),
+            "config": {"recordId": record_id},
+        }
+        panels.append(panel)
+        return {"rendered": True, "panelId": panel["id"]}
+
+    if tool_name == "render_data_panel":
+        panel_type = tool_input["type"]
+        # Skip duplicate rr-source panels — rr_lookup already added one
+        if panel_type == "rr-source" and any(p.get("type") == "rr-source" for p in panels):
             return {"rendered": True, "panelId": "duplicate-skipped"}
+        panel = {
+            "id":     f"panel-{len(panels)}-{uuid.uuid4().hex[:6]}",
+            "type":   panel_type,
+            "title":  tool_input["title"],
+            "pinned": tool_input.get("pinned", False),
+            "config": {"data": tool_input.get("data")},
+        }
+        # rr-source: auto-run vector search if Claude didn't call rr_lookup first
+        if panel_type == "rr-source":
+            data = tool_input.get("data") or {}
+            query = data.get("query") or tool_input.get("answer", "") if isinstance(data, dict) else ""
+            if query and not (isinstance(data, dict) and data.get("sources")):
+                try:
+                    rr_result = await rr_agent.run(query)
+                    panel["answer"]     = rr_result.get("answer", "")
+                    panel["sources"]    = rr_result.get("sources", [])
+                    panel["matches"]    = rr_result.get("matches", [])
+                    panel["summary"]    = rr_result.get("summary", "")
+                    panel["confidence"] = rr_result.get("confidence", "LOW")
+                except Exception as exc:
+                    logger.warning("rr_agent auto-run failed: %s", exc)
+                    panel["answer"]  = tool_input.get("answer", "")
+                    panel["sources"] = []
+            else:
+                if isinstance(data, dict):
+                    panel["answer"]  = data.get("answer", tool_input.get("answer", ""))
+                    panel["sources"] = data.get("sources", [])
+        panels.append(panel)
+        return {"rendered": True, "panelId": panel["id"]}
 
-        # Skip empty record-card panels (no recordId and no meaningful data)
-        if tool_input["type"] == "record-card":
-            config = tool_input.get("config", {})
-            if not config.get("recordId") and not config.get("data", {}).get("customerId"):
-                return {"rendered": False, "reason": "record-card requires a recordId or record data"}
-
+    if tool_name == "render_action_panel":
         panel = {
             "id":     f"panel-{len(panels)}-{uuid.uuid4().hex[:6]}",
             "type":   tool_input["type"],
@@ -450,155 +637,143 @@ async def _dispatch(
             "pinned": tool_input.get("pinned", False),
             "config": tool_input.get("config", {}),
         }
-        # rr-source: auto-run vector search if Claude didn't call invoke_subagent first
-        if tool_input["type"] == "rr-source":
-            query = tool_input.get("config", {}).get("query") or tool_input.get("answer", "")
-            if query and not tool_input.get("sources"):
-                try:
-                    rr_result = await rr_agent.run(query)
-                    panel["answer"]   = rr_result.get("answer", "")
-                    panel["sources"]  = rr_result.get("sources", [])
-                    panel["matches"]  = rr_result.get("matches", [])
-                    panel["summary"]  = rr_result.get("summary", "")
-                    panel["confidence"] = rr_result.get("confidence", "LOW")
-                except Exception as exc:
-                    logger.warning("rr_agent auto-run failed: %s", exc)
-                    panel["answer"]  = tool_input.get("answer", "")
-                    panel["sources"] = tool_input.get("sources", [])
-            else:
-                panel["answer"]  = tool_input.get("answer", "")
-                panel["sources"] = tool_input.get("sources", [])
         panels.append(panel)
         return {"rendered": True, "panelId": panel["id"]}
 
-    if tool_name == "invoke_subagent":
-        subagent_name = tool_input.get("name", "")
-        params        = tool_input.get("params", {})
+    if tool_name == "render_notice_panel":
+        panel = {
+            "id":       f"panel-{len(panels)}-{uuid.uuid4().hex[:6]}",
+            "type":     "reminder-banner",
+            "title":    tool_input["title"],
+            "pinned":   tool_input.get("pinned", False),
+            "config": {
+                "message":    tool_input["message"],
+                "severity":   tool_input.get("severity", "information"),
+                "request_id": tool_input.get("request_id"),
+            },
+        }
+        panels.append(panel)
+        return {"rendered": True, "panelId": panel["id"]}
 
-        if subagent_name == "email_parse":
-            await _activity("Parsing email…")
-            if not params.get("emailText"):
-                return {"error": "emailText required"}
-            result = await anthropic_client.chat(
-                "Extract from email: customer_name, service_identifiers (array), ticket_numbers (array), po_number, urgency_notes. Return JSON only.",
-                params["emailText"],
-            )
-            try:
-                return json.loads(result)
-            except Exception:
-                return {"raw": result}
+    if tool_name == "rr_lookup":
+        await _activity("Searching R&R documents…")
+        description = tool_input.get("description", "")
+        if not description:
+            return {"error": "description required"}
+        query = f"Match this description to R&R service codes: {description}"
+        result = await rr_agent.run(query)
+        if isinstance(result, dict):
+            confidence = result.get("confidence", "LOW")
+            matches    = result.get("matches", [])
 
-        if subagent_name == "rr_match":
-            await _activity("Searching R&R documents…")
-            if not params.get("description"):
-                return {"error": "description required"}
-            result = await rr_agent.run(f"Match this description to R&R service codes: {params['description']}")
-            if isinstance(result, dict):
-                confidence = result.get("confidence", "LOW")
-                matches    = result.get("matches", [])
+            if matches and len(matches) <= 3:
+                panels.append({
+                    "id":         f"panel-{len(panels)}-{uuid.uuid4().hex[:6]}",
+                    "type":       "rr-source",
+                    "title":      "R&R Document Match",
+                    "pinned":     False,
+                    "config":     {},
+                    "answer":     result.get("answer", ""),
+                    "summary":    result.get("summary", ""),
+                    "matches":    matches,
+                    "confidence": confidence,
+                    "sources":    result.get("sources", []),
+                })
+                return result.get("answer", "")
 
-                if matches and len(matches) <= 3:
-                    # Good — specific enough, show the panel
-                    panels.append({
-                        "id":         f"panel-{len(panels)}-{uuid.uuid4().hex[:6]}",
-                        "type":       "rr-source",
-                        "title":      "R&R Document Match",
-                        "pinned":     False,
-                        "config":     {},
-                        "answer":     result.get("answer", ""),
-                        "summary":    result.get("summary", ""),
-                        "matches":    matches,
-                        "confidence": confidence,
-                        "sources":    result.get("sources", []),
-                    })
-                    return result.get("answer", "")
-
-                elif matches and len(matches) > 3:
-                    # Too broad — tell Claude to narrow with more questions
-                    codes_preview = ", ".join(m["code"] for m in matches[:5])
-                    return {
-                        "found": True,
-                        "too_broad": True,
-                        "match_count": len(matches),
-                        "codes_preview": codes_preview,
-                        "suggestion": (
-                            f"The search returned {len(matches)} possible codes ({codes_preview}...) — too broad to be useful. "
-                            "Ask the CDM 1-2 more specific questions to narrow it down: "
-                            "Is this a one-time task or recurring? Which specific system component? "
-                            "Is SAP performing the work or just advising? "
-                            "Then call rr_match again with the refined description."
-                        ),
-                    }
-
-                else:
-                    # No codes found — ask for more detail
-                    return {
-                        "found": False,
-                        "confidence": confidence,
-                        "summary": result.get("summary", ""),
-                        "suggestion": (
-                            "The R&R documents did not return a specific service code for this description. "
-                            "Ask the CDM for more detail: What type of work is involved? Which system/component? "
-                            "Is it a one-time task or ongoing? Which contract type (PCE, RISE, ATLAS)?"
-                        ),
-                    }
-            return result
-
-        if subagent_name == "price_lookup":
-            await _activity("Looking up pricing…")
-            if not params.get("rrId") and not params.get("serviceCode"):
-                return {"error": "rrId or serviceCode required"}
-            code = params.get("serviceCode") or params.get("rrId")
-            result = await pricing_agent.run(f"What is the price for service code {code}?")
-            # Return a clean summary string so Claude quotes it rather than trying to render a panel
-            entries = result.get("price_entries", [])
-            if entries:
-                e = entries[0]
-                price_str = f"{e['price_eur']:.2f} EUR {e.get('unit','')}" if e.get("price_eur") else "case-by-case (contact topic owner)"
+            elif matches and len(matches) > 3:
+                codes_preview = ", ".join(m["code"] for m in matches[:5])
                 return {
                     "found": True,
-                    "code": e["code"],
-                    "name": e["name"],
-                    "price": price_str,
-                    "effort_type": e.get("effort_type", ""),
-                    "notes": e.get("notes", ""),
-                    "answer": result.get("answer", ""),
-                    "confidence": result.get("confidence", "LOW"),
+                    "too_broad": True,
+                    "match_count": len(matches),
+                    "codes_preview": codes_preview,
+                    "suggestion": (
+                        f"The search returned {len(matches)} possible codes ({codes_preview}...) — too broad to be useful. "
+                        "Ask the CDM 1-2 more specific questions to narrow it down: "
+                        "Is this a one-time task or recurring? Which specific system component? "
+                        "Is SAP performing the work or just advising? "
+                        "Then call rr_lookup again with the refined description."
+                    ),
                 }
-            return {"found": False, "answer": result.get("answer", "No pricing data found for this service code.")}
 
-        if subagent_name == "draft_price_email":
-            await _activity("Drafting price communication email…")
-            request_id = params.get("requestId")
-            if not request_id:
-                return {"error": "requestId required"}
-            record = await cap_client.get_as_request(request_id)
-            templates = await cap_client.get_rr_entries()  # get email template via admin config
-            # Use anthropic_client directly for email draft
-            safe = json.dumps({k: record.get(k) for k in
-                               ["ID", "additionalServiceIds", "serviceCode", "price", "currency", "priceInWords", "serviceType"]})
-            result = await anthropic_client.chat(
-                "Fill in this SAP CDM price communication email template using the data provided. Be professional and concise. Return only the completed email text.",
-                f"DATA: {safe}\n\nGenerate a price communication email for this AS request.",
-            )
-            return {"draft": result}
+            else:
+                return {
+                    "found": False,
+                    "confidence": confidence,
+                    "summary": result.get("summary", ""),
+                    "suggestion": (
+                        "The R&R documents did not return a specific service code for this description. "
+                        "Ask the CDM for more detail: What type of work is involved? Which system/component? "
+                        "Is it a one-time task or ongoing? Which contract type (PCE, RISE, ATLAS)?"
+                    ),
+                }
+        return result
 
-        if subagent_name == "generate_o2i":
-            await _activity("Generating O2I invoice ticket…")
-            request_id = params.get("requestId")
-            if not request_id:
-                return {"error": "requestId required"}
-            body = await cap_client.generate_jira_ticket(request_id)
-            return {"ticket_body": body, "note": "Please review and confirm submission to mark as Invoiced."}
+    if tool_name == "price_lookup":
+        await _activity("Looking up pricing…")
+        service_code = tool_input.get("service_code", "").strip()
+        if not service_code:
+            return {"error": "service_code required"}
+        result = await pricing_agent.run(f"What is the price for service code {service_code}?")
+        entries = result.get("price_entries", [])
+        if entries:
+            e = entries[0]
+            price_str = f"{e['price_eur']:.2f} EUR {e.get('unit','')}" if e.get("price_eur") else "case-by-case (contact topic owner)"
+            return {
+                "found":       True,
+                "code":        e["code"],
+                "name":        e["name"],
+                "price":       price_str,
+                "effort_type": e.get("effort_type", ""),
+                "notes":       e.get("notes", ""),
+                "answer":      result.get("answer", ""),
+                "confidence":  result.get("confidence", "LOW"),
+            }
+        return {"found": False, "answer": result.get("answer", "No pricing data found for this service code.")}
 
-        if subagent_name == "create_o2i_ticket":
-            request_id = params.get("requestId")
-            if not request_id:
-                return {"error": "requestId required"}
-            result = await cap_client.confirm_invoiced(request_id)
-            return {"confirmed": True, "status": result.get("status", "Invoiced")}
+    if tool_name == "parse_email":
+        await _activity("Parsing email…")
+        raw_email = tool_input.get("raw_email", "")
+        if not raw_email:
+            return {"error": "raw_email required"}
+        result = await anthropic_client.chat(
+            "Extract from email: customer_name, service_identifiers (array), ticket_numbers (array), po_number, urgency_notes. Return JSON only.",
+            raw_email,
+        )
+        try:
+            return json.loads(result)
+        except Exception:
+            return {"raw": result}
 
-        return {"error": f"Unknown subagent: {subagent_name}"}
+    if tool_name == "draft_price_email":
+        await _activity("Drafting price communication email…")
+        request_id = tool_input.get("request_id", "")
+        if not request_id:
+            return {"error": "request_id required"}
+        record = await cap_client.get_as_request(request_id)
+        safe = json.dumps({k: record.get(k) for k in
+                           ["ID", "additionalServiceIds", "serviceCode", "price", "currency", "priceInWords", "serviceType"]})
+        result = await anthropic_client.chat(
+            "Fill in this SAP CDM price communication email template using the data provided. Be professional and concise. Return only the completed email text.",
+            f"DATA: {safe}\n\nGenerate a price communication email for this AS request.",
+        )
+        return {"draft": result}
+
+    if tool_name == "generate_o2i_ticket":
+        await _activity("Generating O2I invoice ticket…")
+        request_id = tool_input.get("request_id", "")
+        if not request_id:
+            return {"error": "request_id required"}
+        body = await cap_client.generate_jira_ticket(request_id)
+        return {"ticket_body": body, "note": "Please review and confirm submission to mark as Invoiced."}
+
+    if tool_name == "confirm_o2i_invoiced":
+        request_id = tool_input.get("request_id", "")
+        if not request_id:
+            return {"error": "request_id required"}
+        result = await cap_client.confirm_invoiced(request_id)
+        return {"confirmed": True, "status": result.get("status", "Invoiced")}
 
     if tool_name == "update_record":
         await _activity("Updating request…")
@@ -629,27 +804,27 @@ async def _dispatch(
 
     if tool_name == "route_to_agent":
         await _activity(f"Routing to {tool_input.get('agentType', 'agent')}…")
-        agent_type = tool_input.get("agentType")
-        client_id       = tool_input.get("clientId")
-        contract_id     = tool_input.get("contractId")
-        handoff_summary = tool_input.get("handoffSummary", "")
-        agent_message   = tool_input.get("message", "")
+        agent_type  = tool_input.get("agentType")
+        client_id   = tool_input.get("clientId")
+        contract_id = tool_input.get("contractId")
         if not client_id:
             return {"error": "clientId required"}
         recent_turns = [{"role": t["role"], "content": t["content"]}
                         for t in history[-5:] if t.get("agentName") == (contract_id or client_id)]
-        if agent_type == "contract_subagent" and contract_id:
-            reply = await contract_agent_mod.run(
-                contract_id=contract_id, client_id=client_id,
-                handoff_summary=handoff_summary, message=agent_message,
-                recent_turns=recent_turns,
-            )
+        handoff = HandoffContext(
+            to_agent=agent_type,
+            intent=tool_input.get("intent", "general"),
+            customer_id=tool_input.get("clientId", ""),
+            contract_id=tool_input.get("contractId"),
+            request_ids=tool_input.get("request_ids", []),
+            summary=tool_input.get("handoffSummary", ""),
+            recent_turns=recent_turns,
+            message=tool_input.get("message", ""),
+        )
+        if agent_type == "contract_subagent":
+            reply = await contract_agent_mod.run(handoff)
         else:
-            reply = await client_agent_mod.run(
-                client_id=client_id,
-                handoff_summary=handoff_summary, message=agent_message,
-                recent_turns=recent_turns,
-            )
+            reply = await client_agent_mod.run(handoff)
         return {"reply": reply, "agentName": contract_id or client_id}
 
     if tool_name == "surface_pending_action":

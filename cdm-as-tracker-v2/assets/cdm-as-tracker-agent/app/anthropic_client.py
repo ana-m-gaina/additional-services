@@ -104,27 +104,33 @@ async def chat_with_tools(
                 "content": [_block_to_dict(b) for b in resp.content if not (_USE_HAI and b.type == "thinking")],
             })
 
-            tool_results = []
-            for block in resp.content:
-                if block.type != "tool_use":
-                    continue
+            tool_use_blocks = [b for b in resp.content if b.type == "tool_use"]
+
+            async def _safe_call(tc):
                 try:
-                    output = await tool_handler(block.name, block.input)
-                    tool_result = {
+                    return await tool_handler(tc.name, tc.input)
+                except Exception as e:
+                    return {"type": "tool_result", "tool_use_id": tc.id, "content": f"Error: {e}", "is_error": True}
+
+            raw_outputs = list(await asyncio.gather(*[_safe_call(tc) for tc in tool_use_blocks]))
+
+            tool_results = []
+            for tc, output in zip(tool_use_blocks, raw_outputs):
+                if isinstance(output, dict) and output.get("is_error"):
+                    logger.warning("[LLM] tool %s error: %s", tc.name, output.get("content"))
+                    tool_results.append({
                         "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": output if isinstance(output, str) else __import__("json").dumps(output),
-                    }
-                    tool_outputs.append({"name": block.name, "input": block.input, "output": output})
-                except Exception as exc:
-                    logger.warning("[LLM] tool %s error: %s", block.name, exc)
-                    tool_result = {
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
+                        "tool_use_id": tc.id,
                         "is_error": True,
-                        "content": f"Tool error: {exc}",
-                    }
-                tool_results.append(tool_result)
+                        "content": output.get("content", "Unknown error"),
+                    })
+                else:
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": tc.id,
+                        "content": output if isinstance(output, str) else __import__("json").dumps(output),
+                    })
+                    tool_outputs.append({"name": tc.name, "input": tc.input, "output": output})
 
             conversation.append({"role": "user", "content": tool_results})
             continue
