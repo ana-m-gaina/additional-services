@@ -4,7 +4,8 @@ namespace cdm.tracker;
 
 // ── AS Request — main entity ──────────────────────────────────────────────────
 
-entity ASRequest : cuid, managed {
+entity ASRequest : managed {
+  key ID                     : String(50)   not null;
   // Core identity
   requestTitle           : String(200)   not null;
   customerName           : String(200)   not null;

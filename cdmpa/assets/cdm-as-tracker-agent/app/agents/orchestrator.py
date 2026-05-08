@@ -85,14 +85,14 @@ ORCHESTRATOR_TOOLS = [
     },
     {
         "name": "render_action_panel",
-        "description": "Render an action panel: email-draft, field-form, confirm-dialog, or ticket-ref.",
+        "description": "Render an action panel. For email-draft type: you MUST call draft_price_email first and use its returned draft/subject/to values — never write email content yourself. For other types: field-form, confirm-dialog, ticket-ref.",
         "input_schema": {
             "type": "object",
             "required": ["type", "title", "config"],
             "properties": {
                 "type":   {"type": "string", "enum": ["email-draft", "field-form", "confirm-dialog", "ticket-ref"]},
                 "title":  {"type": "string"},
-                "config": {"type": "object", "description": "Type-specific config. For email-draft: {emailText, to, subject}. For field-form: {recordId, fields, editable}. For confirm-dialog: {message, confirmLabel, cancelLabel}. For ticket-ref: {ticketId, ticketUrl, system}."},
+                "config": {"type": "object", "description": "Type-specific config. For email-draft: {emailText, to, subject} — values come from draft_price_email result. For field-form: {recordId, fields, editable}. For confirm-dialog: {message, confirmLabel, cancelLabel}. For ticket-ref: {ticketId, ticketUrl, system}."},
                 "pinned": {"type": "boolean"},
             },
         },
@@ -487,7 +487,7 @@ TOOLS AVAILABLE:
   • Only show a result panel when rr_lookup returns 1-3 specific service codes.
 - price_lookup: search AS Pricing List — use for price, cost, EUR value questions. If CDM gives a specific code, call price_lookup directly — do NOT call rr_lookup first.
 - parse_email: extract AS request fields from a raw customer email
-- draft_price_email: draft a price-communication email for an AS request
+- draft_price_email: draft a price-communication email for an AS request — ALWAYS call this before rendering an email-draft panel; never write email content yourself
 - generate_o2i_ticket: generate the JIRA O2I invoice ticket body (returns draft for CDM review)
 - confirm_o2i_invoiced: mark an AS request as Invoiced after O2I ticket is submitted
 - update_record: update fields on a request (always show what will change first)
@@ -516,6 +516,7 @@ RULES:
 - Never greet on non-first turns
 - Always show CDM what will change before calling update_record
 - Use render_record_panel / render_data_panel / render_action_panel / render_notice_panel to surface data visually; don't just list it in text
+- For price emails: call draft_price_email → then render_action_panel(type:email-draft) with the returned content. Never skip draft_price_email.
 - Proactively surface active reminders via reminder-banner panels
 - API key never goes to the browser
 
@@ -802,13 +803,72 @@ async def _dispatch(
         if not request_id:
             return {"error": "request_id required"}
         record = await cap_client.get_as_request(request_id)
-        safe = json.dumps({k: record.get(k) for k in
-                           ["ID", "additionalServiceIds", "serviceCode", "price", "currency", "priceInWords", "serviceType"]})
-        result = await anthropic_client.chat(
-            "Fill in this SAP CDM price communication email template using the data provided. Be professional and concise. Return only the completed email text.",
-            f"DATA: {safe}\n\nGenerate a price communication email for this AS request.",
-        )
-        return {"draft": result}
+
+        # Resolve template: personal override → shared fallback
+        tpl = await cap_client.get_personal_template(user_id, "price_email")
+        if not tpl:
+            tpl = await cap_client.get_shared_template("price_email")
+
+        # Build substitution values from record
+        price_valid = record.get("priceValidUntil") or ""
+        if not price_valid and record.get("priceCommunicatedDate"):
+            # compute on-the-fly if not already set
+            from datetime import date, timedelta
+            try:
+                base = date.fromisoformat(record["priceCommunicatedDate"])
+                price_valid = (base + timedelta(days=90)).isoformat()
+            except Exception:
+                pass
+        if not price_valid:
+            from datetime import date, timedelta
+            price_valid = (date.today() + timedelta(days=90)).isoformat()
+
+        fields = {
+            "customerName":    record.get("customerName", "Customer"),
+            "customerAccountId": record.get("customerAccountId", ""),
+            "sid":             record.get("sid", ""),
+            "serviceCode":     record.get("serviceCode") or record.get("additionalServiceIds", ""),
+            "serviceType":     record.get("serviceType", ""),
+            "rrDescription":   record.get("rrDescription") or record.get("description", ""),
+            "price":           str(record.get("price", "")),
+            "currency":        record.get("currency", "EUR"),
+            "priceInWords":    record.get("priceInWords", ""),
+            "priceValidUntil": price_valid,
+        }
+
+        if tpl:
+            # Fill placeholders in template; ask Claude to clean up any blanks
+            body_raw = tpl.get("content") or tpl.get("body", "")
+            subject_raw = tpl.get("subject", f"Additional Services Price Proposal — {fields['serviceCode']}")
+            filled_body = body_raw
+            filled_subject = subject_raw
+            for k, v in fields.items():
+                filled_body    = filled_body.replace("{{" + k + "}}", v)
+                filled_subject = filled_subject.replace("{{" + k + "}}", v)
+
+            # Only call model if there are unfilled placeholders
+            if "{{" in filled_body:
+                filled_body = await anthropic_client.chat(
+                    "You are filling in a SAP CDM price communication email template. Replace any remaining {{placeholder}} tokens with appropriate professional text based on the context. Do not change the structure or add new sections. Return only the completed email body.",
+                    f"RECORD: {json.dumps(fields)}\n\nTEMPLATE:\n{filled_body}"
+                )
+        else:
+            # No template at all — generate structured email directly
+            filled_subject = f"Additional Services Price Proposal — {fields['serviceCode']}"
+            filled_body = await anthropic_client.chat(
+                "Write a professional SAP CDM price communication email. Include: customer name, system SID, service code, service description, price with currency written out in words, price validity date (90 days). Use formal business English. Return only the email body, no subject line.",
+                f"RECORD: {json.dumps(fields)}"
+            )
+
+        return {
+            "draft": filled_body,
+            "subject": filled_subject,
+            "to": record.get("customerName", ""),
+            "requestId": request_id,
+            "serviceCode": fields["serviceCode"],
+            "price": fields["price"],
+            "currency": fields["currency"],
+        }
 
     if tool_name == "generate_o2i_ticket":
         await _activity("Generating O2I invoice ticket…")

@@ -177,10 +177,22 @@ async def update_pricing_entry(entry_id: str, data: dict) -> dict:
 
 async def get_as_request(request_id: str) -> dict:
     async with await _client() as c:
-        url = _url(f"{CAP_SERVICE_URL}/ASRequest('{request_id}')", {"$expand": "activityLog"})
-        resp = await c.get(url)
-        _raise(resp, "get_as_request")
-        return resp.json()
+        # Try key lookup first (real UUID); fall back to $filter for friendly IDs
+        import re
+        is_uuid = bool(re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', request_id, re.I))
+        if is_uuid:
+            url = _url(f"{CAP_SERVICE_URL}/ASRequest('{request_id}')", {"$expand": "activityLog"})
+            resp = await c.get(url)
+            _raise(resp, "get_as_request")
+            return resp.json()
+        else:
+            url = _url(f"{CAP_SERVICE_URL}/ASRequest", {"$filter": f"ID eq '{request_id}'", "$expand": "activityLog", "$top": 1})
+            resp = await c.get(url)
+            _raise(resp, "get_as_request")
+            items = resp.json().get("value", [])
+            if not items:
+                raise Exception(f"Request '{request_id}' not found")
+            return items[0]
 
 
 async def get_open_requests(cdm_email: str | None = None) -> list:

@@ -1,19 +1,22 @@
 ID,templateKey,subject,body,lastUpdated
-email-tpl-price,standard_price_communication,Additional Services Price Proposal — {{serviceCode}},"Dear Customer,
+email-tpl-price,price_email,"Additional Services Price Proposal — {{serviceCode}}","Dear {{customerName}},
 
-Thank you for engaging with SAP Additional Services.
+Thank you for your request regarding Additional Services for system {{sid}}.
 
-Following our discussion, please find below the price proposal for the requested Additional Services:
+Following our assessment, please find below the price proposal for the requested service:
 
-Service: {{serviceCode}} — {{serviceType}}
-Amount: {{price}} {{currency}} ({{priceInWords}})
-Price valid until: 90 days from the date of this communication.
+Service code: {{serviceCode}}
+Service: {{serviceType}}
+Scope: {{rrDescription}}
+
+Price: {{price}} {{currency}} ({{priceInWords}})
+Price valid until: {{priceValidUntil}}
 
 To proceed, please reply to this email with your written approval and PO number (if applicable).
 
-Please note: delivery of the Additional Services will commence only after receipt of written approval.
+Please note: delivery of the Additional Service will commence only after receipt of your written approval.
 
-If you have any questions, please do not hesitate to contact your Customer Delivery Manager.
+If you have any questions, please do not hesitate to reach out.
 
 Best regards,
-SAP Customer Delivery Management",2024-01-01
+SAP Customer Delivery Management",2026-05-08

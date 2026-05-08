@@ -198,7 +198,7 @@ const Renderer = {
       bodyLabel.textContent = 'Body'
 
       const ta = document.createElement('ui5-textarea')
-      ta.setAttribute('value', cfg.body || cfg.draft || '')
+      ta.setAttribute('value', cfg.emailText || cfg.body || cfg.draft || '')
       ta.setAttribute('rows', '10')
       ta.setAttribute('growing', '')
       ta.setAttribute('growing-max-lines', '20')

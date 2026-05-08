@@ -29,23 +29,6 @@ html, body {
   z-index: var(--z-sticky);
 }
 
-#nav-toggle {
-  background: none;
-  border: none;
-  color: var(--fg-3);
-  font-size: 1.125rem;
-  cursor: pointer;
-  padding: 0 0.25rem;
-  line-height: 1;
-  border-radius: var(--radius-xs);
-  transition: color var(--dur-fast) var(--ease-standard),
-              background var(--dur-fast) var(--ease-standard);
-}
-#nav-toggle:hover {
-  color: var(--fg-1);
-  background: var(--bg-hover);
-}
-
 /* ── Inline agent identity (in header) ───────────────────── */
 .agent-header-inline {
   display: flex;
@@ -66,7 +49,12 @@ html, body {
   justify-content: center;
   flex-shrink: 0;
   user-select: none;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-standard),
+              box-shadow var(--dur-fast) var(--ease-standard);
 }
+.agent-icon-sm:hover  { opacity: 0.85; box-shadow: var(--shadow-xs); }
+.agent-icon-sm:active { opacity: 0.7; }
 
 .agent-name-inline {
   font-size: var(--fs-small);
@@ -116,6 +104,7 @@ html, body {
 
 /* ── Sidebar nav ─────────────────────────────────────────── */
 #sidebar {
+  position: relative;
   flex-shrink: 0;
   background: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
@@ -128,6 +117,19 @@ html, body {
 
 #sidebar.sidebar-collapsed { width: 0; overflow: hidden; }
 #sidebar.sidebar-open      { width: 13rem; padding: 0.5rem 0; }
+#sidebar.sidebar-resizing  { transition: none; user-select: none; }
+
+#sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: var(--z-sticky);
+}
+#sidebar-resize-handle:hover,
+#sidebar-resize-handle.dragging { background: var(--brand); opacity: 0.4; }
 
 .nav-static {
   display: flex;

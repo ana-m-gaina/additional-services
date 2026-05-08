@@ -8,12 +8,17 @@
 const AGENT_BASE = 'http://localhost:8000'
 
 const AgentClient = {
+  _cdmEmail: null,
+
+  setUser(email) { this._cdmEmail = email },
+
   async chat({ message, sessionId, assistantName, cardContext, onActivity }) {
     const body = JSON.stringify({
       message,
       session_id: sessionId || 'default',
       assistant_name: assistantName || null,
-      card_context: cardContext || null
+      card_context: cardContext || null,
+      cdm_email: this._cdmEmail || null
     })
 
     const res = await fetch(`${AGENT_BASE}/api/chat/stream`, {
@@ -66,7 +71,8 @@ const AgentClient = {
       body: JSON.stringify({
         message,
         session_id: sessionId || 'default',
-        assistant_name: assistantName || null
+        assistant_name: assistantName || null,
+        cdm_email: this._cdmEmail || null
       })
     })
     if (!res.ok) {

@@ -1,6 +1,11 @@
 """
 Pricing data ingestion — reads the AS Pricing xlsm, builds one chunk per service
-entry, embeds with Ollama, stores in CAP PricingChunks.
+entry, embeds with Anthropic Voyage, stores in CAP PricingChunks.
+
+Setup (one-time):
+  1. Set ANTHROPIC_API_KEY in .env
+  2. Install deps:    pip install -r requirements.txt
+  3. Start CAP:       cd ../cdm-as-tracker-cap && cds watch
 
 Usage:
   python scripts/ingest_pricing.py
@@ -22,8 +27,8 @@ log = logging.getLogger(__name__)
 DEFAULT_XLSM = Path(__file__).resolve().parents[4] / "specs" / \
     "SAP_Enterprise_Cloud_Services_Additional Service Pricing List January2026.xlsm"
 DEFAULT_CAP_URL = "http://localhost:4004"
-OLLAMA_URL      = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-EMBED_MODEL     = "mxbai-embed-large"
+VOYAGE_URL      = "https://api.anthropic.com/v1/embeddings"
+EMBED_MODEL     = "voyage-3"
 CAP_USER        = os.environ.get("CAP_USER", "pricingadmin")
 CAP_PASSWORD    = os.environ.get("CAP_PASSWORD", "pricingadmin")
 
@@ -128,16 +133,18 @@ def _extract_entries(xlsm_path: Path) -> list[dict]:
     return entries
 
 
-# ── Ollama embedding ──────────────────────────────────────────────────────────
+# ── Voyage embedding ─────────────────────────────────────────────────────────
 
-async def _embed(client: httpx.AsyncClient, text: str) -> list[float]:
-    resp = await client.post(
-        f"{OLLAMA_URL}/api/embeddings",
-        json={"model": EMBED_MODEL, "prompt": text},
-        timeout=60.0,
-    )
-    resp.raise_for_status()
-    return resp.json()["embedding"]
+async def _embed(text: str) -> list[float]:
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    async with httpx.AsyncClient(timeout=60.0) as c:
+        resp = await c.post(
+            VOYAGE_URL,
+            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"},
+            json={"model": EMBED_MODEL, "input": [text]},
+        )
+        resp.raise_for_status()
+    return resp.json()["data"][0]["embedding"]
 
 
 # ── CAP helpers ───────────────────────────────────────────────────────────────
@@ -174,31 +181,30 @@ async def ingest(xlsm_path: Path, cap_url: str) -> None:
         existing_codes = {c["serviceCode"] for c in existing.get("value", [])}
         log.info("%d PricingChunks already in DB", len(existing_codes))
 
-        async with httpx.AsyncClient() as ollama:
-            for i, entry in enumerate(entries):
-                code = entry["code"]
-                if code in existing_codes:
-                    log.info("Skipping (already ingested): %s", code)
-                    continue
+        for i, entry in enumerate(entries):
+            code = entry["code"]
+            if code in existing_codes:
+                log.info("Skipping (already ingested): %s", code)
+                continue
 
-                try:
-                    vector = await _embed(ollama, entry["text"])
-                except Exception as exc:
-                    log.warning("Embed failed for %s: %s", code, exc)
-                    continue
+            try:
+                vector = await _embed(entry["text"])
+            except Exception as exc:
+                log.warning("Embed failed for %s: %s", code, exc)
+                continue
 
-                payload = {
-                    "serviceCode":   code,
-                    "text":          entry["text"],
-                    "embedding":     json.dumps(vector),
-                    "effortType":    entry["effort_type"] or None,
-                    "unitOfMeasure": entry["unit_measure"] or None,
-                }
-                if entry["price_eur"] is not None:
-                    payload["priceEur"] = entry["price_eur"]
+            payload = {
+                "serviceCode":   code,
+                "text":          entry["text"],
+                "embedding":     json.dumps(vector),
+                "effortType":    entry["effort_type"] or None,
+                "unitOfMeasure": entry["unit_measure"] or None,
+            }
+            if entry["price_eur"] is not None:
+                payload["priceEur"] = entry["price_eur"]
 
-                await _cap_post(cap, cap_url, "PricingChunks", payload)
-                log.info("  [%d/%d] Ingested %s", i + 1, len(entries), code)
+            await _cap_post(cap, cap_url, "PricingChunks", payload)
+            log.info("  [%d/%d] Ingested %s", i + 1, len(entries), code)
 
     log.info("Pricing ingestion complete.")
 

@@ -11,11 +11,11 @@ from app import cap_client, anthropic_client
 
 logger = logging.getLogger(__name__)
 
-OLLAMA_URL       = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-EMBED_MODEL      = "mxbai-embed-large"
-COSINE_THRESHOLD = 0.3   # include any chunk above this similarity
-COSINE_TOP_K     = 15    # hard cap so we don't blow the context window
-MAX_CONTEXT_CHARS = 40000  # ~10k tokens — well within Claude's limit
+VOYAGE_URL       = "https://api.anthropic.com/v1/embeddings"
+EMBED_MODEL      = "voyage-3"
+COSINE_THRESHOLD = 0.3
+COSINE_TOP_K     = 15
+MAX_CONTEXT_CHARS = 40000
 
 _SYSTEM = """You are an expert on SAP CDM Additional Services Roles and Responsibilities.
 
@@ -54,13 +54,15 @@ def capabilities() -> list[str]:
 
 
 async def _embed(text: str) -> np.ndarray:
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     async with httpx.AsyncClient(timeout=30.0) as c:
         resp = await c.post(
-            f"{OLLAMA_URL}/api/embeddings",
-            json={"model": EMBED_MODEL, "prompt": text},
+            VOYAGE_URL,
+            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"},
+            json={"model": EMBED_MODEL, "input": [text]},
         )
         resp.raise_for_status()
-    return np.array(resp.json()["embedding"], dtype=np.float32)
+    return np.array(resp.json()["data"][0]["embedding"], dtype=np.float32)
 
 
 def _cosine(a: np.ndarray, b: np.ndarray) -> float:
@@ -94,7 +96,7 @@ async def run(query: str) -> dict:
         query_vec = await _embed(query)
         use_embeddings = True
     except Exception as exc:
-        logger.warning("Ollama embedding failed: %s — using keyword-only retrieval", exc)
+        logger.warning("Voyage embedding failed: %s — using keyword-only retrieval", exc)
         query_vec = None
         use_embeddings = False
 
