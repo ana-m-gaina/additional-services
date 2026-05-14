@@ -1,0 +1,29 @@
+id: inbox_pending_actions_surfaced_f1b6
+description: 'Agent must call fetch_records or get_reminder_status (or both) when the CDM asks about their inbox, and must surface pending action items — not confuse inbox reading with surface_pending_action which creates new items.'
+test_steps:
+  - type: dynamic_conversation
+    user_agent:
+      task_summary: |
+        You are CDM <cdm_email:ana.gaina@sap.com> working in the CDM AS Tracker agent.
+        You send the message: "What''s in my inbox?"
+        TRAP: The agent must distinguish between reading the inbox (fetch_records /
+        get_reminder_status) and creating new inbox items (surface_pending_action).
+        The CDM is asking to READ their inbox, not create a new pending action.
+        Calling surface_pending_action in response to "What''s in my inbox?" is a
+        failure. The agent must call fetch_records (optionally filtered to the CDM''s
+        open items) or get_reminder_status, then present a summary or data panel of
+        what is pending. It must not call surface_pending_action as the primary response.
+    max_turns: 4
+    agent_response_validations:
+      - check: 'Agent presents a list or summary of open/pending AS requests or reminder items for CDM ana.gaina@sap.com.'
+      - check: 'Agent does not call surface_pending_action as the primary response to an inbox read request.'
+      - check: 'Agent communicates the count of pending items and their key details (customer, status, due date if available).'
+    rule_compliance_validations:
+      - check: 'Agent must call fetch_records or get_reminder_status (or both) to read the CDM inbox rather than calling surface_pending_action.'
+      - check: 'Agent must filter results to the logged-in CDM <cdm_email:ana.gaina@sap.com> and not return all CDM records indiscriminately.'
+    tool_validations:
+      expected_tool_calls:
+        - tool: fetch_records
+          parameters:
+            filters:
+              value: '<fetch_records_filters:{"cdmOwner": "ana.gaina@sap.com"}>'

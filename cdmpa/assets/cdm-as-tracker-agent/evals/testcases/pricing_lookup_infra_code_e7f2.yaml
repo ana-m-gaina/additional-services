@@ -1,0 +1,28 @@
+id: pricing_lookup_infra_code_e7f2
+description: 'Agent must call price_lookup with service_code INFRA_1.8.10 and return the EUR amount from the pricing database, not fabricate a price.'
+test_steps:
+  - type: dynamic_conversation
+    user_agent:
+      task_summary: |
+        You are CDM <cdm_email:ana.gaina@sap.com> working in the CDM AS Tracker agent.
+        You send the message: "What does INFRA_1.8.10 cost?"
+        TRAP: The CDM has provided a specific service code. The agent must NOT call
+        rr_lookup first — the tool description explicitly says do NOT call rr_lookup
+        for pricing questions when a code is provided. The agent must call price_lookup
+        directly with service_code INFRA_1.8.10. It must not fabricate a price or say
+        "I don''t have pricing data" without calling price_lookup. The response must
+        include a EUR amount (or "case-by-case" if the tool returns no price).
+    max_turns: 3
+    agent_response_validations:
+      - check: 'Agent response includes a price in EUR or explicitly states the price is case-by-case based on price_lookup output.'
+      - check: 'Agent does not call rr_lookup before price_lookup for this pricing query.'
+      - check: 'Agent communicates the service name alongside the price, not just a raw number.'
+    rule_compliance_validations:
+      - check: 'Agent must call price_lookup with service_code INFRA_1.8.10 before providing any pricing information.'
+      - check: 'Agent must not fabricate or estimate a price without calling price_lookup.'
+    tool_validations:
+      expected_tool_calls:
+        - tool: price_lookup
+          parameters:
+            service_code:
+              value: 'INFRA_1.8.10'

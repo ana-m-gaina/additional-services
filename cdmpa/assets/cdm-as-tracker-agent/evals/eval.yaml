@@ -1,0 +1,20 @@
+requirements:
+  agent_response_requirements:
+    - 'Agent always communicates which R&R service code(s) were matched, the confidence level, and whether the task is chargeable before presenting a result panel.'
+    - 'Agent always shows a confirm-dialog panel with a human-readable summary of the request fields before calling create_request, and does not proceed without explicit CDM confirmation.'
+    - 'Agent always presents the generated O2I ticket body in a ticket-ref panel for CDM review before marking the request as Invoiced, and explains any fields the CDM needs to verify.'
+  tool_requirements:
+    - 'Agent must call rr_lookup with a description parameter before presenting chargeability information; answering from memory without calling rr_lookup is not permitted.'
+    - 'Agent must call price_lookup with service_code before calling draft_price_email; price data must come from price_lookup output, not be inferred or fabricated.'
+    - 'Agent must call render_action_panel with type confirm-dialog before calling create_request; the confirm-dialog must contain the customerName, sid, and assignedCDM values that will be used.'
+    - 'Agent must call generate_o2i_ticket before calling confirm_o2i_invoiced; confirm_o2i_invoiced must not be called without a prior generate_o2i_ticket call in the same session.'
+    - 'Agent must call render_record_panel with type record-card when the CDM asks to see a specific AS record by ID; it must pass the record ID in the record_id parameter.'
+    - 'Agent must call fetch_records or get_reminder_status (or both) when the CDM asks about their inbox or pending items; surface_pending_action is for creating new inbox items, not reading them.'
+    - 'Agent must call process_meeting_notes with the full raw_text when the CDM pastes meeting notes text; it must not attempt to parse meeting notes without calling process_meeting_notes.'
+  rule_compliance_requirements:
+    - 'WHEN rr_lookup returns too_broad:true (more than 3 codes), the agent MUST ask 1-2 narrowing questions and call rr_lookup again rather than presenting the broad result.'
+    - 'WHEN patch_meeting_note returns a diff, the agent MUST show the diff to the CDM and wait for explicit confirmation before calling confirm_meeting_note_patch.'
+    - 'WHEN the CDM asks to retire or archive an agent via set_agent_status, the agent MUST confirm the CDM''s intent before executing the status change, as retiring creates a permanent tombstone.'
+    - 'WHEN create_request is called from a raw customer email, the agent MUST call parse_email first to extract the fields rather than asking the CDM to manually re-enter email data.'
+    - 'WHEN a draft_price_email is generated, the agent MUST call render_action_panel with type email-draft using the draft, subject, and to values returned by draft_price_email — never compose email content itself.'
+    - 'WHEN the CDM asks to update fields on an AS request, the agent MUST show the CDM what will change before calling update_record.'

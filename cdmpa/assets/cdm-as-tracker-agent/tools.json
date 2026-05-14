@@ -1,0 +1,447 @@
+[
+  {
+    "name": "rr_lookup",
+    "description": "Search the ingested R&R PDF documents using vector search. Use whenever a CDM asks about roles, responsibilities, who owns a task, or whether something is chargeable.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Natural-language description of the service or task to match"
+        },
+        "codes": {
+          "type": "array",
+          "description": "Optional list of candidate codes to narrow the search"
+        }
+      },
+      "required": ["description"]
+    }
+  },
+  {
+    "name": "price_lookup",
+    "description": "Search the ingested AS Pricing List using vector search. Use whenever a CDM asks about price, cost, or EUR value of a service.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "service_code": {
+          "type": "string",
+          "description": "The R&R service code to look up (e.g. INFRA_1.8.10)"
+        }
+      },
+      "required": ["service_code"]
+    }
+  },
+  {
+    "name": "create_request",
+    "description": "Create a new AS request entry in the database. Always show the CDM a summary of what will be created and ask for confirmation before calling this.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "customerName": {
+          "type": "string",
+          "description": "Customer display name"
+        },
+        "requestTitle": {
+          "type": "string",
+          "description": "Short title for the request, e.g. 'HANA DB Upgrade — PRD'"
+        },
+        "customerAccountId": {
+          "type": "string",
+          "description": "SAP customer account / IHC number"
+        },
+        "sid": {
+          "type": "string",
+          "description": "System SID"
+        },
+        "additionalServiceIds": {
+          "type": "string",
+          "description": "Comma-separated R&R service codes e.g. MOVE_1.3.04"
+        },
+        "description": {
+          "type": "string",
+          "description": "Free-text description of the requested service"
+        },
+        "poNumber": {
+          "type": "string",
+          "description": "PO number if provided in the email"
+        },
+        "assignedCDM": {
+          "type": "string",
+          "description": "CDM email address — use the logged-in CDM"
+        },
+        "status": {
+          "type": "string",
+          "description": "Initial status — defaults to New"
+        }
+      },
+      "required": ["customerName", "sid", "assignedCDM"]
+    }
+  },
+  {
+    "name": "generate_o2i_ticket",
+    "description": "Generate the JIRA O2I invoice ticket body for an AS request. Returns the draft ticket for CDM review before submission.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "description": "The AS request ID to generate the O2I ticket for"
+        }
+      },
+      "required": ["request_id"]
+    }
+  },
+  {
+    "name": "confirm_o2i_invoiced",
+    "description": "Confirm that the O2I JIRA ticket has been submitted and mark the AS request as Invoiced.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "description": "The AS request ID to mark as Invoiced"
+        }
+      },
+      "required": ["request_id"]
+    }
+  },
+  {
+    "name": "render_record_panel",
+    "description": "Render a record-card or status-timeline panel for a specific AS request.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "record_id": {
+          "type": "string",
+          "description": "The AS request ID"
+        },
+        "type": {
+          "type": "string",
+          "description": "Panel type: record-card or status-timeline"
+        },
+        "title": {
+          "type": "string",
+          "description": "Panel title"
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "Whether to pin the panel"
+        }
+      },
+      "required": ["record_id", "type"]
+    }
+  },
+  {
+    "name": "render_data_panel",
+    "description": "Render a data-display panel: record-table, kpi-strip, checklist, or rr-source.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Panel type: record-table, kpi-strip, checklist, or rr-source"
+        },
+        "title": {
+          "type": "string",
+          "description": "Panel title"
+        },
+        "data": {
+          "type": "object",
+          "description": "Panel data — object or array depending on type"
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "Whether to pin the panel"
+        }
+      },
+      "required": ["type", "title", "data"]
+    }
+  },
+  {
+    "name": "render_action_panel",
+    "description": "Render an action panel: email-draft, field-form, confirm-dialog, or ticket-ref.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Panel type: email-draft, field-form, confirm-dialog, ticket-ref"
+        },
+        "title": {
+          "type": "string",
+          "description": "Panel title"
+        },
+        "config": {
+          "type": "object",
+          "description": "Type-specific config object"
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "Whether to pin the panel"
+        }
+      },
+      "required": ["type", "title", "config"]
+    }
+  },
+  {
+    "name": "render_notice_panel",
+    "description": "Render a reminder-banner notice panel.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Panel title"
+        },
+        "message": {
+          "type": "string",
+          "description": "Banner message text"
+        },
+        "severity": {
+          "type": "string",
+          "description": "Severity: information, warning, or error"
+        },
+        "request_id": {
+          "type": "string",
+          "description": "Associated AS request ID"
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "Whether to pin the panel"
+        }
+      },
+      "required": ["title", "message"]
+    }
+  },
+  {
+    "name": "fetch_records",
+    "description": "Query AS requests from the database. Returns matching records.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "object",
+          "description": "Filters: status, cdmOwner, customerName"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Max records (default 10)"
+        },
+        "fields": {
+          "type": "array",
+          "description": "List of fields to return"
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "surface_pending_action",
+    "description": "Create a PendingAction and push a card to the CDM Inbox.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User ID to surface the action for"
+        },
+        "automationId": {
+          "type": "string",
+          "description": "Automation ID that triggered this action"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "Prompt text shown to the CDM in the inbox card"
+        },
+        "relatedRequestId": {
+          "type": "string",
+          "description": "Optional related AS request ID"
+        }
+      },
+      "required": ["userId", "automationId", "prompt"]
+    }
+  },
+  {
+    "name": "resolve_pending_action",
+    "description": "Mark a PendingAction as responded or dismissed.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "pendingActionId": {
+          "type": "string",
+          "description": "The pending action ID to resolve"
+        },
+        "status": {
+          "type": "string",
+          "description": "New status: responded or dismissed"
+        },
+        "recordedData": {
+          "type": "object",
+          "description": "Optional data recorded during resolution"
+        }
+      },
+      "required": ["pendingActionId", "status"]
+    }
+  },
+  {
+    "name": "process_meeting_notes",
+    "description": "Extract structured data from raw ops meeting notes and store it on the client's dashboard. Call this when the user pastes or uploads meeting notes text.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "raw_text": {
+          "type": "string",
+          "description": "The full raw meeting notes text pasted or uploaded by the CDM"
+        }
+      },
+      "required": ["raw_text"]
+    }
+  },
+  {
+    "name": "patch_meeting_note",
+    "description": "Apply one or more targeted updates to the stored meeting notes for the active client. Returns a diff — show to CDM and ask for confirmation before calling confirm_meeting_note_patch.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "patches": {
+          "type": "array",
+          "description": "List of patch operations to apply"
+        }
+      },
+      "required": ["patches"]
+    }
+  },
+  {
+    "name": "confirm_meeting_note_patch",
+    "description": "Write the pending meeting note patches to the database. Only call this AFTER patch_meeting_note has returned a diff AND the CDM has explicitly confirmed the changes.",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "name": "parse_email",
+    "description": "Parse a raw customer email to extract AS request fields: customer name, service identifiers, ticket numbers, PO number, urgency notes.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "raw_email": {
+          "type": "string",
+          "description": "The full text of the customer email to parse"
+        }
+      },
+      "required": ["raw_email"]
+    }
+  },
+  {
+    "name": "draft_price_email",
+    "description": "Draft a price-communication email for an AS request.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "description": "The AS request ID"
+        },
+        "customer_name": {
+          "type": "string",
+          "description": "Customer display name for the salutation"
+        },
+        "service_codes": {
+          "type": "array",
+          "description": "List of service codes covered by the email"
+        },
+        "prices": {
+          "type": "object",
+          "description": "Map of service_code to price string"
+        }
+      },
+      "required": ["request_id", "customer_name", "service_codes", "prices"]
+    }
+  },
+  {
+    "name": "update_record",
+    "description": "Update fields on an AS request. Always show the CDM what will change before calling this.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "recordId": {
+          "type": "string",
+          "description": "AS request ID to update"
+        },
+        "fields": {
+          "type": "object",
+          "description": "Field name to new value map"
+        }
+      },
+      "required": ["recordId", "fields"]
+    }
+  },
+  {
+    "name": "link_session_to_customer",
+    "description": "Link the current general conversation session to a specific customer.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "customer_agent_id": {
+          "type": "string",
+          "description": "The CustomerAgent.ID (UUID) to link this session to"
+        }
+      },
+      "required": ["customer_agent_id"]
+    }
+  },
+  {
+    "name": "route_to_agent",
+    "description": "Delegate to a Customer Orchestrator or Contract Subagent. Response comes back in same thread.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "agentType": {
+          "type": "string",
+          "description": "Agent type: customer_orchestrator or contract_subagent"
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Customer ID to route to"
+        },
+        "contractId": {
+          "type": "string",
+          "description": "Contract ID for contract_subagent routing"
+        },
+        "handoffSummary": {
+          "type": "string",
+          "description": "Summary of context for the receiving agent"
+        },
+        "message": {
+          "type": "string",
+          "description": "The message to deliver to the delegated agent"
+        },
+        "intent": {
+          "type": "string",
+          "description": "The specific task being delegated"
+        },
+        "request_ids": {
+          "type": "array",
+          "description": "List of request IDs relevant to this handoff"
+        }
+      },
+      "required": ["agentType", "customerId", "handoffSummary", "message"]
+    }
+  },
+  {
+    "name": "get_reminder_status",
+    "description": "Check which reminder rules are currently firing for the CDM's open requests.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "cdmOwner": {
+          "type": "string",
+          "description": "CDM email to check reminders for (defaults to logged-in CDM)"
+        }
+      },
+      "required": []
+    }
+  }
+]
