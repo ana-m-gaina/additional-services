@@ -11,6 +11,7 @@ Auth strategy (auto-detected at startup):
 import os
 import time
 import logging
+from contextlib import contextmanager
 from typing import Any
 from urllib.parse import urlencode, quote
 
@@ -28,6 +29,46 @@ _USE_XSUAA    = bool(_XSUAA_URL and _CLIENT_ID and _CLIENT_SEC)
 
 _CDM_USER     = os.environ.get("CAP_USER",     "alex")
 _CDM_PASSWORD = os.environ.get("CAP_PASSWORD", "alex")
+
+
+@contextmanager
+def _cap_span(operation: str, entity: str):
+    """Wrap a CAP OData call in an OTel span named cap.odata.<operation>."""
+    t0 = time.monotonic()
+    span_name = f"cap.odata.{operation}"
+    span_ctx = None
+    try:
+        from sap_cloud_sdk.core.telemetry import context_overlay, GenAIOperation
+        # Use RETRIEVAL operation type for OData reads; EXECUTE_TOOL for writes
+        gen_ai_op = GenAIOperation.RETRIEVAL if operation in ("get", "list") else GenAIOperation.EXECUTE_TOOL
+        span_ctx = context_overlay(gen_ai_op, attributes={"cap.entity": entity, "cap.operation": operation})
+    except Exception:
+        pass  # SDK not available in local dev
+
+    if span_ctx is not None:
+        try:
+            with span_ctx:
+                try:
+                    from opentelemetry import trace
+                    span = trace.get_current_span()
+                    span.update_name(span_name)
+                    yield span
+                    duration_ms = int((time.monotonic() - t0) * 1000)
+                    span.set_attribute("duration_ms", duration_ms)
+                except Exception as exc:
+                    duration_ms = int((time.monotonic() - t0) * 1000)
+                    try:
+                        from opentelemetry.trace import StatusCode
+                        span.set_attribute("duration_ms", duration_ms)
+                        span.record_exception(exc)
+                        span.set_status(StatusCode.ERROR, str(exc))
+                    except Exception:
+                        pass
+                    raise
+        except Exception:
+            raise
+    else:
+        yield None
 
 
 class _TokenManager:
@@ -180,19 +221,24 @@ async def get_as_request(request_id: str) -> dict:
         # Try key lookup first (real UUID); fall back to $filter for friendly IDs
         import re
         is_uuid = bool(re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', request_id, re.I))
-        if is_uuid:
-            url = _url(f"{CAP_SERVICE_URL}/ASRequest('{request_id}')", {"$expand": "activityLog"})
-            resp = await c.get(url)
-            _raise(resp, "get_as_request")
-            return resp.json()
-        else:
-            url = _url(f"{CAP_SERVICE_URL}/ASRequest", {"$filter": f"ID eq '{request_id}'", "$expand": "activityLog", "$top": 1})
-            resp = await c.get(url)
-            _raise(resp, "get_as_request")
-            items = resp.json().get("value", [])
-            if not items:
-                raise Exception(f"Request '{request_id}' not found")
-            return items[0]
+        with _cap_span("get", "ASRequest") as span:
+            if is_uuid:
+                url = _url(f"{CAP_SERVICE_URL}/ASRequest('{request_id}')", {"$expand": "activityLog"})
+                resp = await c.get(url)
+                _raise(resp, "get_as_request")
+                if span:
+                    span.set_attribute("http.status_code", resp.status_code)
+                return resp.json()
+            else:
+                url = _url(f"{CAP_SERVICE_URL}/ASRequest", {"$filter": f"ID eq '{request_id}'", "$expand": "activityLog", "$top": 1})
+                resp = await c.get(url)
+                _raise(resp, "get_as_request")
+                if span:
+                    span.set_attribute("http.status_code", resp.status_code)
+                items = resp.json().get("value", [])
+                if not items:
+                    raise Exception(f"Request '{request_id}' not found")
+                return items[0]
 
 
 async def get_open_requests(cdm_email: str | None = None) -> list:
@@ -204,26 +250,36 @@ async def get_open_requests(cdm_email: str | None = None) -> list:
             f"{CAP_SERVICE_URL}/ASRequest",
             {"$filter": " and ".join(filters), "$orderby": "createdAt desc", "$expand": "activityLog"},
         )
-        resp = await c.get(url)
-        _raise(resp, "get_open_requests")
-        return resp.json().get("value", [])
+        with _cap_span("list", "ASRequest") as span:
+            resp = await c.get(url)
+            _raise(resp, "get_open_requests")
+            if span:
+                span.set_attribute("http.status_code", resp.status_code)
+            return resp.json().get("value", [])
 
 
 async def create_as_request(data: dict) -> dict:
     async with await _client() as c:
-        resp = await c.post(f"{CAP_SERVICE_URL}/ASRequest", json=data)
-        _raise(resp, "create_as_request")
-        return resp.json()
+        with _cap_span("create", "ASRequest") as span:
+            resp = await c.post(f"{CAP_SERVICE_URL}/ASRequest", json=data)
+            _raise(resp, "create_as_request")
+            if span:
+                span.set_attribute("http.status_code", resp.status_code)
+            return resp.json()
 
 
 async def advance_status(request_id: str, new_status: str, comment: str = "") -> dict:
     async with await _client() as c:
-        resp = await c.post(
-            f"{CAP_SERVICE_URL}/ASRequest('{request_id}')/CDMService.advanceStatus",
-            json={"newStatus": new_status, "comment": comment},
-        )
-        _raise(resp, "advance_status")
-        return resp.json()
+        with _cap_span("action", "ASRequest") as span:
+            resp = await c.post(
+                f"{CAP_SERVICE_URL}/ASRequest('{request_id}')/CDMService.advanceStatus",
+                json={"newStatus": new_status, "comment": comment},
+            )
+            _raise(resp, "advance_status")
+            if span:
+                span.set_attribute("http.status_code", resp.status_code)
+                span.set_attribute("new_status", new_status)
+            return resp.json()
 
 
 async def record_approval(request_id: str, approval_text: str, po_number: str = "") -> dict:
@@ -253,9 +309,12 @@ async def confirm_invoiced(request_id: str) -> dict:
 
 async def patch_as_request(request_id: str, data: dict) -> dict:
     async with await _client() as c:
-        resp = await c.patch(f"{CAP_SERVICE_URL}/ASRequest('{request_id}')", json=data)
-        _raise(resp, "patch_as_request")
-        return resp.json() if resp.text else {}
+        with _cap_span("patch", "ASRequest") as span:
+            resp = await c.patch(f"{CAP_SERVICE_URL}/ASRequest('{request_id}')", json=data)
+            _raise(resp, "patch_as_request")
+            if span:
+                span.set_attribute("http.status_code", resp.status_code)
+            return resp.json() if resp.text else {}
 
 
 # ── Card layout ────────────────────────────────────────────────────────────────
