@@ -11,6 +11,8 @@ modules:
       buildpack: nodejs_buildpack
       memory: 512M
       disk-quota: 512M
+      health-check-type: http
+      health-check-http-endpoint: /health
     build-parameters:
       builder: npm
       build-result: .
@@ -63,6 +65,8 @@ modules:
       memory: 512M
       disk-quota: 1G
       command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+      health-check-type: http
+      health-check-http-endpoint: /.well-known/agent.json
     build-parameters:
       builder: custom
       commands:
