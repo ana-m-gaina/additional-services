@@ -1,0 +1,397 @@
+{
+  "servers": {
+    "cdm-as-tracker-agent": {
+      "mcp_server_name": "cdm-as-tracker-agent",
+      "description": "CDM Additional Services Tracker multi-agent — mock responses for all agent tools used in integration tests (IBD_TESTING=true).",
+      "tools": {
+        "rr_lookup": {
+          "description": "Search the ingested R&R PDF documents using vector search.",
+          "input_schema": {
+            "type": "object",
+            "required": ["description"],
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "Natural-language description of the service or task to match"
+              },
+              "codes": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Optional list of candidate codes to narrow the search"
+              }
+            }
+          },
+          "mock_response": {
+            "found": true,
+            "confidence": "HIGH",
+            "answer": "Service code INFRA_1.8.10 covers OS patching on managed HANA systems. This is a chargeable Additional Service under the Infrastructure category.",
+            "summary": "OS patching — chargeable AS (INFRA_1.8.10)",
+            "matches": [
+              {
+                "code": "INFRA_1.8.10",
+                "name": "OS Patching — Managed HANA",
+                "category": "Infrastructure",
+                "chargeable": true,
+                "description": "Application of OS patches to HANA managed instances requested by the customer outside the standard patch window."
+              }
+            ],
+            "sources": [
+              {
+                "document": "CDM_RR_Guide_2025.pdf",
+                "page": 42,
+                "excerpt": "INFRA_1.8.10: OS patching performed outside standard maintenance window at customer request."
+              }
+            ]
+          }
+        },
+        "price_lookup": {
+          "description": "Search the ingested AS Pricing List using vector search.",
+          "input_schema": {
+            "type": "object",
+            "required": ["service_code"],
+            "properties": {
+              "service_code": {
+                "type": "string",
+                "description": "The R&R service code to look up (e.g. INFRA_1.8.10)"
+              }
+            }
+          },
+          "mock_response": {
+            "found": true,
+            "code": "INFRA_1.8.10",
+            "name": "OS Patching — Managed HANA",
+            "price": "1500.00 EUR per occurrence",
+            "effort_type": "fixed",
+            "notes": "Price applies per patch event. Multiple systems in a single window are bundled.",
+            "answer": "INFRA_1.8.10 is priced at 1,500 EUR per occurrence (fixed fee).",
+            "confidence": "HIGH"
+          }
+        },
+        "fetch_records": {
+          "description": "Query AS requests from the database. Returns matching records.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filters": {
+                "type": "object",
+                "description": "Filters: status, cdmOwner, customerName"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Max records (default 10)"
+              },
+              "fields": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          },
+          "mock_response": {
+            "records": [
+              {
+                "ID": "req-mock-001",
+                "requestTitle": "HANA DB Upgrade — PRD",
+                "customerName": "Acme Corp",
+                "customerAccountId": "IHC-10045",
+                "sid": "HDB",
+                "additionalServiceIds": "INFRA_1.8.10",
+                "description": "Customer requested OS patching outside standard window.",
+                "poNumber": "PO-2025-88221",
+                "assignedCDM": "cdm@example.com",
+                "cdmOwner": "cdm@example.com",
+                "status": "New",
+                "createdAt": "2026-05-01T09:00:00Z"
+              },
+              {
+                "ID": "req-mock-002",
+                "requestTitle": "Migration Health Check — SBX",
+                "customerName": "Beta Industries",
+                "customerAccountId": "IHC-20033",
+                "sid": "SBX",
+                "additionalServiceIds": "MOVE_1.3.04",
+                "description": "Pre-migration health check for sandbox system.",
+                "poNumber": "",
+                "assignedCDM": "cdm@example.com",
+                "cdmOwner": "cdm@example.com",
+                "status": "PriceCommunicated",
+                "createdAt": "2026-04-28T14:00:00Z"
+              }
+            ],
+            "count": 2
+          }
+        },
+        "create_request": {
+          "description": "Create a new AS request entry in the database.",
+          "input_schema": {
+            "type": "object",
+            "required": ["customerName", "sid", "assignedCDM"],
+            "properties": {
+              "customerName":        { "type": "string" },
+              "requestTitle":        { "type": "string" },
+              "customerAccountId":   { "type": "string" },
+              "sid":                 { "type": "string" },
+              "additionalServiceIds":{ "type": "string" },
+              "description":         { "type": "string" },
+              "poNumber":            { "type": "string" },
+              "assignedCDM":         { "type": "string" },
+              "status":              { "type": "string" }
+            }
+          },
+          "mock_response": {
+            "created": true,
+            "requestId": "req-mock-003",
+            "refreshData": true,
+            "record": {
+              "ID": "req-mock-003",
+              "requestTitle": "Mock AS Request",
+              "customerName": "Test Customer",
+              "sid": "TST",
+              "status": "New",
+              "assignedCDM": "cdm@example.com",
+              "createdAt": "2026-05-14T08:00:00Z"
+            }
+          }
+        },
+        "update_record": {
+          "description": "Update fields on an AS request.",
+          "input_schema": {
+            "type": "object",
+            "required": ["recordId", "fields"],
+            "properties": {
+              "recordId": { "type": "string" },
+              "fields":   { "type": "object" }
+            }
+          },
+          "mock_response": {
+            "updated": true,
+            "recordId": "req-mock-001",
+            "fields": {
+              "status": "PriceCommunicated"
+            }
+          }
+        },
+        "render_record_panel": {
+          "description": "Render a record-card or status-timeline panel for a specific AS request.",
+          "input_schema": {
+            "type": "object",
+            "required": ["record_id", "type"],
+            "properties": {
+              "record_id": { "type": "string" },
+              "type":      { "type": "string", "enum": ["record-card", "status-timeline"] },
+              "title":     { "type": "string" },
+              "pinned":    { "type": "boolean" }
+            }
+          },
+          "mock_response": {
+            "rendered": true,
+            "panelId": "panel-0-mock01"
+          }
+        },
+        "render_data_panel": {
+          "description": "Render a data-display panel: record-table, kpi-strip, checklist, or rr-source.",
+          "input_schema": {
+            "type": "object",
+            "required": ["type", "title", "data"],
+            "properties": {
+              "type":   { "type": "string", "enum": ["record-table", "kpi-strip", "checklist", "rr-source"] },
+              "title":  { "type": "string" },
+              "data":   { "description": "Panel data — object or array depending on type" },
+              "pinned": { "type": "boolean" }
+            }
+          },
+          "mock_response": {
+            "rendered": true,
+            "panelId": "panel-1-mock02"
+          }
+        },
+        "render_action_panel": {
+          "description": "Render an action panel (email-draft, field-form, confirm-dialog, ticket-ref).",
+          "input_schema": {
+            "type": "object",
+            "required": ["type", "title", "config"],
+            "properties": {
+              "type":   { "type": "string", "enum": ["email-draft", "field-form", "confirm-dialog", "ticket-ref"] },
+              "title":  { "type": "string" },
+              "config": { "type": "object" },
+              "pinned": { "type": "boolean" }
+            }
+          },
+          "mock_response": {
+            "rendered": true,
+            "panelId": "panel-2-mock03"
+          }
+        },
+        "render_notice_panel": {
+          "description": "Render a reminder-banner notice panel.",
+          "input_schema": {
+            "type": "object",
+            "required": ["title", "message"],
+            "properties": {
+              "title":      { "type": "string" },
+              "message":    { "type": "string" },
+              "severity":   { "type": "string", "enum": ["information", "warning", "error"] },
+              "request_id": { "type": "string" },
+              "pinned":     { "type": "boolean" }
+            }
+          },
+          "mock_response": {
+            "rendered": true,
+            "panelId": "panel-3-mock04"
+          }
+        },
+        "draft_price_email": {
+          "description": "Draft a price-communication email for an AS request.",
+          "input_schema": {
+            "type": "object",
+            "required": ["request_id", "customer_name", "service_codes", "prices"],
+            "properties": {
+              "request_id":    { "type": "string" },
+              "customer_name": { "type": "string" },
+              "service_codes": { "type": "array", "items": { "type": "string" } },
+              "prices":        { "type": "object" }
+            }
+          },
+          "mock_response": {
+            "draft": "Dear Acme Corp,\n\nWe are pleased to confirm the price for the requested Additional Service:\n\nService Code: INFRA_1.8.10 — OS Patching (Managed HANA)\nSystem SID: HDB\nPrice: EUR 1,500.00 (one thousand five hundred euros)\nPrice validity: until 2026-08-12\n\nPlease confirm your acceptance to proceed.\n\nBest regards,\nYour SAP CDM",
+            "subject": "Additional Services Price Proposal — INFRA_1.8.10",
+            "to": "Acme Corp",
+            "requestId": "req-mock-001",
+            "serviceCode": "INFRA_1.8.10",
+            "price": "1500.00",
+            "currency": "EUR"
+          }
+        },
+        "generate_o2i_ticket": {
+          "description": "Generate the JIRA O2I invoice ticket body for an AS request.",
+          "input_schema": {
+            "type": "object",
+            "required": ["request_id"],
+            "properties": {
+              "request_id": { "type": "string" }
+            }
+          },
+          "mock_response": {
+            "ticket_body": "## O2I Invoice Ticket\n\n**Customer:** Acme Corp (IHC-10045)\n**System SID:** HDB\n**Service Code:** INFRA_1.8.10\n**Description:** OS Patching — Managed HANA\n**PO Number:** PO-2025-88221\n**Amount:** EUR 1,500.00\n**CDM:** cdm@example.com\n\nRequest ID: req-mock-001",
+            "note": "Please review and confirm submission to mark as Invoiced."
+          }
+        },
+        "get_reminder_status": {
+          "description": "Check which reminder rules are currently firing for the CDM's open requests.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "cdmOwner": { "type": "string" }
+            }
+          },
+          "mock_response": {
+            "reminders": [
+              {
+                "ruleId": "R3",
+                "requestId": "req-mock-001",
+                "message": "Request req-mock-001 has been in status 'New' for 14 days without a price communicated.",
+                "severity": "warning",
+                "firedAt": "2026-05-14T08:00:00Z"
+              }
+            ],
+            "count": 1
+          }
+        },
+        "surface_pending_action": {
+          "description": "Create a PendingAction and push a card to the CDM Inbox.",
+          "input_schema": {
+            "type": "object",
+            "required": ["userId", "automationId", "prompt"],
+            "properties": {
+              "userId":           { "type": "string" },
+              "automationId":     { "type": "string" },
+              "prompt":           { "type": "string" },
+              "relatedRequestId": { "type": "string" }
+            }
+          },
+          "mock_response": {
+            "created": true,
+            "pendingActionId": "pa-mock-001"
+          }
+        },
+        "resolve_pending_action": {
+          "description": "Mark a PendingAction as responded or dismissed.",
+          "input_schema": {
+            "type": "object",
+            "required": ["pendingActionId", "status"],
+            "properties": {
+              "pendingActionId": { "type": "string" },
+              "status":          { "type": "string", "enum": ["responded", "dismissed"] },
+              "recordedData":    { "type": "object" }
+            }
+          },
+          "mock_response": {
+            "resolved": true,
+            "pendingActionId": "pa-mock-001",
+            "status": "responded"
+          }
+        },
+        "register_customer": {
+          "description": "Create a new CustomerAgent entry and add it to the nav.",
+          "input_schema": {
+            "type": "object",
+            "required": ["customerId", "displayName"],
+            "properties": {
+              "customerId":  { "type": "string" },
+              "displayName": { "type": "string" }
+            }
+          },
+          "mock_response": {
+            "created": true,
+            "customerId": "cust-mock-001",
+            "displayName": "Acme Corp"
+          }
+        },
+        "register_contract": {
+          "description": "Register a contract under an existing customer.",
+          "input_schema": {
+            "type": "object",
+            "required": ["customerId", "contractId", "contractType"],
+            "properties": {
+              "customerId":   { "type": "string" },
+              "contractId":   { "type": "string" },
+              "contractType": { "type": "string" },
+              "displayName":  { "type": "string" }
+            }
+          },
+          "mock_response": {
+            "created": true,
+            "contractId": "ctr-mock-001",
+            "customerId": "cust-mock-001"
+          }
+        },
+        "route_to_agent": {
+          "description": "Route the current conversation to a specialist subagent.",
+          "input_schema": {
+            "type": "object",
+            "required": ["agentType", "context"],
+            "properties": {
+              "agentType": { "type": "string" },
+              "context":   { "type": "string" }
+            }
+          },
+          "mock_response": {
+            "routed": true,
+            "agentType": "rr",
+            "handoffId": "hnd-mock-001"
+          }
+        }
+      }
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created_for_agent": "cdm-as-tracker-agent",
+    "mock_mode": true,
+    "deterministic": true,
+    "total_servers": 1,
+    "total_tools": 17,
+    "generated_from": ["app/tools/*.py (TOOL_SCHEMA definitions)"],
+    "generation_date": "2026-05-14",
+    "notes": "Self-contained agent — no external MCP servers. This file mocks all tool handler responses for use in integration tests when IBD_TESTING=true."
+  }
+}
