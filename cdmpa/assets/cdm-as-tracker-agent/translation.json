@@ -1,0 +1,443 @@
+{
+  "schemaVersion": "1.0",
+  "name": "cdm-as-tracker-agent",
+  "version": "2.0.0",
+  "tools": [
+    {
+      "name": "rename_assistant",
+      "description": "Rename the assistant to a new name chosen by the CDM. Call when CDM says 'call yourself X', 'rename to X', or similar.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["newName"],
+        "properties": {
+          "newName": {"type": "string", "description": "The new assistant name"}
+        }
+      }
+    },
+    {
+      "name": "fetch_records",
+      "description": "Query AS requests from the database. Returns matching records.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filters": {"type": "object", "description": "Filters: status, cdmOwner, customerName"},
+          "limit":   {"type": "integer", "description": "Max records (default 10)"},
+          "fields":  {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    {
+      "name": "render_record_panel",
+      "description": "Render a record-card or status-timeline panel for a specific AS request.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["record_id", "type"],
+        "properties": {
+          "record_id": {"type": "string", "description": "The AS request ID"},
+          "type":      {"type": "string", "enum": ["record-card", "status-timeline"]},
+          "title":     {"type": "string"},
+          "pinned":    {"type": "boolean", "default": false}
+        }
+      }
+    },
+    {
+      "name": "render_data_panel",
+      "description": "Render a data-display panel: record-table, kpi-strip, checklist, or rr-source.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["type", "title", "data"],
+        "properties": {
+          "type":   {"type": "string", "enum": ["record-table", "kpi-strip", "checklist", "rr-source"]},
+          "title":  {"type": "string"},
+          "data":   {"description": "Panel data — object or array depending on type"},
+          "pinned": {"type": "boolean"}
+        }
+      }
+    },
+    {
+      "name": "render_action_panel",
+      "description": "Render an action panel. For email-draft type: you MUST call draft_price_email first and use its returned draft/subject/to values — never write email content yourself. For other types: field-form, confirm-dialog, ticket-ref.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["type", "title", "config"],
+        "properties": {
+          "type":   {"type": "string", "enum": ["email-draft", "field-form", "confirm-dialog", "ticket-ref"]},
+          "title":  {"type": "string"},
+          "config": {
+            "type": "object",
+            "description": "Type-specific config. For email-draft: {emailText, to, subject} — values come from draft_price_email result. For field-form: {recordId, fields, editable}. For confirm-dialog: {message, confirmLabel, cancelLabel}. For ticket-ref: {ticketId, ticketUrl, system}."
+          },
+          "pinned": {"type": "boolean"}
+        }
+      }
+    },
+    {
+      "name": "render_notice_panel",
+      "description": "Render a reminder-banner notice panel.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["title", "message"],
+        "properties": {
+          "title":      {"type": "string"},
+          "message":    {"type": "string"},
+          "severity":   {"type": "string", "enum": ["information", "warning", "error"], "default": "information"},
+          "request_id": {"type": "string"},
+          "pinned":     {"type": "boolean"}
+        }
+      }
+    },
+    {
+      "name": "rr_lookup",
+      "description": "Search the ingested R&R PDF documents using vector search. Use whenever a CDM asks about roles, responsibilities, who owns a task, or whether something is chargeable. Always call rr_lookup for R&R questions rather than answering from memory. If rr_lookup returns found:false → ask 1-2 targeted clarifying questions then call rr_lookup again. If rr_lookup returns too_broad:true (more than 3 codes) → ask 1-2 more specific narrowing questions then call rr_lookup again. Only show a result panel when rr_lookup returns 1-3 specific service codes.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "description": {"type": "string", "description": "Natural-language description of the service or task to match"},
+          "codes":       {"type": "array", "items": {"type": "string"}, "description": "Optional list of candidate codes to narrow the search"}
+        }
+      }
+    },
+    {
+      "name": "price_lookup",
+      "description": "Search the ingested AS Pricing List using vector search. Use whenever a CDM asks about price, cost, or EUR value of a service. If the CDM provides a specific service code (e.g. INFRA_1.8.10), call price_lookup directly — do NOT call rr_lookup first for pricing questions.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["service_code"],
+        "properties": {
+          "service_code": {"type": "string", "description": "The R&R service code to look up (e.g. INFRA_1.8.10)"}
+        }
+      }
+    },
+    {
+      "name": "parse_email",
+      "description": "Parse a raw customer email to extract AS request fields: customer name, service identifiers, ticket numbers, PO number, urgency notes.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["raw_email"],
+        "properties": {
+          "raw_email": {"type": "string", "description": "The full text of the customer email to parse"}
+        }
+      }
+    },
+    {
+      "name": "draft_price_email",
+      "description": "Draft a price-communication email for an AS request.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["request_id", "customer_name", "service_codes", "prices"],
+        "properties": {
+          "request_id":    {"type": "string", "description": "The AS request ID"},
+          "customer_name": {"type": "string", "description": "Customer display name for the salutation"},
+          "service_codes": {"type": "array", "items": {"type": "string"}, "description": "List of service codes covered by the email"},
+          "prices":        {"type": "object", "description": "Map of service_code → price string, e.g. {\"INFRA_1.8.10\": \"1500.00 EUR\"}"}
+        }
+      }
+    },
+    {
+      "name": "generate_o2i_ticket",
+      "description": "Generate the JIRA O2I invoice ticket body for an AS request. Returns the draft ticket for CDM review before submission.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["request_id"],
+        "properties": {
+          "request_id": {"type": "string", "description": "The AS request ID to generate the O2I ticket for"}
+        }
+      }
+    },
+    {
+      "name": "confirm_o2i_invoiced",
+      "description": "Confirm that the O2I JIRA ticket has been submitted and mark the AS request as Invoiced.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["request_id"],
+        "properties": {
+          "request_id": {"type": "string", "description": "The AS request ID to mark as Invoiced"}
+        }
+      }
+    },
+    {
+      "name": "create_request",
+      "description": "Create a new AS request entry in the database. If creating from a raw customer email, call parse_email first to extract fields. If creating manually or with mock data, fill the fields directly — do NOT require an email. Always show the CDM a summary of what will be created and ask for confirmation before calling this. If an ACTIVE CUSTOMER SESSION is set, use that customer's name and ID automatically — do NOT ask the CDM which customer. Required: customerName, sid, assignedCDM. Include additionalServiceIds (R&R codes), description, poNumber, customerAccountId if available.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["customerName", "sid", "assignedCDM"],
+        "properties": {
+          "customerName":         {"type": "string", "description": "Customer display name"},
+          "requestTitle":         {"type": "string", "description": "Short title for the request, e.g. 'HANA DB Upgrade — PRD'"},
+          "customerAccountId":    {"type": "string", "description": "SAP customer account / IHC number"},
+          "sid":                  {"type": "string", "description": "System SID"},
+          "additionalServiceIds": {"type": "string", "description": "Comma-separated R&R service codes e.g. MOVE_1.3.04"},
+          "description":          {"type": "string", "description": "Free-text description of the requested service"},
+          "poNumber":             {"type": "string", "description": "PO number if provided in the email"},
+          "assignedCDM":          {"type": "string", "description": "CDM email address — use the logged-in CDM"},
+          "status":               {"type": "string", "description": "Initial status — defaults to New"}
+        }
+      }
+    },
+    {
+      "name": "update_record",
+      "description": "Update fields on an AS request. Always show the CDM what will change before calling this.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["recordId", "fields"],
+        "properties": {
+          "recordId": {"type": "string"},
+          "fields":   {"type": "object"}
+        }
+      }
+    },
+    {
+      "name": "get_layout",
+      "description": "Read the CDM's current saved dashboard layout. Call this before propose_layout_change whenever the CDM asks to add, remove, or modify panels.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "propose_layout_change",
+      "description": "Suggest a change to the CDM saved workspace layout. Renders a confirm-dialog; only saves if CDM approves.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["description", "newPanels"],
+        "properties": {
+          "description": {"type": "string"},
+          "newPanels":   {"type": "array"}
+        }
+      }
+    },
+    {
+      "name": "get_reminder_status",
+      "description": "Check which reminder rules are currently firing for the CDM's open requests.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cdmOwner": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "route_to_agent",
+      "description": "Delegate to a Customer Orchestrator or Contract Subagent. Response comes back in same thread — CDM never sees the routing.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["agentType", "customerId", "handoffSummary", "message"],
+        "properties": {
+          "agentType":      {"type": "string", "enum": ["customer_orchestrator", "contract_subagent"]},
+          "customerId":     {"type": "string"},
+          "contractId":     {"type": "string"},
+          "handoffSummary": {"type": "string"},
+          "message":        {"type": "string"},
+          "intent":         {"type": "string", "description": "the specific task being delegated"},
+          "request_ids":    {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    {
+      "name": "surface_pending_action",
+      "description": "Create a PendingAction and push a card to the CDM Inbox.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["userId", "automationId", "prompt"],
+        "properties": {
+          "userId":           {"type": "string"},
+          "automationId":     {"type": "string"},
+          "prompt":           {"type": "string"},
+          "relatedRequestId": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "resolve_pending_action",
+      "description": "Mark a PendingAction as responded or dismissed.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["pendingActionId", "status"],
+        "properties": {
+          "pendingActionId": {"type": "string"},
+          "status":          {"type": "string", "enum": ["responded", "dismissed"]},
+          "recordedData":    {"type": "object"}
+        }
+      }
+    },
+    {
+      "name": "register_customer",
+      "description": "Create a new CustomerAgent entry and add it to the nav.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["customerId", "displayName"],
+        "properties": {
+          "customerId":  {"type": "string"},
+          "displayName": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "link_session_to_customer",
+      "description": "Link the current general conversation session to a specific customer. Call this when the CDM's question is clearly about one specific customer and the session was started as a general (non-customer) chat. After linking, the session will appear under that customer in the sidebar.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["customer_agent_id"],
+        "properties": {
+          "customer_agent_id": {
+            "type": "string",
+            "description": "The CustomerAgent.ID (UUID) to link this session to."
+          }
+        }
+      }
+    },
+    {
+      "name": "register_contract",
+      "description": "Create a new ContractSubagent under an existing CustomerAgent.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["customerId", "sid", "displayName", "contractType"],
+        "properties": {
+          "customerId":   {"type": "string"},
+          "sid":          {"type": "string"},
+          "displayName":  {"type": "string"},
+          "contractType": {"type": "string", "enum": ["Classic", "ATLAS"]}
+        }
+      }
+    },
+    {
+      "name": "set_agent_status",
+      "description": "Change the lifecycle status of a customer, contract, or integration agent. Use when CDM says 'suspend', 'archive', 'retire', or 'reactivate' an agent. Always confirm intent before retiring — it creates a tombstone.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["agentType", "agentId", "newStatus"],
+        "properties": {
+          "agentType": {"type": "string", "enum": ["customer", "contract", "integration"]},
+          "agentId":   {"type": "string", "description": "ID of the CustomerAgent, ContractSubagent, or IntegrationAgent"},
+          "newStatus": {"type": "string", "enum": ["active", "suspended", "archived", "retired"]},
+          "reason":    {"type": "string", "description": "Optional reason for the status change"}
+        }
+      }
+    },
+    {
+      "name": "template_read",
+      "description": "Read a template by key. Checks private (CDM-owned) templates first, falls back to shared templates. Use when CDM asks to use a template, draft from a template, or 'use my price email'.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["key"],
+        "properties": {
+          "key":       {"type": "string", "description": "Template key, e.g. 'price_email', 'jira_o2i', or a custom name the CDM gave their template"},
+          "cdm_email": {"type": "string", "description": "CDM email for private template lookup — omit to get shared only"}
+        }
+      }
+    },
+    {
+      "name": "template_write",
+      "description": "Save or update a personal template for the CDM. Use when CDM says 'save this as my template', 'remember this format', or 'create a template called X'.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["key", "content"],
+        "properties": {
+          "key":         {"type": "string", "description": "Template key/name"},
+          "content":     {"type": "string", "description": "Full template text"},
+          "description": {"type": "string", "description": "Short description of what the template is for"}
+        }
+      }
+    },
+    {
+      "name": "notes_read",
+      "description": "Read the CDM's personal reference notes. Use when CDM asks about their saved notes, personal process info, or when context suggests personal reference data would help.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string", "description": "Optional search query to filter relevant notes"}
+        }
+      }
+    },
+    {
+      "name": "notes_write",
+      "description": "Save a personal note for the CDM. Use when CDM says 'remember this', 'save this', 'note that', or wants to store process info or reference text for later.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content":        {"type": "string", "description": "The note content to save"},
+          "tags":           {"type": "string", "description": "Optional comma-separated tags for searching later"},
+          "relatedRequest": {"type": "string", "description": "Optional AS request ID this note is about"},
+          "sessionId":      {"type": "string", "description": "Current session ID"}
+        }
+      }
+    },
+    {
+      "name": "inject_document",
+      "description": "Load a document into context for this turn only. Content is ephemeral — not stored anywhere. Use when CDM uploads or pastes a document they want to ask questions about.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content": {"type": "string", "description": "Full document text or extracted PDF content"},
+          "title":   {"type": "string", "description": "Document title or filename for reference"},
+          "type":    {"type": "string", "enum": ["contract", "sla", "reference", "email", "other"], "description": "Document type"}
+        }
+      }
+    },
+    {
+      "name": "process_meeting_notes",
+      "description": "Extract structured data from raw ops meeting notes and store it on the client's dashboard. Call this when the user pastes or uploads meeting notes text. The tool identifies the client automatically from the notes content.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["raw_text"],
+        "properties": {
+          "raw_text": {
+            "type": "string",
+            "description": "The full raw meeting notes text pasted or uploaded by the CDM"
+          }
+        }
+      }
+    },
+    {
+      "name": "patch_meeting_note",
+      "description": "Apply one or more targeted updates to the stored meeting notes for the active client. Call this when the CDM types a natural-language update like 'topic 3 is now closed', 'mark risk 1 as resolved', 'add action: Palash to check FMX by Friday', 'update topic 8 owner to Sudhir', or 'add decision: agreed to defer profile changes to April'. The tool applies the patches in memory and returns a human-readable diff — show the diff to the CDM and ask for confirmation BEFORE calling confirm_meeting_note_patch.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["patches"],
+        "properties": {
+          "patches": {
+            "type": "array",
+            "description": "List of patch operations to apply",
+            "items": {
+              "type": "object",
+              "required": ["op", "target"],
+              "properties": {
+                "op": {
+                  "type": "string",
+                  "enum": [
+                    "set_topic_status", "set_topic_owner", "set_topic_due",
+                    "add_topic_bullet", "close_topic",
+                    "add_action", "complete_action", "update_action_owner", "update_action_due",
+                    "close_risk", "add_decision", "update_narrative"
+                  ],
+                  "description": "Type of patch"
+                },
+                "target": {
+                  "type": "string",
+                  "description": "Topic id, action text, risk id, or 'narrative' depending on op"
+                },
+                "value": {
+                  "type": "string",
+                  "description": "New value — status string, owner name, date, bullet text, action text, decision text, or narrative paragraph"
+                },
+                "owner": {"type": "string", "description": "For add_action: who owns it"},
+                "due":   {"type": "string", "description": "For add_action: due date"}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "confirm_meeting_note_patch",
+      "description": "Write the pending meeting note patches to the database. Only call this AFTER patch_meeting_note has returned a diff AND the CDM has explicitly confirmed the changes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

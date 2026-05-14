@@ -1,0 +1,21 @@
+{
+  "name": "CDM AS Tracker Agent v2",
+  "version": "2.0.0",
+  "description": "Agent-native AI orchestrator for CDM Additional Services.",
+  "capabilities": {
+    "skills": [
+      {"name": "rr-lookup", "description": "Look up R&R service code chargeability and category"},
+      {"name": "pricing-lookup", "description": "Look up current prices for AS service codes"},
+      {"name": "request-management", "description": "Create and manage AS request lifecycle"},
+      {"name": "jira-o2i", "description": "Generate and submit JIRA Order-to-Invoice tickets"},
+      {"name": "panel-rendering", "description": "Render UI panels (record-card, table, email-draft, kpi-strip, etc.)"},
+      {"name": "inbox-management", "description": "Surface and resolve PendingAction items in CDM Inbox"},
+      {"name": "meeting-notes", "description": "Process OPS meeting notes into structured JSON with 10 analysis sections"}
+    ]
+  },
+  "endpoints": [
+    {"path": "/api/chat", "method": "POST"},
+    {"path": "/api/chat/stream", "method": "POST"}
+  ],
+  "authentication": {"type": "bearer"}
+}

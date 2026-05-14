@@ -1,0 +1,659 @@
+{
+  "servers": {
+    "cdm-as-tracker-agent": {
+      "mcp_server_name": "cdm-as-tracker-agent",
+      "description": "Agent-native AI orchestrator for CDM Additional Services.",
+      "tools": {
+        "rename_assistant": {
+          "description": "Rename the assistant to a new name chosen by the CDM. Call when CDM says 'call yourself X', 'rename to X', or similar.",
+          "input_schema": {
+            "type": "object",
+            "required": ["newName"],
+            "properties": {
+              "newName": {"type": "string", "description": "The new assistant name"}
+            }
+          },
+          "mock_response": {
+            "renamed": true,
+            "newName": "Beacon"
+          }
+        },
+        "fetch_records": {
+          "description": "Query AS requests from the database. Returns matching records.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filters": {"type": "object", "description": "Filters: status, cdmOwner, customerName"},
+              "limit":   {"type": "integer", "description": "Max records (default 10)"},
+              "fields":  {"type": "array", "items": {"type": "string"}}
+            }
+          },
+          "mock_response": {
+            "records": [
+              {
+                "ID": "req-0001",
+                "requestTitle": "HANA DB Upgrade — PRD",
+                "customerName": "Acme Corp",
+                "customerAccountId": "IHC-100123",
+                "sid": "PRD",
+                "additionalServiceIds": "INFRA_1.8.10",
+                "description": "Upgrade HANA DB to SP14",
+                "status": "PriceCommunicated",
+                "assignedCDM": "cdm@example.com",
+                "price": "4500.00",
+                "currency": "EUR",
+                "createdAt": "2026-04-01T09:00:00Z"
+              },
+              {
+                "ID": "req-0002",
+                "requestTitle": "System Copy — QAS",
+                "customerName": "Globex AG",
+                "customerAccountId": "IHC-200456",
+                "sid": "QAS",
+                "additionalServiceIds": "MOVE_1.3.04",
+                "description": "System copy for QAS refresh",
+                "status": "Approved",
+                "assignedCDM": "cdm@example.com",
+                "price": "2800.00",
+                "currency": "EUR",
+                "createdAt": "2026-04-10T14:30:00Z"
+              }
+            ],
+            "count": 2
+          }
+        },
+        "render_record_panel": {
+          "description": "Render a record-card or status-timeline panel for a specific AS request.",
+          "input_schema": {
+            "type": "object",
+            "required": ["record_id", "type"],
+            "properties": {
+              "record_id": {"type": "string", "description": "The AS request ID"},
+              "type":      {"type": "string", "enum": ["record-card", "status-timeline"]},
+              "title":     {"type": "string"},
+              "pinned":    {"type": "boolean", "default": false}
+            }
+          },
+          "mock_response": {
+            "rendered": true,
+            "panelId": "panel-0-abc123"
+          }
+        },
+        "render_data_panel": {
+          "description": "Render a data-display panel: record-table, kpi-strip, checklist, or rr-source.",
+          "input_schema": {
+            "type": "object",
+            "required": ["type", "title", "data"],
+            "properties": {
+              "type":   {"type": "string", "enum": ["record-table", "kpi-strip", "checklist", "rr-source"]},
+              "title":  {"type": "string"},
+              "data":   {"description": "Panel data — object or array depending on type"},
+              "pinned": {"type": "boolean"}
+            }
+          },
+          "mock_response": {
+            "rendered": true,
+            "panelId": "panel-1-def456"
+          }
+        },
+        "render_action_panel": {
+          "description": "Render an action panel. For email-draft type: you MUST call draft_price_email first and use its returned draft/subject/to values — never write email content yourself. For other types: field-form, confirm-dialog, ticket-ref.",
+          "input_schema": {
+            "type": "object",
+            "required": ["type", "title", "config"],
+            "properties": {
+              "type":   {"type": "string", "enum": ["email-draft", "field-form", "confirm-dialog", "ticket-ref"]},
+              "title":  {"type": "string"},
+              "config": {"type": "object", "description": "Type-specific config."},
+              "pinned": {"type": "boolean"}
+            }
+          },
+          "mock_response": {
+            "rendered": true,
+            "panelId": "panel-2-ghi789"
+          }
+        },
+        "render_notice_panel": {
+          "description": "Render a reminder-banner notice panel.",
+          "input_schema": {
+            "type": "object",
+            "required": ["title", "message"],
+            "properties": {
+              "title":      {"type": "string"},
+              "message":    {"type": "string"},
+              "severity":   {"type": "string", "enum": ["information", "warning", "error"], "default": "information"},
+              "request_id": {"type": "string"},
+              "pinned":     {"type": "boolean"}
+            }
+          },
+          "mock_response": {
+            "rendered": true,
+            "panelId": "panel-3-jkl012"
+          }
+        },
+        "rr_lookup": {
+          "description": "Search the ingested R&R PDF documents using vector search.",
+          "input_schema": {
+            "type": "object",
+            "required": ["description"],
+            "properties": {
+              "description": {"type": "string", "description": "Natural-language description of the service or task to match"},
+              "codes":       {"type": "array", "items": {"type": "string"}, "description": "Optional list of candidate codes to narrow the search"}
+            }
+          },
+          "mock_response": {
+            "found": true,
+            "answer": "HANA DB upgrade is covered under INFRA_1.8.10 — SAP-performed database upgrade for HANA systems. Chargeable for Classic and ATLAS contracts.",
+            "confidence": "HIGH",
+            "matches": [
+              {
+                "code": "INFRA_1.8.10",
+                "name": "HANA DB Upgrade",
+                "category": "Infrastructure",
+                "chargeable": true,
+                "description": "SAP-performed upgrade of HANA database to target SPS/revision"
+              }
+            ],
+            "sources": [
+              {"document": "R&R_PCE_2025.pdf", "page": 42, "section": "1.8 Database Operations"}
+            ],
+            "summary": "1 matching service code found with HIGH confidence."
+          }
+        },
+        "price_lookup": {
+          "description": "Search the ingested AS Pricing List using vector search.",
+          "input_schema": {
+            "type": "object",
+            "required": ["service_code"],
+            "properties": {
+              "service_code": {"type": "string", "description": "The R&R service code to look up (e.g. INFRA_1.8.10)"}
+            }
+          },
+          "mock_response": {
+            "found": true,
+            "code": "INFRA_1.8.10",
+            "name": "HANA DB Upgrade",
+            "price": "4500.00 EUR per system",
+            "effort_type": "fixed",
+            "notes": "Applies to PRD systems only; QAS/DEV at 50% rate",
+            "answer": "INFRA_1.8.10 (HANA DB Upgrade) is priced at 4500.00 EUR per production system.",
+            "confidence": "HIGH"
+          }
+        },
+        "parse_email": {
+          "description": "Parse a raw customer email to extract AS request fields.",
+          "input_schema": {
+            "type": "object",
+            "required": ["raw_email"],
+            "properties": {
+              "raw_email": {"type": "string", "description": "The full text of the customer email to parse"}
+            }
+          },
+          "mock_response": {
+            "customer_name": "Acme Corp",
+            "service_identifiers": ["INFRA_1.8.10", "HANA upgrade"],
+            "ticket_numbers": ["INC0123456"],
+            "po_number": "PO-2026-0042",
+            "urgency_notes": "Required before Q2 end — system freeze starting May 30"
+          }
+        },
+        "draft_price_email": {
+          "description": "Draft a price-communication email for an AS request.",
+          "input_schema": {
+            "type": "object",
+            "required": ["request_id", "customer_name", "service_codes", "prices"],
+            "properties": {
+              "request_id":    {"type": "string", "description": "The AS request ID"},
+              "customer_name": {"type": "string", "description": "Customer display name for the salutation"},
+              "service_codes": {"type": "array", "items": {"type": "string"}, "description": "List of service codes covered by the email"},
+              "prices":        {"type": "object", "description": "Map of service_code → price string"}
+            }
+          },
+          "mock_response": {
+            "draft": "Dear Acme Corp,\n\nThank you for reaching out regarding Additional Services. We are pleased to provide the following price proposal for your system PRD:\n\nService: HANA DB Upgrade (INFRA_1.8.10)\nPrice: EUR 4,500.00 (four thousand five hundred euros)\nPrice valid until: 2026-08-12\n\nPlease confirm your acceptance at your earliest convenience.\n\nBest regards,\nYour CDM",
+            "subject": "Additional Services Price Proposal — INFRA_1.8.10",
+            "to": "Acme Corp",
+            "requestId": "req-0001",
+            "serviceCode": "INFRA_1.8.10",
+            "price": "4500.00",
+            "currency": "EUR"
+          }
+        },
+        "generate_o2i_ticket": {
+          "description": "Generate the JIRA O2I invoice ticket body for an AS request.",
+          "input_schema": {
+            "type": "object",
+            "required": ["request_id"],
+            "properties": {
+              "request_id": {"type": "string", "description": "The AS request ID to generate the O2I ticket for"}
+            }
+          },
+          "mock_response": {
+            "ticket_body": "Summary: AS Invoice — Acme Corp | INFRA_1.8.10 | PRD\n\nCustomer: Acme Corp (IHC-100123)\nSystem SID: PRD\nService Code: INFRA_1.8.10\nService: HANA DB Upgrade\nPrice: EUR 4,500.00\nPO Number: PO-2026-0042\nCDM: cdm@example.com\n\nDelivery confirmed. Please process invoice.",
+            "note": "Please review and confirm submission to mark as Invoiced."
+          }
+        },
+        "confirm_o2i_invoiced": {
+          "description": "Confirm that the O2I JIRA ticket has been submitted and mark the AS request as Invoiced.",
+          "input_schema": {
+            "type": "object",
+            "required": ["request_id"],
+            "properties": {
+              "request_id": {"type": "string", "description": "The AS request ID to mark as Invoiced"}
+            }
+          },
+          "mock_response": {
+            "confirmed": true,
+            "status": "Invoiced"
+          }
+        },
+        "create_request": {
+          "description": "Create a new AS request entry in the database.",
+          "input_schema": {
+            "type": "object",
+            "required": ["customerName", "sid", "assignedCDM"],
+            "properties": {
+              "customerName":         {"type": "string", "description": "Customer display name"},
+              "requestTitle":         {"type": "string", "description": "Short title for the request"},
+              "customerAccountId":    {"type": "string", "description": "SAP customer account / IHC number"},
+              "sid":                  {"type": "string", "description": "System SID"},
+              "additionalServiceIds": {"type": "string", "description": "Comma-separated R&R service codes"},
+              "description":          {"type": "string", "description": "Free-text description of the requested service"},
+              "poNumber":             {"type": "string", "description": "PO number if provided in the email"},
+              "assignedCDM":          {"type": "string", "description": "CDM email address"},
+              "status":               {"type": "string", "description": "Initial status — defaults to New"}
+            }
+          },
+          "mock_response": {
+            "created": true,
+            "requestId": "req-0003",
+            "record": {
+              "ID": "req-0003",
+              "requestTitle": "HANA DB Upgrade — PRD",
+              "customerName": "Acme Corp",
+              "sid": "PRD",
+              "additionalServiceIds": "INFRA_1.8.10",
+              "status": "New",
+              "assignedCDM": "cdm@example.com",
+              "createdAt": "2026-05-14T10:00:00Z"
+            },
+            "refreshData": true
+          }
+        },
+        "update_record": {
+          "description": "Update fields on an AS request. Always show the CDM what will change before calling this.",
+          "input_schema": {
+            "type": "object",
+            "required": ["recordId", "fields"],
+            "properties": {
+              "recordId": {"type": "string"},
+              "fields":   {"type": "object"}
+            }
+          },
+          "mock_response": {
+            "updated": true,
+            "recordId": "req-0001",
+            "fields": {"status": "PriceCommunicated"}
+          }
+        },
+        "get_layout": {
+          "description": "Read the CDM's current saved dashboard layout.",
+          "input_schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "mock_response": {
+            "panels": [
+              {"id": "panel-0", "type": "kpi-strip", "title": "My Open Requests", "pinned": true},
+              {"id": "panel-1", "type": "record-table", "title": "Recent Activity", "pinned": false}
+            ]
+          }
+        },
+        "propose_layout_change": {
+          "description": "Suggest a change to the CDM saved workspace layout.",
+          "input_schema": {
+            "type": "object",
+            "required": ["description", "newPanels"],
+            "properties": {
+              "description": {"type": "string"},
+              "newPanels":   {"type": "array"}
+            }
+          },
+          "mock_response": {
+            "proposed": true,
+            "description": "Add R&R source panel to workspace"
+          }
+        },
+        "get_reminder_status": {
+          "description": "Check which reminder rules are currently firing for the CDM's open requests.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "cdmOwner": {"type": "string"}
+            }
+          },
+          "mock_response": {
+            "reminders": [
+              {
+                "type": "price_not_communicated",
+                "text": "req-0001 (Acme Corp / INFRA_1.8.10) has been in New status for 14 days — price not yet communicated.",
+                "requestId": "req-0001",
+                "severity": "warning"
+              }
+            ],
+            "count": 1
+          }
+        },
+        "route_to_agent": {
+          "description": "Delegate to a Customer Orchestrator or Contract Subagent.",
+          "input_schema": {
+            "type": "object",
+            "required": ["agentType", "customerId", "handoffSummary", "message"],
+            "properties": {
+              "agentType":      {"type": "string", "enum": ["customer_orchestrator", "contract_subagent"]},
+              "customerId":     {"type": "string"},
+              "contractId":     {"type": "string"},
+              "handoffSummary": {"type": "string"},
+              "message":        {"type": "string"},
+              "intent":         {"type": "string", "description": "the specific task being delegated"},
+              "request_ids":    {"type": "array", "items": {"type": "string"}}
+            }
+          },
+          "mock_response": {
+            "reply": "I've reviewed the open requests for Acme Corp. There are 2 active AS requests: INFRA_1.8.10 (PriceCommunicated) and MOVE_1.3.04 (Approved). No blocking issues.",
+            "agentName": "customer-acme-corp"
+          }
+        },
+        "surface_pending_action": {
+          "description": "Create a PendingAction and push a card to the CDM Inbox.",
+          "input_schema": {
+            "type": "object",
+            "required": ["userId", "automationId", "prompt"],
+            "properties": {
+              "userId":           {"type": "string"},
+              "automationId":     {"type": "string"},
+              "prompt":           {"type": "string"},
+              "relatedRequestId": {"type": "string"}
+            }
+          },
+          "mock_response": {
+            "created": true,
+            "pendingActionId": "pa-0001"
+          }
+        },
+        "resolve_pending_action": {
+          "description": "Mark a PendingAction as responded or dismissed.",
+          "input_schema": {
+            "type": "object",
+            "required": ["pendingActionId", "status"],
+            "properties": {
+              "pendingActionId": {"type": "string"},
+              "status":          {"type": "string", "enum": ["responded", "dismissed"]},
+              "recordedData":    {"type": "object"}
+            }
+          },
+          "mock_response": {
+            "resolved": true,
+            "pendingActionId": "pa-0001",
+            "status": "responded"
+          }
+        },
+        "register_customer": {
+          "description": "Create a new CustomerAgent entry and add it to the nav.",
+          "input_schema": {
+            "type": "object",
+            "required": ["customerId", "displayName"],
+            "properties": {
+              "customerId":  {"type": "string"},
+              "displayName": {"type": "string"}
+            }
+          },
+          "mock_response": {
+            "created": true,
+            "customerId": "cag-0001",
+            "displayName": "Acme Corp"
+          }
+        },
+        "link_session_to_customer": {
+          "description": "Link the current general conversation session to a specific customer.",
+          "input_schema": {
+            "type": "object",
+            "required": ["customer_agent_id"],
+            "properties": {
+              "customer_agent_id": {
+                "type": "string",
+                "description": "The CustomerAgent.ID (UUID) to link this session to."
+              }
+            }
+          },
+          "mock_response": {
+            "linked": true,
+            "sessionId": "session-abc",
+            "customerAgentId": "cag-0001"
+          }
+        },
+        "register_contract": {
+          "description": "Create a new ContractSubagent under an existing CustomerAgent.",
+          "input_schema": {
+            "type": "object",
+            "required": ["customerId", "sid", "displayName", "contractType"],
+            "properties": {
+              "customerId":   {"type": "string"},
+              "sid":          {"type": "string"},
+              "displayName":  {"type": "string"},
+              "contractType": {"type": "string", "enum": ["Classic", "ATLAS"]}
+            }
+          },
+          "mock_response": {
+            "created": true,
+            "contractId": "con-0001",
+            "displayName": "Acme Corp — PRD (Classic)"
+          }
+        },
+        "set_agent_status": {
+          "description": "Change the lifecycle status of a customer, contract, or integration agent.",
+          "input_schema": {
+            "type": "object",
+            "required": ["agentType", "agentId", "newStatus"],
+            "properties": {
+              "agentType": {"type": "string", "enum": ["customer", "contract", "integration"]},
+              "agentId":   {"type": "string", "description": "ID of the agent"},
+              "newStatus": {"type": "string", "enum": ["active", "suspended", "archived", "retired"]},
+              "reason":    {"type": "string", "description": "Optional reason for the status change"}
+            }
+          },
+          "mock_response": {
+            "updated": true,
+            "agentId": "cag-0001",
+            "newStatus": "suspended"
+          }
+        },
+        "template_read": {
+          "description": "Read a template by key. Checks private (CDM-owned) templates first, falls back to shared templates.",
+          "input_schema": {
+            "type": "object",
+            "required": ["key"],
+            "properties": {
+              "key":       {"type": "string", "description": "Template key"},
+              "cdm_email": {"type": "string", "description": "CDM email for private template lookup"}
+            }
+          },
+          "mock_response": {
+            "found": true,
+            "key": "price_email",
+            "source": "private",
+            "content": "Dear {{customerName}},\n\nWe are pleased to provide the following price proposal for system {{sid}}:\n\nService: {{rrDescription}} ({{serviceCode}})\nPrice: {{currency}} {{price}} ({{priceInWords}})\nValid until: {{priceValidUntil}}\n\nKind regards,\nYour CDM",
+            "description": "Standard price communication email template"
+          }
+        },
+        "template_write": {
+          "description": "Save or update a personal template for the CDM.",
+          "input_schema": {
+            "type": "object",
+            "required": ["key", "content"],
+            "properties": {
+              "key":         {"type": "string", "description": "Template key/name"},
+              "content":     {"type": "string", "description": "Full template text"},
+              "description": {"type": "string", "description": "Short description"}
+            }
+          },
+          "mock_response": {
+            "saved": true,
+            "key": "price_email",
+            "message": "Template 'price_email' saved to your personal templates."
+          }
+        },
+        "notes_read": {
+          "description": "Read the CDM's personal reference notes.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "query": {"type": "string", "description": "Optional search query to filter relevant notes"}
+            }
+          },
+          "mock_response": {
+            "found": true,
+            "count": 2,
+            "notes": [
+              {
+                "ID": "note-0001",
+                "content": "For ATLAS customers: always check SPC ticket before creating O2I. ATLAS contracts require pre-approval from regional team.",
+                "tags": "atlas,process,o2i",
+                "createdAt": "2026-04-15T08:30:00Z"
+              },
+              {
+                "ID": "note-0002",
+                "content": "Acme Corp contact for AS approvals: procurement@acme.com (cc finance-ops@acme.com for amounts >5000 EUR)",
+                "tags": "acme,contacts",
+                "createdAt": "2026-04-20T11:00:00Z"
+              }
+            ]
+          }
+        },
+        "notes_write": {
+          "description": "Save a personal note for the CDM.",
+          "input_schema": {
+            "type": "object",
+            "required": ["content"],
+            "properties": {
+              "content":        {"type": "string", "description": "The note content to save"},
+              "tags":           {"type": "string", "description": "Optional comma-separated tags"},
+              "relatedRequest": {"type": "string", "description": "Optional AS request ID"},
+              "sessionId":      {"type": "string", "description": "Current session ID"}
+            }
+          },
+          "mock_response": {
+            "saved": true,
+            "message": "Note saved to your personal notes."
+          }
+        },
+        "inject_document": {
+          "description": "Load a document into context for this turn only. Content is ephemeral — not stored anywhere.",
+          "input_schema": {
+            "type": "object",
+            "required": ["content"],
+            "properties": {
+              "content": {"type": "string", "description": "Full document text or extracted PDF content"},
+              "title":   {"type": "string", "description": "Document title or filename for reference"},
+              "type":    {"type": "string", "enum": ["contract", "sla", "reference", "email", "other"], "description": "Document type"}
+            }
+          },
+          "mock_response": {
+            "loaded": true,
+            "title": "Contract_AcmeCorp_2026.pdf",
+            "type": "contract",
+            "word_count": 3420,
+            "note": "Document loaded into context for this session only. Not stored anywhere."
+          }
+        },
+        "process_meeting_notes": {
+          "description": "Extract structured data from raw ops meeting notes and store it on the client's dashboard.",
+          "input_schema": {
+            "type": "object",
+            "required": ["raw_text"],
+            "properties": {
+              "raw_text": {
+                "type": "string",
+                "description": "The full raw meeting notes text pasted or uploaded by the CDM"
+              }
+            }
+          },
+          "mock_response": {
+            "saved": true,
+            "clientName": "Acme Corp",
+            "customerAgentId": "cag-0001",
+            "topicsCount": 8,
+            "actionItemsCount": 5,
+            "risksCount": 1,
+            "decisionsCount": 3
+          }
+        },
+        "patch_meeting_note": {
+          "description": "Apply one or more targeted updates to the stored meeting notes for the active client.",
+          "input_schema": {
+            "type": "object",
+            "required": ["patches"],
+            "properties": {
+              "patches": {
+                "type": "array",
+                "description": "List of patch operations to apply",
+                "items": {
+                  "type": "object",
+                  "required": ["op", "target"],
+                  "properties": {
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "set_topic_status", "set_topic_owner", "set_topic_due",
+                        "add_topic_bullet", "close_topic",
+                        "add_action", "complete_action", "update_action_owner", "update_action_due",
+                        "close_risk", "add_decision", "update_narrative"
+                      ],
+                      "description": "Type of patch"
+                    },
+                    "target": {
+                      "type": "string",
+                      "description": "Topic id, action text, risk id, or 'narrative' depending on op"
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "New value"
+                    },
+                    "owner": {"type": "string", "description": "For add_action: who owns it"},
+                    "due":   {"type": "string", "description": "For add_action: due date"}
+                  }
+                }
+              }
+            }
+          },
+          "mock_response": {
+            "pending": true,
+            "diff": ["Topic 3: status In Progress → Closed"],
+            "summary": "1 change staged — awaiting confirmation"
+          }
+        },
+        "confirm_meeting_note_patch": {
+          "description": "Write the pending meeting note patches to the database. Only call this AFTER patch_meeting_note has returned a diff AND the CDM has explicitly confirmed the changes.",
+          "input_schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "mock_response": {
+            "saved": true,
+            "message": "Meeting notes updated and dashboard refreshed."
+          }
+        }
+      }
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created_for_agent": "cdm-as-tracker-agent",
+    "mock_mode": true,
+    "deterministic": true,
+    "total_servers": 1,
+    "total_tools": 32,
+    "generated_from": ["translation.json", "serverCard.json"],
+    "generation_date": "2026-05-14"
+  }
+}
