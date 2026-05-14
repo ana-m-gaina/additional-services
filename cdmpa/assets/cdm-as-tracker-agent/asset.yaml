@@ -4,14 +4,6 @@ kind: Asset
 metadata:
   name: cdm-as-tracker-agent
   version: 2.0.0
-  description: >
-    Python multi-agent AI service for CDM AS Tracker v2. Implements a Main
-    Orchestrator with 11 tools (render_panel, fetch_records, invoke_subagent,
-    update_record, propose_layout_change, route_to_agent, surface_pending_action,
-    resolve_pending_action, get_reminder_status, register_customer,
-    register_contract), conversation memory persisted via CAP OData, and a
-    Customer→Contract agent hierarchy. All Claude calls use Anthropic SDK
-    (claude-opus-4-7) with adaptive thinking and a 10-iteration tool-use loop.
 
 type: agent
 
@@ -25,35 +17,34 @@ provides:
     - rest
 
 agentCard:
-  name: CDM AS Tracker Agent v2
+  name: CDM AS Tracker Agent
   version: 2.0.0
   description: >
-    Agent-native AI orchestrator for CDM Additional Services. Claude drives the
-    UI by returning panel specs (render_panel tool). Routes to R&R, Pricing,
-    Request Management, and O2I specialist subagents. Maintains per-session
-    conversation memory. Supports Customer→Contract agent delegation and
-    Inbox/PendingActions automation.
+    Agent-native AI orchestrator for CDM Additional Services. Drives R&R
+    chargeability lookups, pricing confirmations, AS request lifecycle
+    management, O2I JIRA ticket generation, meeting notes processing,
+    and CDM Inbox automation. Claude claude-opus-4-7 via Anthropic SDK;
+    all factual answers come from tool calls only.
   capabilities:
     skills:
       - name: rr-lookup
-        description: Look up R&R service code chargeability and category
+        description: Look up R&R service code chargeability and category from ingested R&R PDFs
       - name: pricing-lookup
-        description: Look up current prices for AS service codes
+        description: Look up current EUR prices for AS service codes from the pricing list
       - name: request-management
-        description: Create and manage AS request lifecycle
+        description: Create and manage the full AS request lifecycle in CAP OData
       - name: jira-o2i
-        description: Generate and submit JIRA Order-to-Invoice tickets
+        description: Generate and confirm JIRA Order-to-Invoice tickets for chargeable AS work
       - name: panel-rendering
-        description: Render UI panels (record-card, table, email-draft, kpi-strip, etc.)
-      - name: customer-routing
-        description: Route to Customer Orchestrator or Contract Subagent
+        description: Render UI panels (record-card, table, email-draft, kpi-strip, confirm-dialog, etc.)
       - name: inbox-management
-        description: Surface and resolve PendingAction items in CDM Inbox
+        description: Surface and resolve PendingAction items in the CDM Inbox
+      - name: meeting-notes
+        description: Process raw OPS meeting notes into structured JSON with 10 analysis sections
   authentication:
     type: bearer
   streaming:
     enabled: false
-  model: claude-opus-4-7
 
 models:
   - executableId: anthropic
