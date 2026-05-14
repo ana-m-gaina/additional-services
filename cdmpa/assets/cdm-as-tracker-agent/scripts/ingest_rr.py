@@ -12,6 +12,9 @@ Usage:
 """
 import argparse
 import asyncio
+import time
+from dotenv import load_dotenv
+load_dotenv()
 import json
 import logging
 import os
@@ -27,10 +30,11 @@ log = logging.getLogger(__name__)
 
 DEFAULT_DOCS_DIR = Path(__file__).resolve().parents[4] / "specs"
 DEFAULT_CAP_URL  = "http://localhost:4004"
-VOYAGE_URL       = "https://api.anthropic.com/v1/embeddings"
-EMBED_MODEL      = "voyage-3"
+VOYAGE_URL       = "https://api.voyageai.com/v1/embeddings"
+EMBED_MODEL      = "voyage-4"
 CAP_USER         = os.environ.get("CAP_USER", "pricingadmin")
 CAP_PASSWORD     = os.environ.get("CAP_PASSWORD", "pricingadmin")
+_API_KEY         = os.environ.get("VOYAGE_API_KEY", "")
 
 MAX_CHARS = 4000  # voyage-3 supports 32k tokens; 4000 chars ≈ 1000 tokens, safe chunking size
 
@@ -55,16 +59,23 @@ def _split(text: str) -> list[str]:
 
 
 
-async def embed(text: str) -> list[float]:
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    async with httpx.AsyncClient(timeout=60.0) as c:
-        resp = await c.post(
-            VOYAGE_URL,
-            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"},
-            json={"model": EMBED_MODEL, "input": [text]},
-        )
+async def embed_batch(texts: list[str]) -> list[list[float]]:
+    for attempt in range(6):
+        async with httpx.AsyncClient(timeout=60.0) as c:
+            resp = await c.post(
+                VOYAGE_URL,
+                headers={"Authorization": f"Bearer {_API_KEY}", "Content-Type": "application/json"},
+                json={"model": EMBED_MODEL, "input": texts},
+            )
+        if resp.status_code == 429:
+            wait = 20 * (attempt + 1)
+            log.info("  Rate limited — waiting %ds (attempt %d/6)", wait, attempt + 1)
+            await asyncio.sleep(wait)
+            continue
         resp.raise_for_status()
-    return resp.json()["data"][0]["embedding"]
+        data = resp.json()["data"]
+        return [item["embedding"] for item in sorted(data, key=lambda x: x["index"])]
+    raise RuntimeError("Exceeded retry limit on rate limit")
 
 
 # ── CAP OData helpers ─────────────────────────────────────────────────────────
@@ -97,45 +108,60 @@ async def ingest(docs_dir: Path, cap_url: str) -> None:
 
     auth = (CAP_USER, CAP_PASSWORD)
     async with httpx.AsyncClient(auth=auth, headers={"Accept": "application/json"}) as cap:
-        # fetch already-ingested documents to allow idempotent re-runs
-        existing = await cap_get(cap, cap_url, "RRDocuments?$select=filename")
-        ingested_names = {d["filename"] for d in existing.get("value", [])}
+        existing_docs = await cap_get(cap, cap_url, "RRDocuments?$select=ID,filename,pageCount")
+        doc_by_name = {d["filename"]: d for d in existing_docs.get("value", [])}
 
         for pdf_path in pdfs:
             filename = pdf_path.name
-
-            if filename in ingested_names:
-                log.info("Skipping (already ingested): %s", filename)
-                continue
-
-            log.info("Ingesting: %s", filename)
             reader = PdfReader(str(pdf_path))
             page_count = len(reader.pages)
 
-            # create document record
-            doc = await cap_post(cap, cap_url, "RRDocuments", {
-                "filename":   filename,
-                "filepath":   str(pdf_path.resolve()),
-                "pageCount":  page_count,
-                "uploadedAt": datetime.now(timezone.utc).isoformat(),
-            })
-            doc_id = doc["ID"]
-            log.info("  Created RRDocument %s (%d pages)", doc_id, page_count)
+            if filename in doc_by_name:
+                doc = doc_by_name[filename]
+                doc_id = doc["ID"]
+                # check if fully ingested
+                chunk_data = await cap_get(cap, cap_url,
+                    f"RRChunks?$filter=document_ID eq '{doc_id}'&$select=pageNumber&$top=5000")
+                ingested_pages = {c["pageNumber"] for c in chunk_data.get("value", [])}
+                remaining = [i for i in range(1, page_count + 1) if i not in ingested_pages]
+                if not remaining:
+                    log.info("Skipping (fully ingested): %s", filename)
+                    continue
+                log.info("Resuming %s — %d pages already done, %d remaining",
+                         filename, len(ingested_pages), len(remaining))
+            else:
+                doc = await cap_post(cap, cap_url, "RRDocuments", {
+                    "filename":   filename,
+                    "filepath":   str(pdf_path.resolve()),
+                    "pageCount":  page_count,
+                    "uploadedAt": datetime.now(timezone.utc).isoformat(),
+                })
+                doc_id = doc["ID"]
+                remaining = list(range(1, page_count + 1))
+                log.info("Created RRDocument %s (%d pages)", doc_id, page_count)
 
-            # embed each page, splitting if the page text is too long
-            chunk_count = 0
+            # collect all chunks for remaining pages, then embed in batches of 10
+            remaining_set = set(remaining)
+            pending: list[tuple[int, str]] = []  # (page_num, chunk_text)
             for page_num, page in enumerate(reader.pages, start=1):
+                if page_num not in remaining_set:
+                    continue
                 text = (page.extract_text() or "").strip()
                 if not text:
                     continue
+                for chunk_text in _split(text):
+                    pending.append((page_num, chunk_text))
 
-                sub_chunks = _split(text)
-                for sub_idx, chunk_text in enumerate(sub_chunks):
-                    try:
-                        vector = await embed(chunk_text)
-                    except Exception as exc:
-                        log.warning("  Skipping chunk p%d[%d]: %s", page_num, sub_idx, exc)
-                        continue
+            BATCH = 10
+            chunk_count = 0
+            for i in range(0, len(pending), BATCH):
+                batch = pending[i:i + BATCH]
+                try:
+                    vectors = await embed_batch([t for _, t in batch])
+                except Exception as exc:
+                    log.warning("  Skipping batch %d-%d: %s", i, i + BATCH, exc)
+                    continue
+                for (page_num, chunk_text), vector in zip(batch, vectors):
                     await cap_post(cap, cap_url, "RRChunks", {
                         "document_ID": doc_id,
                         "pageNumber":  page_num,
@@ -143,10 +169,9 @@ async def ingest(docs_dir: Path, cap_url: str) -> None:
                         "embedding":   json.dumps(vector),
                     })
                     chunk_count += 1
-                if chunk_count % 10 == 0 and chunk_count > 0:
-                    log.info("  ... %d chunks embedded", chunk_count)
+                log.info("  ... %d/%d chunks embedded", chunk_count, len(pending))
 
-            log.info("  Done: %d chunks from %s", chunk_count, filename)
+            log.info("  Done: %d new chunks from %s", chunk_count, filename)
 
     log.info("Ingestion complete.")
 

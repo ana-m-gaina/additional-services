@@ -180,17 +180,26 @@ entity PersonaLayout {
 
 // ── Conversation memory ───────────────────────────────────────────────────────
 
-entity ConversationTurn : cuid, managed {
-  userId    : String(200);
-  role      : String(10);    // 'user' | 'assistant' | 'tool'
-  content   : LargeString;
-  sessionId : String(100);
-  agentName : String(100);   // which agent produced this turn
+entity ConversationSession : cuid {
+  customerAgentId : String(50);   // FK → CustomerAgent.ID (null = global)
+  title           : String(200);
+  createdBy       : String(200);
+  createdAt       : DateTime;
+  lastActiveAt    : DateTime;
 }
 
-// ── Client → Contract agent hierarchy ────────────────────────────────────────
+entity ConversationTurn : cuid, managed {
+  userId          : String(200);
+  role            : String(10);    // 'user' | 'assistant' | 'tool'
+  content         : LargeString;
+  sessionId       : String(100);
+  agentName       : String(100);   // which agent produced this turn
+  customerAgentId : String(50);    // FK → CustomerAgent.ID (for per-client filtering)
+}
 
-entity ClientAgent : cuid {
+// ── Customer → Contract agent hierarchy ──────────────────────────────────────
+
+entity CustomerAgent : cuid {
   customerId      : String(200);
   displayName     : String(200);
   createdBy       : String(200);
@@ -203,7 +212,7 @@ entity ClientAgent : cuid {
 }
 
 entity ContractSubagent : cuid {
-  clientId        : String(50);   // FK → ClientAgent.ID
+  customerId      : String(50);   // FK → CustomerAgent.ID
   sid             : String(50);
   displayName     : String(200);
   contractType    : String(50);   // 'Classic' | 'ATLAS'
@@ -215,9 +224,9 @@ entity ContractSubagent : cuid {
   transferredTo   : String(200);
 }
 
-// ── Automation agents ─────────────────────────────────────────────────────────
+// ── Integration agents ────────────────────────────────────────────────────────
 
-entity AutomationAgent : cuid {
+entity IntegrationAgent : cuid {
   eventType       : String(100);
   displayName     : String(200);
   enabled         : Boolean      default true;
@@ -231,8 +240,8 @@ entity AutomationAgent : cuid {
 // ── Retired agents tombstone ──────────────────────────────────────────────────
 
 entity RetiredAgent : cuid {
-  originalId    : String(50)   not null;  // ID from ClientAgent / ContractSubagent / AutomationAgent
-  agentType     : String(30)   not null;  // 'client' | 'contract' | 'automation'
+  originalId    : String(50)   not null;  // ID from CustomerAgent / ContractSubagent / IntegrationAgent
+  agentType     : String(30)   not null;  // 'customer' | 'contract' | 'integration'
   displayName   : String(200)  not null;
   retiredBy     : String(200);
   retiredAt     : DateTime     not null;
@@ -244,7 +253,7 @@ entity RetiredAgent : cuid {
 
 entity PendingAction : cuid {
   userId           : String(200);
-  automationId     : String(50);  // FK → AutomationAgent.ID
+  automationId     : String(50);  // FK → IntegrationAgent.ID
   sessionId        : String(100);
   prompt           : LargeString;
   status           : String(20)   default 'pending'; // pending | responded | dismissed
@@ -286,4 +295,19 @@ entity AdminConfig {
   configKey   : String(100)  not null;
   configValue : String(2000);
   description : String(500);
+}
+
+// ── Meeting notes — extracted from ops meeting notes pasted in chat ───────────
+
+entity MeetingNote : cuid, managed {
+  customerAgentId : String(50)  not null;  // FK → CustomerAgent.ID
+  clientName      : String(200);
+  meetingDate     : Date;
+  rawText         : LargeString;
+  extractedJson   : LargeString;
+  topicsJson      : LargeString;
+  actionItemsJson : LargeString;
+  risksJson       : LargeString;
+  decisionsJson   : LargeString;
+  processedBy     : String(200);
 }

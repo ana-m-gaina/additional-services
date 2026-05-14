@@ -7,7 +7,7 @@ metadata:
   description: >
     CDM Additional Services Tracker v2 — agent-native workspace for SAP Customer
     Delivery Managers. CAP Node.js backend + Python multi-agent AI shell (Claude).
-    Merges the agent-native shell, conversation memory, Client→Contract hierarchy,
+    Merges the agent-native shell, conversation memory, Customer→Contract hierarchy,
     Inbox/PendingActions, and 7 reminder rules of v1 onto the CDMPA BTP-ready stack.
 
 assets:

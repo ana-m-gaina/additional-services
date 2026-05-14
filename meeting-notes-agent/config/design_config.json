@@ -1,0 +1,99 @@
+{
+  "document": {
+    "font": "Arial"
+  },
+  "colors": {
+    "flags": {
+      "topIssue":  { "text": "#FFFFFF", "background": "#A80000" },
+      "action":    { "text": "#FFFFFF", "background": "#0063B1" },
+      "risk":      { "text": "#FFFFFF", "background": "#D83B01" },
+      "info":      { "text": "#FFFFFF", "background": "#605E5C" },
+      "monitoring":{ "text": "#1A1A1A", "background": "#FFF4CE" },
+      "closed":    { "text": "#FFFFFF", "background": "#107C10" }
+    },
+    "statusBadges": {
+      "inProgress":      { "text": "#FFFFFF", "background": "#0063B1" },
+      "blocked":         { "text": "#FFFFFF", "background": "#A80000" },
+      "completedClosed": { "text": "#FFFFFF", "background": "#107C10" },
+      "monitoring":      { "text": "#1A1A1A", "background": "#FFF4CE" }
+    },
+    "topicComponents": {
+      "summaryBackground":       "#F0F4FF",
+      "decisionsBackground":     "#E6F4EA",
+      "sharedUpdatesBackground": "#F5F5F5",
+      "overviewBackground":      "#F0F4FF"
+    },
+    "topicDivider": {
+      "color": "#C8C8C8"
+    },
+    "subTopicCard": {
+      "dividerBorder": "#CCCCCC",
+      "dividerSize": 4,
+      "expiryText": "#A80000"
+    },
+    "analysis": {
+      "decisionIdColor": "#107C10",
+      "riskOpenShading": "#FDE7E9"
+    }
+  },
+  "typography": {
+    "documentTitle":          { "size": 18, "color": "#1A1A1A" },
+    "processedDate":          { "size": 10, "color": "#666666" },
+    "sectionHeading":         { "size": 13, "color": "#1A1A1A", "bottomBorder": { "size": 6, "color": "#C8C8C8" } },
+    "topicTitle":             { "size": 14, "color": "#0063B1" },
+    "flagBadge":              { "size": 9 },
+    "statusBadge":            { "size": 9 },
+    "statusLineOwner":        { "size": 11, "color": "#333333" },
+    "statusLineSeparator":    { "size": 11, "color": "#999999" },
+    "statusLineDueLabel":     { "size": 11, "color": "#666666" },
+    "statusLineDueValue":     { "size": 11, "color": "#1A1A1A" },
+    "references":             { "size": 10, "color": "#555555", "italics": true },
+    "summaryText":            { "size": 11, "color": "#333333" },
+    "decisionsHeader":        { "size": 11, "color": "#107C10" },
+    "decisionsItem":          { "size": 11, "color": "#333333", "checkmarkColor": "#107C10" },
+    "sharedUpdatesHeader":    { "size": 11, "color": "#444444" },
+    "sharedUpdatesItem":      { "size": 11, "color": "#444444" },
+    "overviewHeader":         { "size": 11, "color": "#444444" },
+    "overviewSubTopicId":     { "size": 10, "color": "#0063B1", "font": "Consolas" },
+    "overviewSubTopicMeta":   { "size": 10, "color": "#555555" },
+    "summaryCountLine":       { "size": 10, "color": "#555555" },
+    "subTopicId":             { "size": 12, "color": "#0063B1", "font": "Consolas" },
+    "subTopicTitle":          { "size": 12, "color": "#1A1A1A" },
+    "subTopicMetadataLabel":  { "size": 10, "color": "#666666" },
+    "subTopicMetadataValue":  { "size": 10, "color": "#1A1A1A" },
+    "timelineCurrentLabel":   { "size": 11, "color": "#0063B1" },
+    "timelineEarlierLabel":   { "size": 11, "color": "#888888" },
+    "timelineDates":          { "size": 10, "color": "#333333" },
+    "timelineEarlierDates":   { "size": 10, "color": "#888888" },
+    "currentBullets":         { "size": 11, "color": "#1A1A1A" },
+    "currentSubBullets":      { "size": 10, "color": "#333333" },
+    "earlierBullets":         { "size": 11, "color": "#555555" },
+    "earlierSubBullets":      { "size": 10, "color": "#666666" },
+    "milestoneLine":          { "size": 11, "color": "#333333" },
+    "absenceName":            { "size": 11, "color": "#1A1A1A" },
+    "absenceDetail":          { "size": 11, "color": "#555555" }
+  },
+  "components": {
+    "topicAggregate": {
+      "statusLineSeparator": "   |   ",
+      "dueLabelPrefix": "Due: "
+    },
+    "sectionAggregate": {
+      "summaryCountSeparator": "  ·  ",
+      "nextDuePrefix": "Next due: "
+    },
+    "decisionsSection": {
+      "header": "Decisions",
+      "checkmark": "✓"
+    },
+    "sharedUpdatesSection": {
+      "header": "Shared updates",
+      "bulletChar": "•"
+    }
+  },
+  "topicDivider": {
+    "color": "#C8C8C8",
+    "size": 8,
+    "space": 12
+  }
+}

@@ -20,6 +20,7 @@ function userApiMock() {
 }
 
 export default defineConfig({
+  base: './',
   plugins: [react(), userApiMock()],
   server: {
     proxy: {

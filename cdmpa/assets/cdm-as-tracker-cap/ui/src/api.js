@@ -36,15 +36,15 @@ export const resolvePendingAction = (id, status) =>
     method: 'PATCH', body: JSON.stringify({ status, resolvedAt: new Date().toISOString() })
   })
 
-export const getClientAgents = () =>
-  _odata(`${BASE_CDM}/ClientAgents?$orderby=displayName`).then(d => d.value || [])
+export const getCustomerAgents = () =>
+  _odata(`${BASE_CDM}/CustomerAgents?$orderby=displayName`).then(d => d.value || [])
 
-export const getContractSubagents = (clientId = null) =>
-  _odata(`${BASE_CDM}/ContractSubagents${clientId ? `?$filter=clientId eq '${clientId}'` : ''}`)
+export const getContractSubagents = (customerId = null) =>
+  _odata(`${BASE_CDM}/ContractSubagents${customerId ? `?$filter=customerId eq '${customerId}'` : ''}`)
     .then(d => d.value || [])
 
-export const getAutomationAgents = () =>
-  _odata(`${BASE_CDM}/AutomationAgents`).then(d => d.value || [])
+export const getIntegrationAgents = () =>
+  _odata(`${BASE_CDM}/IntegrationAgents`).then(d => d.value || [])
 
 export const patchAgent = (entity, id, data) =>
   _odata(`${BASE_CDM}/${entity}('${id}')`, { method: 'PATCH', body: JSON.stringify(data) })
@@ -84,13 +84,14 @@ export const triggerMockEvent = (eventType, payload) =>
     method: 'POST', body: JSON.stringify({ eventType, payload: JSON.stringify(payload) })
   })
 
-export async function sendChat(message, sessionId, cardContext, cdmEmail, assistantName, onActivity) {
+export async function sendChat(message, sessionId, cardContext, cdmEmail, assistantName, onActivity, customerAgentId) {
   const body = JSON.stringify({
     message,
-    session_id:     sessionId || 'default',
-    card_context:   cardContext || null,
-    cdm_email:      cdmEmail || null,
-    assistant_name: assistantName || null,
+    session_id:        sessionId || 'default',
+    card_context:      cardContext ? JSON.stringify(cardContext) : null,
+    cdm_email:         cdmEmail || null,
+    assistant_name:    assistantName || null,
+    customer_agent_id: customerAgentId || null,
   })
 
   const res = await fetch('/api/chat/stream', {
@@ -140,3 +141,39 @@ export async function getCurrentUser() {
   if (!res.ok) return { firstname: '', lastname: '', email: 'anonymous', name: 'anonymous' }
   return res.json()
 }
+
+export const getConversationSessions = (customerAgentId) =>
+  _odata(`${BASE_CDM}/ConversationSessions?$filter=customerAgentId eq '${customerAgentId}'&$orderby=lastActiveAt desc`)
+    .then(d => d.value || [])
+
+export const getGeneralConversationSessions = () =>
+  _odata(`${BASE_CDM}/ConversationSessions?$orderby=lastActiveAt desc`)
+    .then(d => d.value || [])
+
+export const savePersonalTemplate = (templateKey, description, content) =>
+  _odata(`${BASE_CDM}/savePersonalTemplate`, { method: 'POST', body: JSON.stringify({ templateKey, description, content }) })
+
+export const getPersonalTemplates = () =>
+  _odata(`${BASE_CDM}/PersonalTemplates?$orderby=templateKey`).then(d => d.value || [])
+
+export const deletePersonalTemplate = (id) =>
+  fetch(`${BASE_CDM}/PersonalTemplates('${id}')`, { method: 'DELETE' })
+  _odata(`${BASE_CDM}/ConversationSessions?$filter=customerAgentId eq null&$orderby=lastActiveAt desc`)
+    .then(d => d.value || [])
+
+export const deleteConversationSession = (sessionId) =>
+  fetch(`${BASE_CDM}/ConversationSessions('${sessionId}')`, { method: 'DELETE' })
+
+export const createConversationSession = (customerAgentId, title) =>
+  _odata(`${BASE_CDM}/createConversationSession`, {
+    method: 'POST',
+    body: JSON.stringify({ customerAgentId, title }),
+  })
+
+export const getConversationTurns = (sessionId) =>
+  _odata(`${BASE_CDM}/ConversationTurns?$filter=sessionId eq '${sessionId}'&$orderby=createdAt asc`)
+    .then(d => d.value || [])
+
+export const getMeetingNotes = (customerAgentId) =>
+  _odata(`${BASE_CDM}/MeetingNotes?$filter=customerAgentId eq '${customerAgentId}'&$orderby=createdAt desc`)
+    .then(d => d.value || [])

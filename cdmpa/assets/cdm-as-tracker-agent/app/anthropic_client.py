@@ -43,11 +43,11 @@ async def chat(system_prompt: str, user_message: str) -> str:
     return await chat_with_history(system_prompt, [{"role": "user", "content": user_message}])
 
 
-async def chat_with_history(system_prompt: str, messages: list[dict]) -> str:
+async def chat_with_history(system_prompt: str, messages: list[dict], max_tokens: int = 2048) -> str:
     client = _make_client()
     resp = await client.messages.create(
         model=_MODEL,
-        max_tokens=2048,
+        max_tokens=max_tokens,
         system=system_prompt,
         messages=messages,
     )

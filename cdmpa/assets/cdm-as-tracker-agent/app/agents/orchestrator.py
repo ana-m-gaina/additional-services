@@ -14,6 +14,9 @@ from .models import HandoffContext
 
 logger = logging.getLogger(__name__)
 
+# Keyed by session_id; holds staged meeting note patches awaiting CDM confirmation
+_pending_patches: dict = {}
+
 
 def _all_capabilities() -> str:
     from . import rr_agent, pricing_agent, request_management_agent, o2i_agent, client_agent, contract_agent
@@ -71,12 +74,12 @@ ORCHESTRATOR_TOOLS = [
     },
     {
         "name": "render_data_panel",
-        "description": "Render a data-display panel: table, kpi-strip, checklist, or rr-source.",
+        "description": "Render a data-display panel: record-table, kpi-strip, checklist, or rr-source.",
         "input_schema": {
             "type": "object",
             "required": ["type", "title", "data"],
             "properties": {
-                "type":   {"type": "string", "enum": ["table", "kpi-strip", "checklist", "rr-source"]},
+                "type":   {"type": "string", "enum": ["record-table", "kpi-strip", "checklist", "rr-source"]},
                 "title":  {"type": "string"},
                 "data":   {"description": "Panel data — object or array depending on type"},
                 "pinned": {"type": "boolean"},
@@ -195,6 +198,32 @@ ORCHESTRATOR_TOOLS = [
         },
     },
     {
+        "name": "create_request",
+        "description": (
+            "Create a new AS request entry in the database. "
+            "If creating from a raw customer email, call parse_email first to extract fields. "
+            "If creating manually or with mock data, fill the fields directly — do NOT require an email. "
+            "Always show the CDM a summary of what will be created and ask for confirmation before calling this. "
+            "If an ACTIVE CUSTOMER SESSION is set, use that customer's name and ID automatically — do NOT ask the CDM which customer. "
+            "Required: customerName, sid, assignedCDM. Include additionalServiceIds (R&R codes), description, poNumber, customerAccountId if available."
+        ),
+        "input_schema": {
+            "type": "object",
+            "required": ["customerName", "sid", "assignedCDM"],
+            "properties": {
+                "customerName":       {"type": "string", "description": "Customer display name"},
+                "requestTitle":       {"type": "string", "description": "Short title for the request, e.g. 'HANA DB Upgrade — PRD'"},
+                "customerAccountId":  {"type": "string", "description": "SAP customer account / IHC number"},
+                "sid":                {"type": "string", "description": "System SID"},
+                "additionalServiceIds": {"type": "string", "description": "Comma-separated R&R service codes e.g. MOVE_1.3.04"},
+                "description":        {"type": "string", "description": "Free-text description of the requested service"},
+                "poNumber":           {"type": "string", "description": "PO number if provided in the email"},
+                "assignedCDM":        {"type": "string", "description": "CDM email address — use the logged-in CDM"},
+                "status":             {"type": "string", "description": "Initial status — defaults to New"},
+            },
+        },
+    },
+    {
         "name": "update_record",
         "description": "Update fields on an AS request. Always show the CDM what will change before calling this.",
         "input_schema": {
@@ -205,6 +234,11 @@ ORCHESTRATOR_TOOLS = [
                 "fields":   {"type": "object"},
             },
         },
+    },
+    {
+        "name": "get_layout",
+        "description": "Read the CDM's current saved dashboard layout. Call this before propose_layout_change whenever the CDM asks to add, remove, or modify panels.",
+        "input_schema": {"type": "object", "properties": {}},
     },
     {
         "name": "propose_layout_change",
@@ -230,13 +264,13 @@ ORCHESTRATOR_TOOLS = [
     },
     {
         "name": "route_to_agent",
-        "description": "Delegate to a Client Orchestrator or Contract Subagent. Response comes back in same thread — CDM never sees the routing.",
+        "description": "Delegate to a Customer Orchestrator or Contract Subagent. Response comes back in same thread — CDM never sees the routing.",
         "input_schema": {
             "type": "object",
-            "required": ["agentType", "clientId", "handoffSummary", "message"],
+            "required": ["agentType", "customerId", "handoffSummary", "message"],
             "properties": {
-                "agentType":      {"type": "string", "enum": ["client_orchestrator", "contract_subagent"]},
-                "clientId":       {"type": "string"},
+                "agentType":      {"type": "string", "enum": ["customer_orchestrator", "contract_subagent"]},
+                "customerId":     {"type": "string"},
                 "contractId":     {"type": "string"},
                 "handoffSummary": {"type": "string"},
                 "message":        {"type": "string"},
@@ -273,8 +307,8 @@ ORCHESTRATOR_TOOLS = [
         },
     },
     {
-        "name": "register_client",
-        "description": "Create a new ClientAgent entry and add it to the nav.",
+        "name": "register_customer",
+        "description": "Create a new CustomerAgent entry and add it to the nav.",
         "input_schema": {
             "type": "object",
             "required": ["customerId", "displayName"],
@@ -285,13 +319,32 @@ ORCHESTRATOR_TOOLS = [
         },
     },
     {
-        "name": "register_contract",
-        "description": "Create a new ContractSubagent under an existing ClientAgent.",
+        "name": "link_session_to_customer",
+        "description": (
+            "Link the current general conversation session to a specific customer. "
+            "Call this when the CDM's question is clearly about one specific customer "
+            "and the session was started as a general (non-customer) chat. "
+            "After linking, the session will appear under that customer in the sidebar."
+        ),
         "input_schema": {
             "type": "object",
-            "required": ["clientId", "sid", "displayName", "contractType"],
+            "required": ["customer_agent_id"],
             "properties": {
-                "clientId":     {"type": "string"},
+                "customer_agent_id": {
+                    "type": "string",
+                    "description": "The CustomerAgent.ID (UUID) to link this session to.",
+                },
+            },
+        },
+    },
+    {
+        "name": "register_contract",
+        "description": "Create a new ContractSubagent under an existing CustomerAgent.",
+        "input_schema": {
+            "type": "object",
+            "required": ["customerId", "sid", "displayName", "contractType"],
+            "properties": {
+                "customerId":   {"type": "string"},
                 "sid":          {"type": "string"},
                 "displayName":  {"type": "string"},
                 "contractType": {"type": "string", "enum": ["Classic", "ATLAS"]},
@@ -300,13 +353,13 @@ ORCHESTRATOR_TOOLS = [
     },
     {
         "name": "set_agent_status",
-        "description": "Change the lifecycle status of a client, contract, or automation agent. Use when CDM says 'suspend', 'archive', 'retire', or 'reactivate' an agent. Always confirm intent before retiring — it creates a tombstone.",
+        "description": "Change the lifecycle status of a customer, contract, or integration agent. Use when CDM says 'suspend', 'archive', 'retire', or 'reactivate' an agent. Always confirm intent before retiring — it creates a tombstone.",
         "input_schema": {
             "type": "object",
             "required": ["agentType", "agentId", "newStatus"],
             "properties": {
-                "agentType": {"type": "string", "enum": ["client", "contract", "automation"]},
-                "agentId":   {"type": "string", "description": "ID of the ClientAgent, ContractSubagent, or AutomationAgent"},
+                "agentType": {"type": "string", "enum": ["customer", "contract", "integration"]},
+                "agentId":   {"type": "string", "description": "ID of the CustomerAgent, ContractSubagent, or IntegrationAgent"},
                 "newStatus": {"type": "string", "enum": ["active", "suspended", "archived", "retired"]},
                 "reason":    {"type": "string", "description": "Optional reason for the status change"},
             },
@@ -374,6 +427,79 @@ ORCHESTRATOR_TOOLS = [
             }
         }
     },
+    {
+        "name": "process_meeting_notes",
+        "description": (
+            "Extract structured data from raw ops meeting notes and store it on the client's dashboard. "
+            "Call this when the user pastes or uploads meeting notes text. "
+            "The tool identifies the client automatically from the notes content."
+        ),
+        "input_schema": {
+            "type": "object",
+            "required": ["raw_text"],
+            "properties": {
+                "raw_text": {
+                    "type": "string",
+                    "description": "The full raw meeting notes text pasted or uploaded by the CDM",
+                },
+            },
+        },
+    },
+    {
+        "name": "patch_meeting_note",
+        "description": (
+            "Apply one or more targeted updates to the stored meeting notes for the active client. "
+            "Call this when the CDM types a natural-language update like 'topic 3 is now closed', "
+            "'mark risk 1 as resolved', 'add action: Palash to check FMX by Friday', "
+            "'update topic 8 owner to Sudhir', or 'add decision: agreed to defer profile changes to April'. "
+            "The tool applies the patches in memory and returns a human-readable diff — "
+            "show the diff to the CDM and ask for confirmation BEFORE calling confirm_meeting_note_patch."
+        ),
+        "input_schema": {
+            "type": "object",
+            "required": ["patches"],
+            "properties": {
+                "patches": {
+                    "type": "array",
+                    "description": "List of patch operations to apply",
+                    "items": {
+                        "type": "object",
+                        "required": ["op", "target"],
+                        "properties": {
+                            "op": {
+                                "type": "string",
+                                "enum": [
+                                    "set_topic_status", "set_topic_owner", "set_topic_due",
+                                    "add_topic_bullet", "close_topic",
+                                    "add_action", "complete_action", "update_action_owner", "update_action_due",
+                                    "close_risk", "add_decision", "update_narrative"
+                                ],
+                                "description": "Type of patch"
+                            },
+                            "target": {
+                                "type": "string",
+                                "description": "Topic id, action text, risk id, or 'narrative' depending on op"
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "New value — status string, owner name, date, bullet text, action text, decision text, or narrative paragraph"
+                            },
+                            "owner": {"type": "string", "description": "For add_action: who owns it"},
+                            "due":   {"type": "string", "description": "For add_action: due date"},
+                        }
+                    }
+                }
+            }
+        }
+    },
+    {
+        "name": "confirm_meeting_note_patch",
+        "description": (
+            "Write the pending meeting note patches to the database. "
+            "Only call this AFTER patch_meeting_note has returned a diff AND the CDM has explicitly confirmed the changes."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+    },
 ]
 
 # ── Context builder ────────────────────────────────────────────────────────────
@@ -418,11 +544,13 @@ async def run(
     cdm_email: str | None = None,
     assistant_name: str | None = None,
     activity_callback=None,
+    customer_agent_id: str | None = None,
 ) -> dict:
     user_id = cdm_email or "anonymous"
     panels: list[dict] = []
     proposed_layout: dict | None = None
     renamed_to: str | None = None
+    refresh_data: bool = False
 
     # ── 1. Load conversation history ──────────────────────────────────────────
     history = await cap_client.get_conversation_turns(user_id, session_id, limit=20)
@@ -432,6 +560,22 @@ async def run(
 
     # ── 2. Load ambient context ───────────────────────────────────────────────
     open_requests, config, pending_actions = await _load_context(user_id)
+
+    # ── 2a. Resolve active customer from session ──────────────────────────────
+    active_customer: dict | None = None
+    resolved_customer_agent_id = customer_agent_id
+    if not resolved_customer_agent_id:
+        try:
+            session = await cap_client.get_conversation_session(session_id)
+            resolved_customer_agent_id = session.get("customerAgentId")
+        except Exception:
+            pass
+    if resolved_customer_agent_id:
+        try:
+            all_customers = await cap_client.get_customer_agents()
+            active_customer = next((c for c in all_customers if c["ID"] == resolved_customer_agent_id), None)
+        except Exception:
+            pass
 
     name         = assistant_name or config.get("assistant_name", "Beacon")
     active_model = anthropic_client._MODEL
@@ -454,10 +598,88 @@ async def run(
         f"Example: \"Hi, I'm {name}, running on {active_model}. You can change my name or switch models at any time.\""
     ) if is_first_turn else ""
 
+    active_customer_block = ""
+    if active_customer:
+        cid = active_customer.get("customerId", "")
+        cname = active_customer.get("displayName", "")
+        active_customer_block = (
+            f"\nACTIVE CUSTOMER SESSION: This conversation is scoped to customer "
+            f"{cname} (ID: {cid}, AgentID: {resolved_customer_agent_id}). "
+            f"When creating requests or performing actions for this customer, "
+            f"use customerName={cname!r} and customerId={cid!r} automatically — do NOT ask the CDM to re-specify the customer.\n"
+        )
+
+    # ── 2b. Load latest meeting note for active customer ─────────────────────
+    meeting_note_block = ""
+    if resolved_customer_agent_id:
+        try:
+            notes = await cap_client.get_meeting_notes(resolved_customer_agent_id)
+            if notes:
+                note = notes[0]
+                import json as _json
+                full = _json.loads(note.get("extractedJson") or "{}")
+                rollup   = full.get("analysis", {}).get("rollup", {})
+                topics   = full.get("topics", [])
+                actions  = full.get("analysis", {}).get("actionItems", [])
+                risks    = full.get("analysis", {}).get("risks", [])
+                decisions= full.get("analysis", {}).get("decisions", [])
+                sr_refs  = full.get("analysis", {}).get("references", [])
+                open_risks   = [r for r in risks    if r.get("status") == "Open"]
+                overdue_acts = [a for a in actions  if a.get("overdue")]
+                note_date = note.get("meetingDate") or (note.get("createdAt") or "")[:10]
+
+                lines = [f"\nMEETING NOTES (last processed: {note_date}):"]
+                if rollup.get("narrativeSummary"):
+                    lines.append(f"Summary: {rollup['narrativeSummary']}")
+                lines.append(f"Topics: {len(topics)} | Actions: {len(actions)} ({len(overdue_acts)} overdue) | Open risks: {len(open_risks)} | Decisions: {len(decisions)}")
+                if rollup.get("avgAgeDaysOpenItems") is not None:
+                    lines.append(f"Avg age open items: {rollup['avgAgeDaysOpenItems']}d | Closed this period: {rollup.get('closedInPeriod', '—')}")
+
+                if topics:
+                    lines.append("\nTOPICS:")
+                    for t in topics:
+                        flags = ", ".join(t.get("flags", []))
+                        lines.append(f"  [{t.get('id','?')}] {t.get('title','?')} | {t.get('status','?')}"
+                                     + (f" | {flags}" if flags else "")
+                                     + (f" | Owner: {t['owner']}" if t.get('owner') and t['owner'] != 'TBD' else "")
+                                     + (f" | Due: {t['due']}" if t.get('due') and t['due'] != 'TBD' else ""))
+                        if t.get("summary"):
+                            lines.append(f"    {t['summary']}")
+
+                if overdue_acts:
+                    lines.append("\nOVERDUE ACTIONS:")
+                    for a in overdue_acts:
+                        lines.append(f"  - {a.get('owner','?')}: {a.get('action','?')} (due {a.get('due','?')})")
+
+                if actions and not overdue_acts:
+                    lines.append("\nACTION ITEMS:")
+                    for a in actions[:10]:
+                        lines.append(f"  - {a.get('owner','?')}: {a.get('action','?')}" + (f" (due {a['due']})" if a.get('due') else ""))
+
+                if open_risks:
+                    lines.append("\nOPEN RISKS:")
+                    for r in open_risks:
+                        lines.append(f"  [{r.get('id','?')}] {r.get('description','?')}")
+
+                if decisions:
+                    lines.append("\nDECISIONS:")
+                    for d in decisions[:8]:
+                        lines.append(f"  [{d.get('id','?')} {d.get('date','')}] {d.get('text','?')}")
+
+                if sr_refs:
+                    lines.append("\nSR / TICKET INDEX:")
+                    for s in sr_refs:
+                        lines.append(f"  {s.get('ref','?')} ({s.get('type','?')}): {s.get('context','?')}")
+
+                meeting_note_block = "\n".join(lines) + "\n"
+        except Exception:
+            pass
+
     system_prompt = f"""You are {name} — a CDM Personal Virtual Assistant and AI co-worker for SAP Customer Delivery Managers.
 Your name is {name}. You understand the full AS process and can take actions on the CDM's behalf using the tools available.
 If the CDM asks you to change your name, use rename_assistant.{first_turn_note}
-
+{active_customer_block}
+{meeting_note_block}
 CDM USER: {user_id}
 ACTIVE MODEL: {active_model}
 
@@ -487,18 +709,26 @@ TOOLS AVAILABLE:
   • Only show a result panel when rr_lookup returns 1-3 specific service codes.
 - price_lookup: search AS Pricing List — use for price, cost, EUR value questions. If CDM gives a specific code, call price_lookup directly — do NOT call rr_lookup first.
 - parse_email: extract AS request fields from a raw customer email
+- create_request: create a new AS request DB entry — parse_email first if creating from a raw email; for manual/mock creation fill fields directly. If an active customer session is set, its name/ID are already known — do not ask.
 - draft_price_email: draft a price-communication email for an AS request — ALWAYS call this before rendering an email-draft panel; never write email content yourself
 - generate_o2i_ticket: generate the JIRA O2I invoice ticket body (returns draft for CDM review)
 - confirm_o2i_invoiced: mark an AS request as Invoiced after O2I ticket is submitted
 - update_record: update fields on a request (always show what will change first)
-- propose_layout_change: suggest workspace layout changes (CDM must confirm)
+- propose_layout_change: suggest workspace layout changes (CDM must confirm) — always call get_layout first to read existing panels before adding or removing
 - get_reminder_status: check which reminder rules are firing
-- route_to_agent: delegate to a Client Orchestrator or Contract Subagent (invisible to CDM)
+- route_to_agent: delegate to a Customer Orchestrator or Contract Subagent (invisible to CDM)
 - surface_pending_action: push a card to CDM Inbox for actions requiring human input
 - resolve_pending_action: mark a pending action as responded or dismissed
-- register_client: add a new client to the nav
-- register_contract: add a new contract under a client
-- set_agent_status: suspend, archive, or retire a client/contract/automation agent (always confirm before retiring)
+- register_customer: add a new customer to the nav
+- register_contract: add a new contract under a customer
+- set_agent_status: suspend, archive, or retire a customer/contract/integration agent (always confirm before retiring)
+- process_meeting_notes: extract structured data from raw ops meeting notes and store on the client's dashboard. Call this immediately when the CDM pastes a block of meeting notes text (recognisable by date headings, topic numbers, owner/status lines, action items). Do NOT ask for confirmation first — just call it.
+- patch_meeting_note: apply targeted updates to the stored meeting notes when the CDM types a natural-language change ("topic 3 is closed", "mark risk 1 resolved", "add action: Palash to check FMX by Friday"). Call patch_meeting_note to build the diff, show it to the CDM, then call confirm_meeting_note_patch only after explicit confirmation.
+- confirm_meeting_note_patch: write pending patches to the database. Only call after CDM confirms.
+
+MEETING NOTES DETECTION: If the user message looks like raw meeting notes (contains topic numbers or bullet points with owners/status/dates, company name at top, or action items like "X to check"), call process_meeting_notes immediately with the entire message as raw_text.
+
+MEETING NOTES UPDATE DETECTION: If the CDM is in a client session and types something that describes a change to existing meeting notes — status update, ownership change, new action item, closing a topic or risk, adding a decision — call patch_meeting_note with the appropriate patches. Show the diff, then wait for confirmation before calling confirm_meeting_note_patch.
 
 CURRENT WORKSPACE STATE:
 {context_block}
@@ -507,15 +737,17 @@ CURRENT WORKSPACE STATE:
 
 ROUTING PRIORITY:
 1. If CDM is replying to a pending action → resolve it via resolve_pending_action
-2. If message mentions a customer name → route_to_agent (client_orchestrator)
-3. If message is a clear task (email parse) → parse_email; (price) → price_lookup; (O2I) → generate_o2i_ticket / confirm_o2i_invoiced
-4. Otherwise handle directly
+2. If message looks like raw meeting notes (topic list, status/owner lines, action items) → process_meeting_notes immediately
+3. If message mentions a customer name → route_to_agent (customer_orchestrator)
+4. If message is a clear task (email parse) → parse_email then confirm with CDM then create_request; (price) → price_lookup; (O2I) → generate_o2i_ticket / confirm_o2i_invoiced
+5. Otherwise handle directly
 
 RULES:
 - Be concise — CDMs are busy
 - Never greet on non-first turns
 - Always show CDM what will change before calling update_record
 - Use render_record_panel / render_data_panel / render_action_panel / render_notice_panel to surface data visually; don't just list it in text
+- When panels are rendered, keep the reply text to one short sentence max — never re-explain panel content in prose
 - For price emails: call draft_price_email → then render_action_panel(type:email-draft) with the returned content. Never skip draft_price_email.
 - Proactively surface active reminders via reminder-banner panels
 - API key never goes to the browser
@@ -530,16 +762,19 @@ RULES:
             panels=panels,
             proposed_layout_ref=proposed_layout_container,
             renamed_to_ref=renamed_to_container,
+            refresh_data_ref=refresh_data_container,
             history=history,
             user_id=user_id,
             session_id=session_id,
             open_requests=open_requests,
+            resolved_customer_agent_id=resolved_customer_agent_id,
             activity_callback=activity_callback,
         )
 
     # Mutable containers for side-effect outputs
     proposed_layout_container = [None]
     renamed_to_container      = [None]
+    refresh_data_container    = [False]
 
     # ── 5. Run tool-use loop ──────────────────────────────────────────────────
     result = await anthropic_client.chat_with_tools(
@@ -551,18 +786,21 @@ RULES:
     now = datetime.utcnow().isoformat() + "Z"
     await cap_client.save_conversation_turns([
         {"ID": str(uuid.uuid4()), "userId": user_id, "sessionId": session_id,
-         "role": "user", "content": message, "agentName": "main_orchestrator", "createdAt": now},
+         "role": "user", "content": message, "agentName": "main_orchestrator",
+         "customerAgentId": customer_agent_id, "createdAt": now},
         {"ID": str(uuid.uuid4()), "userId": user_id, "sessionId": session_id,
          "role": "assistant",
          "content": json.dumps({"reply": reply, "panels": panels, "toolOutputs": result["tool_outputs"]}),
-         "agentName": "main_orchestrator", "createdAt": now},
+         "agentName": "main_orchestrator", "customerAgentId": customer_agent_id, "createdAt": now},
     ])
+    await cap_client.update_session_last_active(session_id)
 
     return {
-        "reply":           reply,
-        "panels":          panels if panels else None,
-        "proposedLayout":  proposed_layout_container[0],
-        "renameAssistant": renamed_to_container[0],
+        "reply":               reply,
+        "panels":              panels if panels else None,
+        "proposedLayout":      proposed_layout_container[0],
+        "renameAssistant":     renamed_to_container[0],
+        "refreshData":         refresh_data_container[0] or False,
     }
 
 
@@ -583,10 +821,12 @@ async def _dispatch(
     panels: list,
     proposed_layout_ref: list,
     renamed_to_ref: list,
+    refresh_data_ref: list,
     history: list,
     user_id: str,
     session_id: str,
     open_requests: list,
+    resolved_customer_agent_id: str | None = None,
     activity_callback=None,
 ) -> Any:
     # Read-only tools — safe for concurrent dispatch:
@@ -594,7 +834,7 @@ async def _dispatch(
     #   template_read, notes_read, inject_document
     # Write tools — must not be parallelised with conflicting writes:
     #   update_record, surface_pending_action, resolve_pending_action,
-    #   register_client, register_contract, set_agent_status, route_to_agent,
+    #   register_customer, register_contract, set_agent_status, route_to_agent,
     #   render_record_panel, render_data_panel, render_action_panel, render_notice_panel,
     #   draft_price_email, generate_o2i_ticket, confirm_o2i_invoiced, template_write
     import app.agents.rr_agent as rr_agent
@@ -797,6 +1037,28 @@ async def _dispatch(
         except Exception:
             return {"raw": result}
 
+    if tool_name == "create_request":
+        await _activity("Creating AS request…")
+        import uuid as _uuid
+        description = tool_input.get("description", "")
+        title = tool_input.get("requestTitle") or (description[:80] if description else "AS Request")
+        data = {
+            "ID":                   str(_uuid.uuid4()),
+            "requestTitle":         title,
+            "customerName":         tool_input.get("customerName", ""),
+            "customerAccountId":    tool_input.get("customerAccountId", ""),
+            "sid":                  tool_input.get("sid", ""),
+            "additionalServiceIds": tool_input.get("additionalServiceIds", ""),
+            "description":          description,
+            "poNumber":             tool_input.get("poNumber", ""),
+            "assignedCDM":          tool_input.get("assignedCDM") or user_id,
+            "cdmOwner":             tool_input.get("assignedCDM") or user_id,
+            "status":               tool_input.get("status") or "New",
+        }
+        result = await cap_client.create_as_request(data)
+        refresh_data_ref[0] = True
+        return {"created": True, "requestId": result.get("ID"), "record": result, "refreshData": True}
+
     if tool_name == "draft_price_email":
         await _activity("Drafting price communication email…")
         request_id = tool_input.get("request_id", "")
@@ -900,6 +1162,15 @@ async def _dispatch(
         except Exception as e:
             return {"error": str(e)}
 
+    if tool_name == "get_layout":
+        row = await cap_client.get_persona_layout(user_id)
+        if not row or not row.get("layoutJson"):
+            return {"panels": []}
+        try:
+            return {"panels": json.loads(row["layoutJson"]).get("panels", [])}
+        except Exception:
+            return {"panels": []}
+
     if tool_name == "propose_layout_change":
         proposed_layout_ref[0] = {
             "description": tool_input.get("description", ""),
@@ -914,17 +1185,17 @@ async def _dispatch(
 
     if tool_name == "route_to_agent":
         await _activity(f"Routing to {tool_input.get('agentType', 'agent')}…")
-        agent_type  = tool_input.get("agentType")
-        client_id   = tool_input.get("clientId")
-        contract_id = tool_input.get("contractId")
-        if not client_id:
-            return {"error": "clientId required"}
+        agent_type   = tool_input.get("agentType")
+        customer_id  = tool_input.get("customerId")
+        contract_id  = tool_input.get("contractId")
+        if not customer_id:
+            return {"error": "customerId required"}
         recent_turns = [{"role": t["role"], "content": t["content"]}
-                        for t in history[-5:] if t.get("agentName") == (contract_id or client_id)]
+                        for t in history[-5:] if t.get("agentName") == (contract_id or customer_id)]
         handoff = HandoffContext(
             to_agent=agent_type,
             intent=tool_input.get("intent", "general"),
-            customer_id=tool_input.get("clientId", ""),
+            customer_id=tool_input.get("customerId", ""),
             contract_id=tool_input.get("contractId"),
             request_ids=tool_input.get("request_ids", []),
             summary=tool_input.get("handoffSummary", ""),
@@ -935,7 +1206,7 @@ async def _dispatch(
             reply = await contract_agent_mod.run(handoff)
         else:
             reply = await client_agent_mod.run(handoff)
-        return {"reply": reply, "agentName": contract_id or client_id}
+        return {"reply": reply, "agentName": contract_id or customer_id}
 
     if tool_name == "surface_pending_action":
         target_user  = tool_input.get("userId", user_id)
@@ -966,22 +1237,29 @@ async def _dispatch(
         result = await cap_client.resolve_pending_action(action_id, pa_status, recorded)
         return {"resolved": True, "pendingActionId": action_id, "status": pa_status}
 
-    if tool_name == "register_client":
+    if tool_name == "register_customer":
         customer_id  = tool_input.get("customerId", "")
         display_name = tool_input.get("displayName", "")
         if not customer_id or not display_name:
             return {"error": "customerId and displayName required"}
-        result = await cap_client.register_client(customer_id, display_name, user_id)
-        return {"created": True, "clientId": result.get("ID"), "displayName": display_name}
+        result = await cap_client.register_customer(customer_id, display_name, user_id)
+        return {"created": True, "customerId": result.get("ID"), "displayName": display_name}
+
+    if tool_name == "link_session_to_customer":
+        cag_id = tool_input.get("customer_agent_id", "")
+        if not cag_id:
+            return {"error": "customer_agent_id required"}
+        await cap_client.link_session_to_customer(session_id, cag_id)
+        return {"linked": True, "sessionId": session_id, "customerAgentId": cag_id}
 
     if tool_name == "register_contract":
-        client_id     = tool_input.get("clientId", "")
+        customer_id   = tool_input.get("customerId", "")
         sid           = tool_input.get("sid", "")
         display_name  = tool_input.get("displayName", "")
         contract_type = tool_input.get("contractType", "Classic")
-        if not client_id or not sid or not display_name:
-            return {"error": "clientId, sid, displayName required"}
-        result = await cap_client.register_contract(client_id, sid, display_name, contract_type)
+        if not customer_id or not sid or not display_name:
+            return {"error": "customerId, sid, displayName required"}
+        result = await cap_client.register_contract(customer_id, sid, display_name, contract_type)
         return {"created": True, "contractId": result.get("ID"), "displayName": display_name}
 
     if tool_name == "set_agent_status":
@@ -992,7 +1270,7 @@ async def _dispatch(
         reason     = tool_input.get("reason", "")
         if not agent_type or not agent_id or not new_status:
             return {"error": "agentType, agentId, newStatus required"}
-        entity_map = {"client": "ClientAgents", "contract": "ContractSubagents", "automation": "AutomationAgents"}
+        entity_map = {"customer": "CustomerAgents", "contract": "ContractSubagents", "integration": "IntegrationAgents"}
         entity = entity_map.get(agent_type)
         if not entity:
             return {"error": f"Unknown agentType: {agent_type}"}
@@ -1084,6 +1362,467 @@ async def _dispatch(
             "word_count": word_count,
             "content": content,
             "note": "Document loaded into context for this session only. Not stored anywhere."
+        }
+
+    if tool_name == "patch_meeting_note":
+        patches = tool_input.get("patches", [])
+        if not patches:
+            return {"error": "No patches provided"}
+        if not resolved_customer_agent_id:
+            return {"error": "No active client session — open a client chat first"}
+
+        await _activity("Loading meeting notes for patching…")
+        try:
+            notes = await cap_client.get_meeting_notes(resolved_customer_agent_id)
+        except Exception as e:
+            return {"error": f"Could not load meeting notes: {e}"}
+        if not notes:
+            return {"error": "No meeting notes found for this client. Process a full set of notes first."}
+
+        note = notes[0]
+        try:
+            full = json.loads(note.get("extractedJson") or "{}")
+        except Exception:
+            return {"error": "Could not parse stored meeting notes JSON"}
+
+        diff_lines = []
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        for p in patches:
+            op     = p.get("op", "")
+            target = p.get("target", "")
+            value  = p.get("value", "")
+
+            topics   = full.get("topics", [])
+            analysis = full.get("analysis", {})
+            actions  = analysis.get("actionItems", [])
+            risks    = analysis.get("risks", [])
+            decisions= analysis.get("decisions", [])
+
+            if op == "set_topic_status":
+                for t in topics:
+                    if str(t.get("id","")).lower() == target.lower() or t.get("title","").lower().startswith(target.lower()):
+                        old = t.get("status","?")
+                        t["status"] = value
+                        diff_lines.append(f"Topic {t.get('id') or t.get('title')}: status {old} → {value}")
+                        break
+
+            elif op == "close_topic":
+                for t in topics:
+                    if str(t.get("id","")).lower() == target.lower() or t.get("title","").lower().startswith(target.lower()):
+                        old = t.get("status","?")
+                        t["status"] = "Closed"
+                        if "Closed" not in t.get("flags", []):
+                            t.setdefault("flags", []).append("Closed")
+                        diff_lines.append(f"Topic {t.get('id') or t.get('title')}: status {old} → Closed")
+                        break
+
+            elif op == "set_topic_owner":
+                for t in topics:
+                    if str(t.get("id","")).lower() == target.lower() or t.get("title","").lower().startswith(target.lower()):
+                        old = t.get("owner","TBD")
+                        t["owner"] = value
+                        diff_lines.append(f"Topic {t.get('id') or t.get('title')}: owner {old} → {value}")
+                        break
+
+            elif op == "set_topic_due":
+                for t in topics:
+                    if str(t.get("id","")).lower() == target.lower() or t.get("title","").lower().startswith(target.lower()):
+                        old = t.get("due","TBD")
+                        t["due"] = value
+                        diff_lines.append(f"Topic {t.get('id') or t.get('title')}: due {old} → {value}")
+                        break
+
+            elif op == "add_topic_bullet":
+                for t in topics:
+                    if str(t.get("id","")).lower() == target.lower() or t.get("title","").lower().startswith(target.lower()):
+                        current = t.setdefault("timeline", {}).setdefault("current", [])
+                        if current and current[0].get("date") == today_str:
+                            current[0].setdefault("bullets", []).append(value)
+                        else:
+                            current.insert(0, {"date": today_str, "bullets": [value]})
+                        diff_lines.append(f"Topic {t.get('id') or t.get('title')}: added bullet → \"{value}\"")
+                        break
+
+            elif op == "add_action":
+                owner = p.get("owner", "TBD")
+                due   = p.get("due", None)
+                overdue = False
+                if due:
+                    try:
+                        overdue = due < today_str
+                    except Exception:
+                        pass
+                new_action = {"text": value, "owner": owner, "due": due, "topicRef": target, "overdue": overdue}
+                actions.append(new_action)
+                analysis["actionItems"] = actions
+                full["analysis"] = analysis
+                diff_lines.append(f"New action added: {owner}: {value}" + (f" (due {due})" if due else ""))
+
+            elif op == "complete_action":
+                for a in actions:
+                    if target.lower() in (a.get("text","") or "").lower() or target.lower() in (a.get("owner","") or "").lower():
+                        a["overdue"] = False
+                        a["completedDate"] = today_str
+                        diff_lines.append(f"Action marked complete: {a.get('owner','?')}: {a.get('text','?')}")
+                        break
+
+            elif op == "update_action_owner":
+                for a in actions:
+                    if target.lower() in (a.get("text","") or "").lower():
+                        old = a.get("owner","?")
+                        a["owner"] = value
+                        diff_lines.append(f"Action owner changed: \"{a.get('text','?')}\" {old} → {value}")
+                        break
+
+            elif op == "update_action_due":
+                for a in actions:
+                    if target.lower() in (a.get("text","") or "").lower():
+                        old = a.get("due","?")
+                        a["due"] = value
+                        try:
+                            a["overdue"] = value < today_str
+                        except Exception:
+                            pass
+                        diff_lines.append(f"Action due date changed: \"{a.get('text','?')}\" {old} → {value}")
+                        break
+
+            elif op == "close_risk":
+                for r in risks:
+                    if r.get("id","").lower() == target.lower() or target.lower() in r.get("description","").lower():
+                        old = r.get("status","?")
+                        r["status"] = "Closed"
+                        r["closedDate"] = today_str
+                        diff_lines.append(f"Risk {r.get('id','?')} closed: {r.get('description','?')}")
+                        break
+
+            elif op == "add_decision":
+                existing = decisions
+                new_id = f"DEC-{today_str[:4]}-{len(existing)+1:03d}"
+                new_dec = {"id": new_id, "date": today_str, "text": value, "topicRef": target, "subTopicRef": None, "agreedBy": None}
+                decisions.append(new_dec)
+                analysis["decisions"] = decisions
+                full["analysis"] = analysis
+                diff_lines.append(f"New decision {new_id}: {value}")
+
+            elif op == "update_narrative":
+                if "rollup" not in analysis:
+                    analysis["rollup"] = {}
+                old = analysis["rollup"].get("narrativeSummary","(none)")
+                analysis["rollup"]["narrativeSummary"] = value
+                full["analysis"] = analysis
+                diff_lines.append(f"Narrative summary updated")
+
+        if not diff_lines:
+            return {"error": "No matching topics, actions, or risks found for the requested patches. Check the topic ID or description."}
+
+        # Store pending patch state keyed by session_id
+        _pending_patches[session_id] = {
+            "note_id":     note.get("ID"),
+            "customer_agent_id": resolved_customer_agent_id,
+            "patched_json": json.dumps(full),
+            "topics_json":  json.dumps(full.get("topics",[])),
+            "actions_json": json.dumps(full.get("analysis",{}).get("actionItems",[])),
+            "risks_json":   json.dumps(full.get("analysis",{}).get("risks",[])),
+            "decisions_json": json.dumps(full.get("analysis",{}).get("decisions",[])),
+            "client_name":  note.get("clientName",""),
+            "meeting_date": note.get("meetingDate",""),
+        }
+
+        return {
+            "pending": True,
+            "diff": diff_lines,
+            "summary": f"{len(diff_lines)} change{'s' if len(diff_lines) != 1 else ''} staged — awaiting confirmation",
+        }
+
+    if tool_name == "confirm_meeting_note_patch":
+        pending = _pending_patches.pop(session_id, None)
+        if not pending:
+            return {"error": "No pending patch found. Call patch_meeting_note first."}
+
+        await _activity("Saving updated meeting notes…")
+        try:
+            await cap_client.save_meeting_note(
+                customer_agent_id=pending["customer_agent_id"],
+                client_name=pending["client_name"],
+                meeting_date=pending["meeting_date"],
+                raw_text="",
+                extracted_json=pending["patched_json"],
+                topics_json=pending["topics_json"],
+                action_items_json=pending["actions_json"],
+                risks_json=pending["risks_json"],
+                decisions_json=pending["decisions_json"],
+            )
+        except Exception as e:
+            return {"error": f"Failed to save: {e}"}
+
+        refresh_data_ref[0] = True
+        return {"saved": True, "message": "Meeting notes updated and dashboard refreshed."}
+
+    if tool_name == "process_meeting_notes":
+        raw_text = tool_input.get("raw_text", "").strip()
+        if not raw_text:
+            return {"error": "raw_text is required"}
+
+        await _activity("Extracting meeting notes structure…")
+
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        EXTRACTION_SYSTEM = f"""You are a meeting notes extraction agent. Extract structured data from raw OPS meeting notes and return a complete ClientRecord JSON.
+
+Return ONLY a valid JSON object — no markdown fences, no explanation, no commentary.
+
+The output must conform exactly to this schema. All fields shown are required unless marked optional.
+
+---
+## TOP-LEVEL STRUCTURE
+
+{{
+  "client": "company name as written at top of notes",
+  "processedDate": "{today}",
+  "milestones": [ {{"date": "...", "description": "...", "comment": "..."}} ],
+  "absences": [ {{"who": "...", "date": "...", "substitute1": "...", "substitute2Notes": "..."}} ],
+  "topics": [ ...see TOPIC SCHEMA... ],
+  "analysis": {{
+    "decisions":       [ ...see DECISIONS AUDIT TRAIL... ],
+    "references":      [ ...see SR/REFERENCE INDEX... ],
+    "risks":           [ ...see RISK REGISTER... ],
+    "ownerHistory":    {{ "topicId": [ ...see OWNER HISTORY... ] }},
+    "actionItems":     [ ...see ACTION ITEMS... ],
+    "systemMap":       {{ "SYSCODE": {{"topics": [], "mentions": 0, "concentrationRisk": false}} }},
+    "staleTopics":     [ ...see STALE TOPICS... ],
+    "upcomingActions": [ ...see UPCOMING ACTIONS... ],
+    "rollup":          {{ ...see ROLLUP SUMMARY... }},
+    "diff":            null,
+    "config": {{
+      "riskThresholdDays": 30,
+      "staleThresholdWeeks": 2,
+      "rollupPeriod": "weekly",
+      "systemConcentrationThreshold": 3,
+      "ownerFlipThreshold": 2
+    }}
+  }}
+}}
+
+---
+## MILESTONES
+Extract the milestones / important events table from the top of the notes if present.
+Each row: {{"date": "as written", "description": "event name", "comment": "status comment e.g. Finished"}}
+Include all rows even if partially empty.
+
+---
+## ABSENCES
+Extract the absences/holidays table from the top of the notes if present.
+Each row: {{"who": "name", "date": "date range or empty", "substitute1": "cover person or empty", "substitute2Notes": "additional note or empty"}}
+Include all rows even if the person has no absence (empty date = no upcoming absence).
+
+---
+## TOPIC SCHEMA
+Each topic object:
+{{
+  "id": "topic number e.g. '1', '4a', '0451' — or null",
+  "flags": ["Top Issue"|"Action"|"Risk"|"Info"|"Monitoring"|"Closed"],
+  "title": "topic title",
+  "references": "SR33551172, SAPNote# 2600030 — verbatim refs mentioned, or null",
+  "status": "In Progress|Blocked|Completed|Closed|Monitoring",
+  "owner": "person or party name, or TBD",
+  "due": "due date as written, or TBD",
+  "summary": "one AI-written sentence summarising current state",
+  "decisions": [{{"text": "verbatim", "date": "or null"}}],
+  "isSection": false,
+  "sharedUpdates": [{{"text": "verbatim bullet", "date": "or null"}}],
+  "subTopics": [],
+  "timeline": {{
+    "current": [{{"date": "most recent date", "bullets": ["verbatim"]}}],
+    "earlier": [{{"date": "older date or null", "bullets": ["verbatim"]}}]
+  }}
+}}
+
+### STATUS RULES (critical)
+- "Blocked" ONLY if the word is literally written
+- "Waiting on X" / "in progress on X side" = "In Progress"
+- Default: "In Progress"
+
+### OWNER RULES
+- "X to check" / "X investigating" / "X to raise" → owner is X
+- "In progress on [party] side" → owner is that party
+- Default: "TBD"
+
+### FLAG RULES
+- "Top Issue" — only if explicitly called a top issue in the notes
+- "Action" — topic has open action items assigned to people
+- "Risk" — topic is blocked OR contains process gap / escalation language
+- "Info" — informational update only, no action needed
+- "Monitoring" — topic is being watched but no active work
+- "Closed" — topic is fully done
+
+### TIMELINE RULES
+- Most recent date group → "current" array
+- All older date groups → "earlier" array, one entry per date — NEVER clump multiple dates together
+- Bullets with no recoverable date → "earlier" with date: null
+- Preserve bullet text close to verbatim
+
+### DECISION DETECTION (triggers)
+"OK for", "confirmed", "agreed", "no need to", "considered permanent", "to be closed", "completed", "done"
+Each decision: {{"text": "verbatim decision text", "date": "date or null"}}
+
+### SECTION TOPICS (isSection: true)
+Set isSection=true when a topic tracks multiple system IDs (e.g. 0451/0473/0474) or uses Part I/Part II language.
+- Bullets mentioning a specific ID/system → that subTopic's timeline
+- Bullets mentioning multiple IDs → each relevant subTopic
+- General/ambiguous bullets → sharedUpdates (over-aggregate rather than misplace)
+
+Each subTopic:
+{{
+  "id": "e.g. '0451' or 'FMP'",
+  "title": "full title",
+  "systems": ["FMP", "FMQ"],
+  "owner": "TBD",
+  "due": "TBD",
+  "expiry": "expiry date if mentioned, else omit",
+  "status": "In Progress|Blocked|Completed|Closed|Monitoring",
+  "decisions": [{{"text": "...", "date": "..."}}],
+  "timeline": {{"current": [], "earlier": []}}
+}}
+
+---
+## ANALYSIS SECTIONS
+
+### 1. DECISIONS AUDIT TRAIL (analysis.decisions)
+Extract every decision across all topics into a sequential log.
+Sequential IDs: DEC-{today[:4]}-001, DEC-{today[:4]}-002, etc.
+{{"id": "DEC-YYYY-NNN", "date": "or null", "text": "verbatim", "topicRef": "topic id", "subTopicRef": "sub-topic id or null", "agreedBy": "party or null"}}
+
+### 2. SR/REFERENCE INDEX (analysis.references)
+Collect every SR, SAPNote, Case#, KBA, ticket number mentioned anywhere.
+Deduplicate — same ref in multiple topics gets one entry with all topicRefs.
+{{"ref": "verbatim e.g. SR33551172", "type": "SR|SAPNote|Case|KBA|Other", "context": "brief context from surrounding text", "topicRefs": ["1", "3"], "status": "if mentioned"}}
+
+### 3. RISK REGISTER (analysis.risks)
+Flag as a risk:
+- Any topic with status "Blocked"
+- Process gap language: "how can this happen without", "why was this not done", "no checks being done", "without input from team"
+- Escalation language: "wondering why", "impression was that", "not implemented for such a long time"
+- Topic with no due date AND no owner (stalled without accountability)
+{{"id": "RISK-NNN", "description": "...", "detectedDate": "{today}", "topicRef": "topic id", "trigger": "what triggered it", "status": "Open", "closedDate": null}}
+
+### 4. ACTION ITEMS (analysis.actionItems)
+Detect: "X to check", "X to raise SR", "X to send", "X to share", "X to confirm", "X to create", "X to investigate", "SR needed", "SR to be raised by X"
+Sort: overdue first, then by due date, then by owner.
+{{"text": "verbatim action", "owner": "person", "due": "date or null", "topicRef": "topic id", "subTopicRef": "or null", "overdue": true/false}}
+overdue = true if due date is before {today}.
+
+### 5. SYSTEM IMPACT MAP (analysis.systemMap)
+List every system code mentioned (FMP, FMQ, FMX, FMS, FMD, HMD, HMQ, HMP, WFD, WFP, WFB, HMX, FME, etc).
+For each: which topic IDs reference it, total mention count, concentrationRisk=true if in 3+ topics.
+{{"FMP": {{"topics": ["1","4a","8"], "mentions": 12, "concentrationRisk": true}}}}
+
+### 6. OWNER HISTORY (analysis.ownerHistory)
+For each topic where ownership changed between parties (detect from timeline: "in progress on SAP side" then later "in progress on Allianz side"):
+{{"topicId": [{{"date": "YYYY-MM-DD", "from": "SAP", "to": "Allianz"}}]}}
+Only include topics that actually had ownership changes.
+
+### 7. STALE TOPICS (analysis.staleTopics)
+Flag topics where the most recent date in their timeline is more than 2 weeks before {today}.
+{{"topicRef": "topic id", "topicTitle": "...", "lastMentioned": "most recent date found", "gapDays": N, "owner": "current owner"}}
+
+### 8. UPCOMING ACTIONS (analysis.upcomingActions)
+Actions from any topic due within 7 days of {today} (i.e. due by {today} + 7 days).
+{{"description": "action text", "owner": "person", "dueDate": "as written", "topicRef": "topic id"}}
+
+### 9. ROLLUP SUMMARY (analysis.rollup)
+{{
+  "period": "weekly",
+  "totalTopics": N,
+  "closedInPeriod": N,
+  "openedInPeriod": N,
+  "blocked": N,
+  "decisionsInPeriod": N,
+  "activeRisks": N,
+  "avgAgeDaysOpenItems": N,
+  "actionsDueNext7Days": N,
+  "narrativeSummary": "AI-written paragraph summarising current state — suitable for pasting into a weekly status report"
+}}
+
+### 10. DIFF (analysis.diff)
+Set to null — this is a first-run extraction with no previous data to compare against.
+
+---
+## CRITICAL RULES
+- Preserve bullet text close to verbatim — do not paraphrase raw bullets
+- "summary" field is AI-written (one sentence); all other text fields are verbatim
+- Empty arrays [] and null values are valid — do not omit required fields
+- Never confuse entry dates (when discussed) with due dates (when something must happen)
+- sharedUpdates items are objects with "text" field, not plain strings"""
+
+        try:
+            extracted_text = await anthropic_client.chat_with_history(
+                EXTRACTION_SYSTEM,
+                [{"role": "user", "content": raw_text}],
+                max_tokens=16000,
+            )
+            # Strip markdown code fences if present
+            cleaned = extracted_text.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+            extracted = json.loads(cleaned)
+        except Exception as e:
+            return {"error": f"Extraction failed: {e}"}
+
+        client_name = extracted.get("client", "")
+        meeting_date = extracted.get("processedDate") or extracted.get("meetingDate") or today
+        topics = extracted.get("topics", [])
+        analysis = extracted.get("analysis", {})
+        action_items = analysis.get("actionItems", [])
+        risks = analysis.get("risks", [])
+        decisions = analysis.get("decisions", [])
+
+        # Match client name to a CustomerAgent
+        customer_agent_id = None
+        try:
+            agents = await cap_client.get_customer_agents()
+            client_lower = client_name.lower()
+            for agent in agents:
+                name = (agent.get("displayName") or "").lower()
+                if client_lower and (client_lower in name or name in client_lower):
+                    customer_agent_id = agent.get("ID")
+                    client_name = agent.get("displayName", client_name)
+                    break
+        except Exception:
+            pass
+
+        if not customer_agent_id:
+            return {
+                "error": f"Could not match client '{client_name}' to any known customer. "
+                         f"Available customers: {[a.get('displayName') for a in (agents if 'agents' in dir() else [])]}. "
+                         "Please check the client name in the notes."
+            }
+
+        await _activity(f"Saving meeting notes for {client_name}…")
+
+        try:
+            await cap_client.save_meeting_note(
+                customer_agent_id=customer_agent_id,
+                client_name=client_name,
+                meeting_date=meeting_date,
+                raw_text=raw_text,
+                extracted_json=json.dumps(extracted),
+                topics_json=json.dumps(topics),
+                action_items_json=json.dumps(action_items),
+                risks_json=json.dumps(risks),
+                decisions_json=json.dumps(decisions),
+            )
+        except Exception as e:
+            return {"error": f"Failed to save meeting note: {e}"}
+
+        refresh_data_ref[0] = True
+        return {
+            "saved": True,
+            "clientName": client_name,
+            "customerAgentId": customer_agent_id,
+            "topicsCount": len(topics),
+            "actionItemsCount": len(action_items),
+            "risksCount": len([r for r in risks if r.get("status") == "Open"]),
+            "decisionsCount": len(decisions),
         }
 
     return {"error": f"Unknown tool: {tool_name}"}

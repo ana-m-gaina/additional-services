@@ -8,9 +8,9 @@ metadata:
     Python multi-agent AI service for CDM AS Tracker v2. Implements a Main
     Orchestrator with 11 tools (render_panel, fetch_records, invoke_subagent,
     update_record, propose_layout_change, route_to_agent, surface_pending_action,
-    resolve_pending_action, get_reminder_status, register_client,
+    resolve_pending_action, get_reminder_status, register_customer,
     register_contract), conversation memory persisted via CAP OData, and a
-    Client→Contract agent hierarchy. All Claude calls use Anthropic SDK
+    Customer→Contract agent hierarchy. All Claude calls use Anthropic SDK
     (claude-opus-4-7) with adaptive thinking and a 10-iteration tool-use loop.
 
 type: agent
@@ -31,7 +31,7 @@ agentCard:
     Agent-native AI orchestrator for CDM Additional Services. Claude drives the
     UI by returning panel specs (render_panel tool). Routes to R&R, Pricing,
     Request Management, and O2I specialist subagents. Maintains per-session
-    conversation memory. Supports Client→Contract agent delegation and
+    conversation memory. Supports Customer→Contract agent delegation and
     Inbox/PendingActions automation.
   capabilities:
     skills:
@@ -45,8 +45,8 @@ agentCard:
         description: Generate and submit JIRA Order-to-Invoice tickets
       - name: panel-rendering
         description: Render UI panels (record-card, table, email-draft, kpi-strip, etc.)
-      - name: client-routing
-        description: Route to Client Orchestrator or Contract Subagent
+      - name: customer-routing
+        description: Route to Customer Orchestrator or Contract Subagent
       - name: inbox-management
         description: Surface and resolve PendingAction items in CDM Inbox
   authentication:

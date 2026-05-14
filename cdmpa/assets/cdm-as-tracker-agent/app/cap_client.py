@@ -326,20 +326,47 @@ async def save_conversation_turns(turns: list) -> None:
             _raise(resp, "save_conversation_turn")
 
 
-# ── Client / Contract agent hierarchy ─────────────────────────────────────────
-
-async def get_client_agents() -> list:
+async def get_conversation_session(session_id: str) -> dict:
     async with await _client() as c:
-        url = _url(f"{CAP_SERVICE_URL}/ClientAgents", {"$orderby": "displayName"})
+        resp = await c.get(f"{CAP_SERVICE_URL}/ConversationSessions('{session_id}')")
+        if resp.status_code == 404:
+            return {}
+        _raise(resp, "get_conversation_session")
+        return resp.json()
+
+
+async def update_session_last_active(session_id: str) -> None:
+    from datetime import datetime
+    async with await _client() as c:
+        await c.patch(
+            f"{CAP_SERVICE_URL}/ConversationSessions('{session_id}')",
+            json={"lastActiveAt": datetime.utcnow().isoformat() + "Z"},
+        )
+
+
+async def link_session_to_customer(session_id: str, customer_agent_id: str) -> None:
+    async with await _client() as c:
+        resp = await c.post(
+            f"{CAP_SERVICE_URL}/linkSessionToCustomer",
+            json={"sessionId": session_id, "customerAgentId": customer_agent_id},
+        )
+        _raise(resp, "link_session_to_customer")
+
+
+# ── Customer / Contract agent hierarchy ───────────────────────────────────────
+
+async def get_customer_agents() -> list:
+    async with await _client() as c:
+        url = _url(f"{CAP_SERVICE_URL}/CustomerAgents", {"$orderby": "displayName"})
         resp = await c.get(url)
-        _raise(resp, "get_client_agents")
+        _raise(resp, "get_customer_agents")
         return resp.json().get("value", [])
 
 
-async def get_contract_subagents(client_id: str | None = None) -> list:
+async def get_contract_subagents(customer_id: str | None = None) -> list:
     params: dict[str, Any] = {"$orderby": "displayName"}
-    if client_id:
-        params["$filter"] = f"clientId eq '{client_id}'"
+    if customer_id:
+        params["$filter"] = f"customerId eq '{customer_id}'"
     async with await _client() as c:
         url = _url(f"{CAP_SERVICE_URL}/ContractSubagents", params)
         resp = await c.get(url)
@@ -347,7 +374,7 @@ async def get_contract_subagents(client_id: str | None = None) -> list:
         return resp.json().get("value", [])
 
 
-async def register_client(customer_id: str, display_name: str, created_by: str) -> dict:
+async def register_customer(customer_id: str, display_name: str, created_by: str) -> dict:
     import uuid
     data = {
         "ID": str(uuid.uuid4()),
@@ -357,18 +384,18 @@ async def register_client(customer_id: str, display_name: str, created_by: str) 
         "createdAt": __import__("datetime").datetime.utcnow().isoformat() + "Z",
     }
     async with await _client() as c:
-        resp = await c.post(f"{CAP_SERVICE_URL}/ClientAgents", json=data)
-        _raise(resp, "register_client")
+        resp = await c.post(f"{CAP_SERVICE_URL}/CustomerAgents", json=data)
+        _raise(resp, "register_customer")
         return resp.json()
 
 
 async def register_contract(
-    client_id: str, sid: str, display_name: str, contract_type: str
+    customer_id: str, sid: str, display_name: str, contract_type: str
 ) -> dict:
     import uuid
     data = {
         "ID": str(uuid.uuid4()),
-        "clientId": client_id,
+        "customerId": customer_id,
         "sid": sid,
         "displayName": display_name,
         "contractType": contract_type,
@@ -380,12 +407,12 @@ async def register_contract(
         return resp.json()
 
 
-# ── Automation agents & Pending actions (Inbox) ────────────────────────────────
+# ── Integration agents & Pending actions (Inbox) ──────────────────────────────
 
-async def get_automation_agents() -> list:
+async def get_integration_agents() -> list:
     async with await _client() as c:
-        resp = await c.get(f"{CAP_SERVICE_URL}/AutomationAgents")
-        _raise(resp, "get_automation_agents")
+        resp = await c.get(f"{CAP_SERVICE_URL}/IntegrationAgents")
+        _raise(resp, "get_integration_agents")
         return resp.json().get("value", [])
 
 
@@ -660,3 +687,47 @@ async def save_personal_note(cdm_email: str, content: str, tags: str = "", relat
             return {"saved": True}
     except Exception as e:
         raise Exception(f"Failed to save note: {e}")
+
+
+async def save_meeting_note(
+    customer_agent_id: str,
+    client_name: str,
+    meeting_date: str,
+    raw_text: str,
+    extracted_json: str,
+    topics_json: str,
+    action_items_json: str,
+    risks_json: str,
+    decisions_json: str,
+) -> dict:
+    async with await _client() as c:
+        resp = await c.post(
+            f"{CAP_SERVICE_URL}/saveMeetingNote",
+            json={
+                "customerAgentId": customer_agent_id,
+                "clientName":      client_name,
+                "meetingDate":     meeting_date or None,
+                "rawText":         raw_text,
+                "extractedJson":   extracted_json,
+                "topicsJson":      topics_json,
+                "actionItemsJson": action_items_json,
+                "risksJson":       risks_json,
+                "decisionsJson":   decisions_json,
+            },
+        )
+        _raise(resp, "save_meeting_note")
+        return resp.json()
+
+
+async def get_meeting_notes(customer_agent_id: str) -> list:
+    try:
+        async with await _client() as c:
+            url = _url(
+                f"{CAP_SERVICE_URL}/MeetingNotes",
+                {"$filter": f"customerAgentId eq '{customer_agent_id}'", "$orderby": "createdAt desc"},
+            )
+            resp = await c.get(url)
+            _raise(resp, "get_meeting_notes")
+            return resp.json().get("value", [])
+    except Exception:
+        return []

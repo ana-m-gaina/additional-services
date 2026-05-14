@@ -1,4 +1,4 @@
-ID,clientId,sid,displayName,contractType,createdAt,status
+ID,customerId,sid,displayName,contractType,createdAt,status
 contract-allianz-prod,client-allianz,AL1PRD,Allianz Production (PCE),Classic,2025-09-01,active
 contract-allianz-dev,client-allianz,AL1DEV,Allianz Dev/QA (PCE),Classic,2025-09-01,active
 contract-globex-prod,client-globex,GX1PRD,Globex Production (S/4 PCE),Classic,2025-11-15,active

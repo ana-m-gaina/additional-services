@@ -9,8 +9,10 @@ export default function ConfirmDialog({ panel }) {
     if (!panel.proposedLayout) return
     setStatus('saving')
     try {
-      await savePersonaLayout(JSON.stringify(panel.proposedLayout))
+      const layout = { panels: panel.proposedLayout?.newPanels || panel.proposedLayout?.panels || [] }
+      await savePersonaLayout(JSON.stringify(layout))
       document.dispatchEvent(new Event('cdm:layout-updated'))
+      document.dispatchEvent(new Event('cdm:go-dashboard'))
       setStatus('done')
     } catch (e) {
       alert(e.message)

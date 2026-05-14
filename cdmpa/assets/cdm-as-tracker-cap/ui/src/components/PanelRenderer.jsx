@@ -10,6 +10,9 @@ import TicketRef from './panels/TicketRef.jsx'
 import ConfirmDialog from './panels/ConfirmDialog.jsx'
 import RrSource from './panels/RrSource.jsx'
 import PdfViewer from './panels/PdfViewer.jsx'
+import MeetingTopics      from './panels/MeetingTopics.jsx'
+import MeetingActionItems from './panels/MeetingActionItems.jsx'
+import MeetingRisks       from './panels/MeetingRisks.jsx'
 
 const MAP = {
   'record-card':     RecordCard,
@@ -24,6 +27,9 @@ const MAP = {
   'confirm-dialog':  ConfirmDialog,
   'rr-source':       RrSource,
   'pdf-viewer':      PdfViewer,
+  'meeting-topics':       MeetingTopics,
+  'meeting-action-items': MeetingActionItems,
+  'meeting-risks':        MeetingRisks,
 }
 
 export default function PanelRenderer({ panel, cdmEmail, inline = false }) {

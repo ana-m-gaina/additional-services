@@ -177,9 +177,9 @@ module.exports = class CDMService extends cds.ApplicationService {
     const {
       ASRequest, ActivityLog, RRTable, PricingTable, CardLayout,
       PersonaLayouts, ConversationTurns,
-      ClientAgents, ContractSubagents, AutomationAgents, PendingActions,
+      CustomerAgents, ContractSubagents, IntegrationAgents, PendingActions,
       EmailTemplates, AdminConfigs, JiraTicketTemplates,
-      PersonalTemplates, PersonalNotes,
+      PersonalTemplates, PersonalNotes, MeetingNotes,
       StatusValues, ProcessTypes, Currencies
     } = this.entities
 
@@ -409,6 +409,32 @@ module.exports = class CDMService extends cds.ApplicationService {
       return true
     })
 
+    // ── createConversationSession unbound action ────────────────────────────────
+    this.on('createConversationSession', async req => {
+      const { customerAgentId, title } = req.data
+      const userId = req.user?.id || 'anonymous'
+      const now    = new Date().toISOString()
+      const id     = crypto.randomUUID()
+      await INSERT.into('cdm.tracker.ConversationSession').entries({
+        ID:              id,
+        customerAgentId: customerAgentId || null,
+        title:           title || 'New chat',
+        createdBy:       userId,
+        createdAt:       now,
+        lastActiveAt:    now,
+      })
+      return { ID: id, customerAgentId, title: title || 'New chat', createdBy: userId, createdAt: now, lastActiveAt: now }
+    })
+
+    // ── linkSessionToCustomer — move a general session to a customer ───────────
+    this.on('linkSessionToCustomer', async req => {
+      const { sessionId, customerAgentId } = req.data
+      await UPDATE('cdm.tracker.ConversationSession')
+        .set({ customerAgentId })
+        .where({ ID: sessionId })
+      return true
+    })
+
     // ── orchestrate — proxy to Python agent ────────────────────────────────────
     this.on('orchestrate', async req => {
       const { message, sessionId, mode, assistantName } = req.data
@@ -460,10 +486,10 @@ module.exports = class CDMService extends cds.ApplicationService {
         const record = await SELECT.one.from(ASRequest, requestId)
         if (!record) return req.error(404, 'Request not found')
 
-        let automation = await SELECT.one.from(AutomationAgents).where({ eventType: 'customer.acceptance' })
+        let automation = await SELECT.one.from(IntegrationAgents).where({ eventType: 'customer.acceptance' })
         if (!automation) {
           const autoId = crypto.randomUUID()
-          await INSERT.into(AutomationAgents).entries({
+          await INSERT.into(IntegrationAgents).entries({
             ID: autoId,
             eventType: 'customer.acceptance',
             displayName: 'Customer acceptance',
@@ -497,6 +523,31 @@ module.exports = class CDMService extends cds.ApplicationService {
       id:    req.user?.id    || 'anonymous',
       roles: req.user?.roles || [],
     }))
+
+    // ── saveMeetingNote ────────────────────────────────────────────────────────
+    this.on('saveMeetingNote', async req => {
+      const { customerAgentId, clientName, meetingDate, rawText, extractedJson,
+              topicsJson, actionItemsJson, risksJson, decisionsJson } = req.data
+      if (!customerAgentId) return req.error(400, 'customerAgentId required')
+
+      const id = crypto.randomUUID()
+      await INSERT.into(MeetingNotes).entries({
+        ID:              id,
+        customerAgentId,
+        clientName:      clientName   || '',
+        meetingDate:     meetingDate  || null,
+        rawText:         rawText      || '',
+        extractedJson:   extractedJson || '',
+        topicsJson:      topicsJson   || '[]',
+        actionItemsJson: actionItemsJson || '[]',
+        risksJson:       risksJson    || '[]',
+        decisionsJson:   decisionsJson || '[]',
+        processedBy:     req.user?.id || 'anonymous',
+        createdAt:       new Date().toISOString(),
+        modifiedAt:      new Date().toISOString(),
+      })
+      return id
+    })
 
     return super.init()
   }

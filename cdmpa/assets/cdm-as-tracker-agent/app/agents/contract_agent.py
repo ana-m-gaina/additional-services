@@ -14,7 +14,7 @@ def capabilities() -> list[str]:
 
 
 async def run(handoff: HandoffContext) -> str:
-    contracts = await cap_client.get_contract_subagents(client_id=handoff.customer_id)
+    contracts = await cap_client.get_contract_subagents(customer_id=handoff.customer_id)
     contract  = next((c for c in contracts if c["ID"] == handoff.contract_id), None)
     if not contract:
         return f"Contract subagent {handoff.contract_id} not found."
@@ -28,9 +28,9 @@ async def run(handoff: HandoffContext) -> str:
         for r in scoped
     ) or "No requests for this contract."
 
-    clients = await cap_client.get_client_agents()
-    client  = next((c for c in clients if c["ID"] == handoff.customer_id), None)
-    customer_name = client.get("displayName", "unknown") if client else "unknown"
+    customers = await cap_client.get_customer_agents()
+    customer  = next((c for c in customers if c["ID"] == handoff.customer_id), None)
+    customer_name = customer.get("displayName", "unknown") if customer else "unknown"
 
     system = (
         f"You are a specialist agent for contract SID: {sid} | "

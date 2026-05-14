@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "vercel-app Asset",
+  "description": "Schema for the vercel-app asset format consumed by the deployer. Mirrors the canonical example at deployer-example-structure-pr/solution/assets/vercel-app/asset.yaml.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "type", "container"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "asset.sap/v1",
+      "description": "API version. Must be 'asset.sap/v1'."
+    },
+    "kind": {
+      "type": "string",
+      "const": "Asset",
+      "description": "Resource type. Must be 'Asset' (capital A)."
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Identifying name in kebab-case. Modifying this after deployment causes breaking changes (URLs of the deployed asset).",
+          "pattern": "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$",
+          "maxLength": 63
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of this asset.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+        }
+      }
+    },
+    "type": {
+      "type": "string",
+      "const": "vercel-app",
+      "description": "Asset type discriminator. Must be 'vercel-app'."
+    },
+    "container": {
+      "type": "object",
+      "required": ["buildPath", "port"],
+      "additionalProperties": false,
+      "description": "Container configuration the deployer uses to build and run the Vercel app.",
+      "properties": {
+        "buildPath": {
+          "type": "string",
+          "description": "Path to the source directory the deployer should build (e.g. 'src').",
+          "minLength": 1
+        },
+        "port": {
+          "type": "integer",
+          "description": "Port the app listens on inside the container.",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

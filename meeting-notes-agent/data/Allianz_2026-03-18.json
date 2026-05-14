@@ -1,0 +1,1196 @@
+{
+  "client": "Allianz Technology SE",
+  "processedDate": "2026-03-18",
+  "milestones": [
+    {
+      "date": "15th–16th Nov",
+      "description": "DR Test",
+      "comment": "Finished"
+    }
+  ],
+  "absences": [
+    { "who": "Tobias", "date": "", "substitute1": "", "substitute2Notes": "" },
+    { "who": "Christian", "date": "", "substitute1": "", "substitute2Notes": "" },
+    { "who": "Shruti", "date": "", "substitute1": "", "substitute2Notes": "" },
+    { "who": "Japneet", "date": "4 March", "substitute1": "Japneet/Oana", "substitute2Notes": "" },
+    { "who": "Japneet", "date": "2, 4 and 5 March", "substitute1": "Sudhir/Shruti", "substitute2Notes": "" },
+    { "who": "Sudhir", "date": "4–6 March", "substitute1": "Japneet/Oana", "substitute2Notes": "" }
+  ],
+  "topics": [
+    {
+      "id": "1",
+      "flags": ["Top Issue", "Action"],
+      "title": "Top Issues",
+      "references": null,
+      "status": "In Progress",
+      "owner": "SAP",
+      "due": "22nd of March",
+      "summary": "Three security note items are tracked as top issues: 0451 (WFD/HMD/HMQ/HMP/JAP, expiry 15 April 2026), 0473 (FMX only — kernel update, expiry 18 August), and 0474 (FMS/FMD/FMQ/FMP/FMX — parameter settings, expiry 18 August). 0451 is largely complete with HMD and WFD done; HMP is on track for 22 March. 0473 and 0474 are the two new top issues — both RFC-related. Japneet/Sudhir are investigating the kernel update requirement and Palash is investigating parameter settings and keeping the team posted. SRs for 0474 were raised for FMD and FMQ on 17 March; volume migration FMP plus 0474 is planned for 22 March.",
+      "isSection": true,
+      "decisions": [
+        { "text": "HMP - OK for the 22nd of March", "date": "17.03.2026" },
+        { "text": "HMD and WFD — everything is done, so 0451 is completed", "date": "09.02.2026" }
+      ],
+      "subTopics": [
+        {
+          "id": "0451",
+          "title": "WFD/HMD/HMQ/HMP/JAP",
+          "systems": ["WFD", "HMD", "HMQ", "HMP"],
+          "owner": "SAP",
+          "due": "22nd of March",
+          "expiry": "15th of April 2026",
+          "status": "In Progress",
+          "decisions": [
+            { "text": "HMD and WFD — everything is done, so 0451 is completed", "date": "09.02.2026" },
+            { "text": "HMP - OK for the 22nd of March", "date": "17.03.2026" }
+          ],
+          "timeline": {
+            "current": [
+              {
+                "date": "17.03.2026",
+                "bullets": [
+                  "0474 - raised SRs for FMD and FMQ 17.03.2026",
+                  "Volume migration FMP plus 0474 - 22nd of March",
+                  "2 new top issues — both for same issue - RFC related",
+                  "Update kernel to latest - Japneet investigating if kernel needs updating (Sudhir)",
+                  "Update parameters - restart needed (rfc/authCheckInPlayback = 2)",
+                  "Palash investigating and keeping us posted",
+                  "HMP - OK for the 22nd of March",
+                  "Everything on track"
+                ]
+              }
+            ],
+            "earlier": [
+              {
+                "date": "09.02.2026",
+                "bullets": [
+                  "HMD and WFD - everything is done, so 0451 is completed",
+                  "HMP SR - to be raised for the OS patching today and for Volume migration to be raised in March",
+                  "0406 - completed successfully on the 25th of Jan",
+                  "0451 - HMD and WFD scheduled for 7th of Feb",
+                  "HMQ for 15th of Feb - patching and volume migration",
+                  "HMP 22nd of March - OS patching + volume migration. To be done in Month of March",
+                  "On track",
+                  "New top issue to be resolved January 2026",
+                  "25th of Jan scheduled - WFP and WFB",
+                  "SR needed: select time slot after 1 PM CET on the 25th"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "0473",
+          "title": "FMX Part I: Missing Authorization check in SAP NetWeaver Application Server for ABAP — Update Kernel",
+          "systems": ["FMX"],
+          "owner": "SAP",
+          "due": "TBD",
+          "expiry": "18th August",
+          "status": "In Progress",
+          "decisions": [],
+          "timeline": {
+            "current": [
+              {
+                "date": "17.03.2026",
+                "bullets": [
+                  "0473 only applicable for FMX",
+                  "Japneet investigating if kernel needs updating (Sudhir)",
+                  "Palash investigating and keeping us posted"
+                ]
+              }
+            ],
+            "earlier": []
+          }
+        },
+        {
+          "id": "0474",
+          "title": "FMS, FMD, FMQ, FMP, FMX Part II: Missing Authorization check in SAP NetWeaver Application Server for ABAP — Parameter settings",
+          "systems": ["FMS", "FMD", "FMQ", "FMP", "FMX"],
+          "owner": "SAP",
+          "due": "22nd of March",
+          "expiry": "18th August",
+          "status": "In Progress",
+          "decisions": [],
+          "timeline": {
+            "current": [
+              {
+                "date": "17.03.2026",
+                "bullets": [
+                  "Raised SRs for FMD and FMQ 17.03.2026",
+                  "Volume migration FMP plus 0474 - 22nd of March",
+                  "Update parameters - restart needed (rfc/authCheckInPlayback = 2)",
+                  "Palash investigating and keeping us posted"
+                ]
+              }
+            ],
+            "earlier": []
+          }
+        }
+      ],
+      "sharedUpdates": [],
+      "timeline": { "current": [], "earlier": [] }
+    },
+    {
+      "id": "2",
+      "flags": ["Action"],
+      "title": "Profile Parameters",
+      "references": "SAPCase # 996781",
+      "status": "In Progress",
+      "owner": "Allianz/SAP",
+      "due": "Early April",
+      "summary": "Ongoing review and tuning of profile parameters across systems. The main open item is memory parameters (SAPCase # 996781) — a solution has been proposed that is valid for both Q and P systems, but requires validation from Allianz. Additionally, sapgui/user_scripting has been extended until November with security team agreement. FMQ parameters are to be set statically via a new SR by Christian, and FMP may be set dynamically. Parameter restart is targeted for early April after monthly closing.",
+      "isSection": false,
+      "decisions": [
+        { "text": "Extension done for sapgui/user_scripting — security team has agreed to extend until November", "date": null },
+        { "text": "All parameters maintained back to ECS standard", "date": null }
+      ],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "16.03.2026",
+            "bullets": [
+              "Any update from Allianz on the topic",
+              "Possible to set for FMP same as FMQ (ECS standards) - after monthly closing to look into it",
+              "Restart required for parameters - looking at month of April (early April)",
+              "End of month review"
+            ]
+          }
+        ],
+        "earlier": [
+          {
+            "date": "02.02.2026",
+            "bullets": [
+              "In progress - let's review at the end of the month - Feb",
+              "In progress",
+              "In progress on Allianz side",
+              "Memory - extraction failing in FMQ - Memory parameters SAPCase # 996781 - solution proposed",
+              "Is the solution pertinent for our scenario?",
+              "Purpose: extraction failing in FMQ - solution is valid for both Q and P - needs validation from Allianz and see if it solves the issue",
+              "In progress - to check with Christian when back",
+              "In progress on Allianz side",
+              "Memory parameters SAPCase # 996781 - solution proposed - Allianz to check",
+              "Christian to check and get back to us",
+              "All parameters maintained back to ECS standard.",
+              "Memory parameters SAPCase # 996781, work in progress",
+              "Christian feedback on profile parameters",
+              "Sap user scripting remains true (right now it is set dynamically) Christian to create a new SR to correct this and have the script be set to true and not dynamic.",
+              "Parameters have been changed, Christian to update on efficiency/applicability",
+              "For FMQ parameters should be set and for Sunday, SR to be created by Christian for Prod and can be done during maintenance window on Sunday",
+              "Extension done for sapgui/user_scripting",
+              "Tobias: already tested with some customers and looked good, preparing for new authorizations in prod, set parameter",
+              "Christian: create SR to be set statically for FMQ and maybe FMP to be set dynamically",
+              "e-mail needed from Tobias or Christian to confirm",
+              "For sapgui/user_scripting",
+              "The security team has agreed to extend until November"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "3",
+      "flags": ["Action", "Risk"],
+      "title": "Security Notes Implementation",
+      "references": "Note: 3674774, SR33551172",
+      "status": "In Progress",
+      "owner": "Allianz/SAP",
+      "due": "TBD",
+      "summary": "Ongoing implementation of security notes across all systems. High-priority notes from May 2025 have been implemented; the team is now working through low-priority notes from May 2025. A key process question arose around responsibility for security notes (SAP vs Allianz Basis) — SAP confirmed they are responsible and operate on a monthly analysis/implementation cycle. The Realtek solution currently in place (implemented by Christian) is considered sufficient by Allianz and can be treated as permanent until Realtek delivers a better long-term solution. Next step is a CAS team meeting to release transports to production — Oana to contact Yesh. Former topic: CQC Service Activation Pre-requisites.",
+      "isSection": false,
+      "decisions": [
+        { "text": "For Allianz the solution that is currently applicable can be considered permanent (Realtek is working on a solution that can be rolled out to other customers as well)", "date": null },
+        { "text": "SAP is responsible for security notes implementation", "date": null },
+        { "text": "High priority notes have been implemented", "date": null }
+      ],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "16.03.2026",
+            "bullets": [
+              "Waiting on Benjamin for exact audit requirements for different types of SLAs",
+              "Once that is done SAP to provide plan",
+              "Palash to share SLAs with Yeswanth - Yesh to come back with proposal",
+              "Allianz: does the approval need to be provided now? What is the process?",
+              "Check with Yeswanth about the swap option for CAS - Tuesday 3/3/2026",
+              "Transports moved to QA system — review and approval needed for Prod movement",
+              "Note 3674774: 9.6 (Immediately to be implemented — Allianz Basis implemented this)",
+              "SR33551172: Status Service Provided: implemented on some systems but not on all",
+              "Who is responsible for these types of Notes? - SAP or Allianz?",
+              "SAP is responsible",
+              "Allianz: when would have this been done?",
+              "SAP: by the end of the month — SAP team does an analysis on a monthly basis and then implements them by the end of the month",
+              "Currently Security notes package includes the analysis and monthly basis implementation independent of CVSS",
+              "Allianz to discuss with Basis colleagues and get back to SAP",
+              "Alignment needed on the topic: Meeting to be scheduled",
+              "Central Topic question: was there a timeline given for a permanent solution regarding Realtek?",
+              "For Allianz the solution that is currently applicable can be considered permanent (Realtek is working on a solution that can be rolled out to other customers as well. When that is done, Allianz will switch over to that one as well)",
+              "Realtek to provide a better solution long-term but currently solution implemented by Christian is sufficient",
+              "Team implemented all high-security notes from May-2025. Now team is working on low-priority notes from May-2025",
+              "Team is asked to maintain the SAP For Me ticket number in TR Description.",
+              "Feedback from Yesh - status on the lower priority notes",
+              "High priority notes have been implemented",
+              "Status of lower priority notes: Oana to check with Yesh",
+              "Allianz was wondering why Security notes were not implemented for such a long time?",
+              "Not the implementation necessarily, the impression was that the system was still running and should SAP not implement it the Basis colleagues were supposed to do it",
+              "No checks being done from SAP side during the entire time",
+              "Implementation done on Wednesday last",
+              "Update from Yeshwanth",
+              "Yesh to look into the slots and propose a time for a sync",
+              "Changes made during session - this was a temporary fix - permanent fix suggested?",
+              "Realtek to provide a better solution long-term but currently solution implemented by Christian is sufficient",
+              "Repo change made by Christian but only active for 000 - cross client coding change",
+              "Method skips 000 client for auth check",
+              "Next step: meeting about the doc and principles are to release the transports to production - CAS team meeting needed - Oana to contact Yesh",
+              "Meeting with Realtek planned. Timelines proposed by Yesh: 3-Dec 10:00 AM CET, 4-Dec 10:00 AM CET, 4-Dec 04:00 PM CET",
+              "Christian described issues to Realtek and they were sent the info by Dietmar. Seems to be no way around without Realtek authorization (assumption, waiting to get Realtek feedback)",
+              "In progress - Central meeting is bi-weekly",
+              "Oana raised this topic in the Central topic last week and Juan is following up on it",
+              "Christian to work on a step by step and document situation and then follow-up",
+              "Best follow-up: a test done together and at the same time"
+            ]
+          }
+        ],
+        "earlier": []
+      }
+    },
+    {
+      "id": "4a",
+      "flags": ["Action"],
+      "title": "Performance analysis - FMP RCA",
+      "references": "Case # 1240521, SAPNote# 2600030",
+      "status": "In Progress",
+      "owner": "Allianz/SAP",
+      "due": "TBD",
+      "summary": "Performance RCA for FMP (Case # 1240521). The DB team recommended tuning the default_statement_concurrency_limit parameter — current value is 51, recommended value for OLTP workloads is 25 (for 128 CPU configuration) per SAPNote# 2600030. Christian is sharing details with Shruti and Japneet. The approach is to wait for implementation in FMP, monitor the system for one week including the monthly closing period, and then assess. A HANA base upgrade parameter question was also raised — Palash is adding this to the SR.",
+      "isSection": false,
+      "decisions": [
+        { "text": "Confirmed and done with the patching window", "date": null },
+        { "text": "Go ahead with the change after the holidays in next maintenance window (Palash: adding this topic into the SR)", "date": null }
+      ],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "16.03.2026",
+            "bullets": [
+              "Christian waiting on some details",
+              "Details to be sent to Japneet",
+              "In progress on Allianz side",
+              "In progress on SAP side - update next week",
+              "Christian to share details with Shruti"
+            ]
+          }
+        ],
+        "earlier": [
+          {
+            "date": "13.02.2026",
+            "bullets": [
+              "Update by 13th of Feb",
+              "Some transactions ran longer than expected: Christian to share the details with Shruti and Japneet"
+            ]
+          },
+          {
+            "date": null,
+            "bullets": [
+              "In Progress",
+              "Wait for implementation in FMP and monitor the sys for 1 week and see if any issues pop up because of parameter change"
+            ]
+          },
+          {
+            "date": "25.01.2026",
+            "bullets": [
+              "25th of Jan - sys monitor to start for two weeks to incorporate the monthly closing starting with Jan 29th",
+              "Confirmed and done with the patching window",
+              "3 tickets created in customer action",
+              "SAP to check and update if another SR is needed",
+              "Palash: Q: if hana base upgrade - parameter the same (Shruti: YES)",
+              "Go ahead with the change after the holidays in next maintenance window",
+              "Palash: adding this topic into the SR",
+              "SR needed - Shruti looking into this",
+              "Allianz to review and confirm path forward",
+              "Palash or Binu - to check into parameter",
+              "DB team suggested to tune parameter default_statement_concurrency_limit",
+              "Current value is 51, which means 51 parallel CPU threads will be used by single DB request. For OLTP workloads, suggested value is max(4, rounddown(0.20 * cpu_threads,0)) in ECS which is 25 for 128 CPU configuration.",
+              "Please review SAPNote# 2600030"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "4b",
+      "flags": ["Action"],
+      "title": "Conversion updates",
+      "references": null,
+      "status": "In Progress",
+      "owner": "SAP",
+      "due": "TBD",
+      "summary": "S4 conversion planning and execution is in progress. The conversion was originally set for 19 January 2026 with an SR to be created by Allianz at the start of January. After discussion with Octavian from SAP, pricing is understood and conversion is most likely planned for 2026. Oana is setting up meetings with Roman (simplification items) and Susanne + Markus. Key open items: upgrade for Add-on implementation responsibility and technical conversion process. The customer needs to communicate what they want to patch; for a bigger S4 upgrade, a separate SR template is required.",
+      "isSection": false,
+      "decisions": [
+        { "text": "Reply received - to be followed up with approval; once approved SAP will start the process", "date": null },
+        { "text": "Conversion most likely planned for next year 2026 — after discussion with Octavian from SAP, pricing is understood", "date": null }
+      ],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "16.03.2026",
+            "bullets": [
+              "Update?",
+              "Waiting for feedback on incident opened",
+              "In progress",
+              "In progress on Felix side — need to find expertise closer to DE time",
+              "Ongoing - some issues to be discussed with providers but moving along",
+              "Informed Naveen regarding planned FMX/HMX Patching. No impact, proper downtime planning needed.",
+              "PL assigned, followup meetings set.",
+              "Allianz good to go - just check with Business Function",
+              "Naveen has taken the lead in getting a PL by today evening or tomorrow",
+              "PO solution proposed: with a different customer we solved this by having ECS send an email to the customer after the commissioning via SAP 4 me, requesting confirmation.",
+              "Meetings on Monday",
+              "Confirm with customer if they received the reply — Reply received - to be followed up with approval",
+              "Once approved SAP will start the process and set up some meeting for moving forward with the execution",
+              "do you have a cutover plan for the S4-conversion process you are able to share with us?",
+              "SR to be raised by Allianz 15th or 16th of Dec",
+              "Check the lead time for SR for the technical conversion",
+              "Lead time: 3 weeks before conversion starts",
+              "Conversion set to 19th of Jan 2026. SR to be created at the beginning of January 2026 by Allianz",
+              "After discussion with Octavian from SAP, pricing is understood. Conversion most likely planned for next year 2026.",
+              "Allianz to confirm dates.",
+              "Technical Conversion meeting took place on the 6th of Nov and details were provided, checking with Tobias for next steps",
+              "For the below services, these are support packages and we have SRs for them: SR name Update application Software - Not Billable _ BASIC_1.5.09 — the customer needs to communicate what they want to patch and it will be delivered with this template. If it will be a bigger upgrade from one S4 version to another then it will be the SR name: Upgrade Application Software",
+              "Oana to check details regarding technical conversion",
+              "Oana to check: Upgrade for Add on implementation - who is responsible for upgrade - paid or not?",
+              "In progress: Oana to set up meetings: Roman (simplification items) and Susanne + Markus"
+            ]
+          }
+        ],
+        "earlier": []
+      }
+    },
+    {
+      "id": "5",
+      "flags": ["Info"],
+      "title": "CAS ticket",
+      "references": null,
+      "status": "In Progress",
+      "owner": "TBD",
+      "due": "31.05.2026",
+      "summary": "CAS ticket consumption tracking. Total: 72, Used: 5. Tickets reset yearly on 31 May 2026. One task was completed by Yeswanth (27 October 2025). Open question remains on how Ops tickets will be processed internally by SAP.",
+      "isSection": false,
+      "decisions": [
+        { "text": "Task is completed - Yeswanth provided the needed reply", "date": "27.10.2025" }
+      ],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "16.03.2026",
+            "bullets": [
+              "No OS patching for month of March (referenced in CAS context)",
+              "Total: 72 / Used: 5"
+            ]
+          }
+        ],
+        "earlier": [
+          {
+            "date": "15.12.2025",
+            "bullets": [
+              "Tickets reset yearly: 31.05.2026"
+            ]
+          },
+          {
+            "date": "27.10.2025",
+            "bullets": [
+              "Task is completed - Yeswanth provided the needed reply"
+            ]
+          },
+          {
+            "date": "13.10.2025",
+            "bullets": [
+              "Ops tickets - how will the tickets get processed internally by SAP",
+              "How many remain to be used - add in this section"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "8",
+      "flags": ["Action"],
+      "title": "Patching",
+      "references": null,
+      "status": "In Progress",
+      "owner": "SAP",
+      "due": "22nd of March",
+      "summary": "Monthly patching status across all systems. No OS patching for March; SRs can be submitted. February patching is complete for FMP and FMS. HMD and WFD were scheduled for 7 Feb, HMQ for 15 Feb, and HMP for 22 Feb (Linux only). Patching Details reference guide included: SR-based process, no SAP4Me/SR integration, CAS team handles security patches, offline changes via CMP.",
+      "isSection": false,
+      "decisions": [
+        { "text": "All patches up to date for FMP and FMS for Feb month — SRs to be cancelled", "date": null },
+        { "text": "FMD - Sat 4 AM to 12 CET (Oana to update DED)", "date": null }
+      ],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "16.03.2026",
+            "bullets": [
+              "No OS patching for month of March",
+              "SRs can be submitted for March patching",
+              "Volume migration SR to be submitted along with OS patching - Palash",
+              "All patches up to date for FMP and FMS for Feb month. SR's to be cancelled",
+              "FMP done on the 25th of Jan",
+              "FMS - 30th of Jan",
+              "HMD and WFD scheduled for 7th of Feb -- patching and volume migration",
+              "HMQ for 15th of Feb - patching and volume migration",
+              "HMP 22nd of Feb (PROD) - Only Linux patching",
+              "In progress",
+              "Scheduled: FMP - 25th of Jan, FMS - 30th of Jan",
+              "SAP rescheduled everything",
+              "Anything planned on Allianz side for upcoming weeks? - no",
+              "Can FMD be moved to the weekend?",
+              "FMD - Sat 4 AM to 12 CET (Oana to update DED)",
+              "DEV and QA are ok",
+              "2 different SRs: 1 bundled for patching and database and 2nd SR for application client upgrade",
+              "Application SR - Hana client application SR - standard single SR",
+              "Prod and FMS: Incorrect schedule for SR and bundled SR - was supposed to be submitted at a different time",
+              "Mitigation: change the timing (inquiry on SAP side - to be updated if this can be done)",
+              "If not possible: then creation of 3 SRs needed",
+              "Action: Shruti or Japneet to confirm by EOD today/tomorrow morning if a new creation is needed",
+              "Action: Palash also to confirm with Christian if the existing timing works",
+              "In progress",
+              "FMD & FMQ on one weekend - Shruti can assist",
+              "Activities that need to be done - to be defined and see if this can be done manually or scheduled",
+              "17-18th and 25th for PROD",
+              "Can FMD be moved to the weekend?"
+            ]
+          }
+        ],
+        "earlier": []
+      }
+    },
+    {
+      "id": "8a",
+      "flags": ["Action"],
+      "title": "Table Memory Consumption",
+      "references": null,
+      "status": "In Progress",
+      "owner": "SAP",
+      "due": "TBD",
+      "summary": "FMX memory consumption monitoring. A 512 GB allocation limit is configured for the FMX tenant (physical memory on HMX system is ~2TB Global Allocation Limit). High Memory Usage alerts trigger at 85–90% of this limit. After conversion FMX will be used for a short time. Current guidance: ignore the alerts unless actual issues arise, then adjust.",
+      "isSection": false,
+      "decisions": [
+        { "text": "Action: Currently ignore the alerts - if any issues due to alerts adjust", "date": "23.02.2026" }
+      ],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "23.02.2026",
+            "bullets": [
+              "Action: Currently ignore the alerts - if any issues due to alerts adjust"
+            ]
+          }
+        ],
+        "earlier": [
+          {
+            "date": "16.02.2026",
+            "bullets": [
+              "Any other details needed on Allianz side?"
+            ]
+          },
+          {
+            "date": "09.02.2026",
+            "bullets": [
+              "A memory allocation limit for FMX tenant of 512 GB is configured to control usage with actual physical memory for the HMX system being ~2TB (Global Allocation Limit).",
+              "When memory consumption reaches 85–90% of this limit, High Memory Usage alerts are triggered, which explains the alerts observed.",
+              "Q: should the alert threshold be changed?",
+              "Q: what is the sys usage for FMX after conversion",
+              "After conversion FMX will be used for a short time",
+              "Action: Currently ignore the alerts - if any issues due to alerts adjust"
+            ]
+          },
+          {
+            "date": "02.02.2026",
+            "bullets": [
+              "Details needed - RAM getting consumed",
+              "Shruti will investigate - conversion impact non probable"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "8b",
+      "flags": ["Action"],
+      "title": "Update on the PCA (Post Copy Automation) option",
+      "references": null,
+      "status": "Closed",
+      "owner": "Allianz",
+      "due": "TBD",
+      "summary": "Request was raised to move forward with PCA for the FME system. After review, Christian (corrected from notes: Christina) got back to Zoltan — the system should be ready by 1 April but there is no need for PCA; Allianz will do the cleanup. This topic can be closed.",
+      "isSection": false,
+      "decisions": [
+        { "text": "No need to PCA, Allianz to do the cleanup — this topic be closed", "date": "09.03.2026" }
+      ],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "09.03.2026",
+            "bullets": [
+              "Christian got back to Zoltan - want sys to be ready by 1st April",
+              "No need to PCA, Allianz to do the cleanup",
+              "This topic be closed"
+            ]
+          }
+        ],
+        "earlier": [
+          {
+            "date": "09.02.2026",
+            "bullets": [
+              "There was a request to move forward with this, is this still the case?",
+              "FME system - the later Allianz sets up the better, no need to FME until the actual conversion",
+              "Christina will get back to Zoltan - this is not priority"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "9",
+      "flags": ["Action"],
+      "title": "Evidence",
+      "references": null,
+      "status": "In Progress",
+      "owner": "TBD",
+      "due": "TBD",
+      "summary": "Additional evidence required for auditors regarding controls on Regression, Performance and/or E2E Tests. In progress.",
+      "isSection": false,
+      "decisions": [],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": null,
+            "bullets": [
+              "In progress",
+              "In progress",
+              "Additional evidence to our auditors regarding our controls on Regression, Performance and/or E2E Tests"
+            ]
+          }
+        ],
+        "earlier": []
+      }
+    },
+    {
+      "id": "10",
+      "flags": ["Action", "Risk"],
+      "title": "FMPAZZ Enqueue Replication Server in red status",
+      "references": "KBA 2903167",
+      "status": "In Progress",
+      "owner": "SAP",
+      "due": "22nd of March",
+      "summary": "Enqueue replication server experienced red status due to high lock request volume exhausting available memory blocks at ERS level. RCA was completed; official mail may take a while due to internal tool issue. Palash raised SRs to increase enqueue memory parameters — to be completed 22 March. Recommended action: increase enqueue memory parameters per KBA 2903167. A system restart is required. SAP internal team preparing RCA and follow-up actions.",
+      "isSection": false,
+      "decisions": [
+        { "text": "RCA completed - official mail might take a while due to internal tool issue", "date": null }
+      ],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "16.03.2026",
+            "bullets": [
+              "RCA was send today",
+              "Palash raised SRs to raise parameters - to be completed 22nd of March",
+              "RCA completed - official mail might take a while due to internal tool issue",
+              "High rate of lock requests was sent to the enqueue server within a short period of time. This resulted in the enqueue server becoming overloaded and exhausting the available memory blocks at the ERS level. To prevent similar incidents, the values of the enqueue memory parameters should be increased (KBA 2903167)",
+              "Analysis done for Enqueue replication server. To change the parameter SR to be raised to change the parameter explicitly for ASCS instance",
+              "To update if system restart required? - Yes System restart required (details mentioned in KBA)",
+              "In progress on SAP side",
+              "SAP internal team preparing RCA, actions to be taken after RCA",
+              "Japneet shared initial analysis"
+            ]
+          }
+        ],
+        "earlier": []
+      }
+    },
+    {
+      "id": "11",
+      "flags": ["Action"],
+      "title": "Monthly PCE meeting",
+      "references": null,
+      "status": "In Progress",
+      "owner": "SAP",
+      "due": "Week of 23rd of March",
+      "summary": "Monthly PCE meeting tracking. OS-level triggering is occurring across 3 systems and more time is needed. TSM is investigating. Timeline measurement question raised — is this a month-end peak or ongoing throughout the month? Internal ticket raised to server management team to analyze. Update expected week of 23 March.",
+      "isSection": false,
+      "decisions": [],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "16.03.2026",
+            "bullets": [
+              "More time needed as there are 3 systems: OS level is triggering",
+              "Update week of 23rd of March"
+            ]
+          }
+        ],
+        "earlier": [
+          {
+            "date": "09.03.2026",
+            "bullets": [
+              "TSM investigating on our end"
+            ]
+          },
+          {
+            "date": "02.03.2026",
+            "bullets": [
+              "To check timeline measurement - is this a month end peak or happening during the entire month?",
+              "Note: no alerts in PROD or other alerts",
+              "During peak: already having the memory parameter that we discussed",
+              "Once duration: to discuss further and investigate",
+              "Entire month - light blue average usage for the month and dark blue the peaks",
+              "Internal ticket to server management team to analyze it"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "12",
+      "flags": ["Action", "Risk"],
+      "title": "FMX running full",
+      "references": null,
+      "status": "In Progress",
+      "owner": "SAP",
+      "due": "TBD",
+      "summary": "FMX disk space is running full. EOS DB SPOC has been involved and an update is expected this week (week of 16 March). A conversion is currently happening which is running over the weekend without team input — this is flagged as a process risk. Sudhir is investigating.",
+      "isSection": false,
+      "decisions": [],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "16.03.2026",
+            "bullets": [
+              "EOS DB SPOC has been involved and we are waiting on an update this week"
+            ]
+          }
+        ],
+        "earlier": [
+          {
+            "date": "09.03.2026",
+            "bullets": [
+              "Christian to send alert about not having anymore space on FMX",
+              "Currently there is a conversion happening: how can this run full over weekend without input from team",
+              "Sudhir to investigate"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "analysis": {
+    "decisions": [
+      {
+        "id": "DEC-2026-001",
+        "date": "17.03.2026",
+        "text": "HMP - OK for the 22nd of March",
+        "topicRef": "1",
+        "subTopicRef": "0451",
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-002",
+        "date": "09.02.2026",
+        "text": "HMD and WFD — everything is done, so 0451 is completed",
+        "topicRef": "1",
+        "subTopicRef": "0451",
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-003",
+        "date": null,
+        "text": "Extension done for sapgui/user_scripting — security team has agreed to extend until November",
+        "topicRef": "2",
+        "subTopicRef": null,
+        "agreedBy": "Security team"
+      },
+      {
+        "id": "DEC-2026-004",
+        "date": null,
+        "text": "All parameters maintained back to ECS standard",
+        "topicRef": "2",
+        "subTopicRef": null,
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-005",
+        "date": null,
+        "text": "For Allianz the solution that is currently applicable can be considered permanent (Realtek is working on a solution that can be rolled out to other customers as well)",
+        "topicRef": "3",
+        "subTopicRef": null,
+        "agreedBy": "Allianz"
+      },
+      {
+        "id": "DEC-2026-006",
+        "date": null,
+        "text": "SAP is responsible for security notes implementation",
+        "topicRef": "3",
+        "subTopicRef": null,
+        "agreedBy": "SAP"
+      },
+      {
+        "id": "DEC-2026-007",
+        "date": null,
+        "text": "High priority notes have been implemented",
+        "topicRef": "3",
+        "subTopicRef": null,
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-008",
+        "date": null,
+        "text": "Confirmed and done with the patching window",
+        "topicRef": "4a",
+        "subTopicRef": null,
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-009",
+        "date": null,
+        "text": "Go ahead with the change after the holidays in next maintenance window (Palash adding this into the SR)",
+        "topicRef": "4a",
+        "subTopicRef": null,
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-010",
+        "date": null,
+        "text": "Reply received - to be followed up with approval; once approved SAP will start the conversion process",
+        "topicRef": "4b",
+        "subTopicRef": null,
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-011",
+        "date": null,
+        "text": "Conversion most likely planned for 2026 — pricing understood after discussion with Octavian from SAP",
+        "topicRef": "4b",
+        "subTopicRef": null,
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-012",
+        "date": "27.10.2025",
+        "text": "Task is completed - Yeswanth provided the needed reply",
+        "topicRef": "5",
+        "subTopicRef": null,
+        "agreedBy": "Yeswanth"
+      },
+      {
+        "id": "DEC-2026-013",
+        "date": null,
+        "text": "All patches up to date for FMP and FMS for Feb month — SRs to be cancelled",
+        "topicRef": "8",
+        "subTopicRef": null,
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-014",
+        "date": null,
+        "text": "FMD - Sat 4 AM to 12 CET (Oana to update DED)",
+        "topicRef": "8",
+        "subTopicRef": null,
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-015",
+        "date": "23.02.2026",
+        "text": "Currently ignore the alerts - if any issues due to alerts adjust",
+        "topicRef": "8a",
+        "subTopicRef": null,
+        "agreedBy": null
+      },
+      {
+        "id": "DEC-2026-016",
+        "date": "09.03.2026",
+        "text": "No need to PCA, Allianz to do the cleanup — this topic be closed",
+        "topicRef": "8b",
+        "subTopicRef": null,
+        "agreedBy": "Allianz"
+      },
+      {
+        "id": "DEC-2026-017",
+        "date": null,
+        "text": "RCA completed - official mail might take a while due to internal tool issue",
+        "topicRef": "10",
+        "subTopicRef": null,
+        "agreedBy": null
+      }
+    ],
+    "references": [
+      {
+        "ref": "SAPCase # 996781",
+        "type": "Case",
+        "context": "Memory parameters — extraction failing in FMQ, solution proposed valid for both Q and P systems",
+        "topicRefs": ["2"],
+        "status": "work in progress"
+      },
+      {
+        "ref": "Note 3674774",
+        "type": "SAPNote",
+        "context": "Security note 9.6 — immediately to be implemented, Allianz Basis implemented this",
+        "topicRefs": ["3"],
+        "status": "implemented by Allianz Basis"
+      },
+      {
+        "ref": "SR33551172",
+        "type": "SR",
+        "context": "Security note SR — Status Service Provided: implemented on some systems but not all",
+        "topicRefs": ["3"],
+        "status": "partially implemented"
+      },
+      {
+        "ref": "Case # 1240521",
+        "type": "Case",
+        "context": "Performance analysis FMP RCA — parameter tuning investigation",
+        "topicRefs": ["4a"],
+        "status": "in progress"
+      },
+      {
+        "ref": "SAPNote# 2600030",
+        "type": "SAPNote",
+        "context": "default_statement_concurrency_limit parameter — recommended value for OLTP workloads",
+        "topicRefs": ["4a"],
+        "status": "under review"
+      },
+      {
+        "ref": "KBA 2903167",
+        "type": "KBA",
+        "context": "Enqueue memory parameters — increase to prevent enqueue server overload at ERS level",
+        "topicRefs": ["10"],
+        "status": "pending implementation"
+      }
+    ],
+    "risks": [
+      {
+        "id": "RISK-001",
+        "description": "Security notes were not implemented for a long time. Notes from Allianz: 'wondering why Security notes were not implemented for such a long time' and 'no checks being done from SAP side during the entire time'. Impression was that system was still running and SAP should have implemented — a process accountability gap.",
+        "detectedDate": "2026-03-18",
+        "topicRef": "3",
+        "trigger": "Escalation language: 'wondering why', 'impression was that'; process gap language: 'no checks being done from SAP side during the entire time'",
+        "status": "Open",
+        "closedDate": null
+      },
+      {
+        "id": "RISK-002",
+        "description": "FMX running full — a conversion is happening over the weekend without input from team. Process gap: critical operations running without team awareness.",
+        "detectedDate": "2026-03-18",
+        "topicRef": "12",
+        "trigger": "Process gap language: 'how can this run full over weekend without input from team'",
+        "status": "Open",
+        "closedDate": null
+      }
+    ],
+    "ownerHistory": {
+      "2": [
+        { "date": "2026-02-02", "from": "SAP", "to": "Allianz" },
+        { "date": "2026-03-16", "from": "Allianz", "to": "Allianz/SAP" }
+      ],
+      "3": [
+        { "date": "2026-03-16", "from": "Allianz", "to": "Allianz/SAP" }
+      ]
+    },
+    "actionItems": [
+      {
+        "text": "Japneet investigating if kernel needs updating (0473)",
+        "owner": "Japneet/Sudhir",
+        "due": null,
+        "topicRef": "1",
+        "subTopicRef": "0473",
+        "overdue": false
+      },
+      {
+        "text": "Palash investigating parameter settings for 0474 and keeping team posted",
+        "owner": "Palash",
+        "due": "22.03.2026",
+        "topicRef": "1",
+        "subTopicRef": "0474",
+        "overdue": false
+      },
+      {
+        "text": "Volume migration FMP plus 0474 - 22nd of March",
+        "owner": "SAP",
+        "due": "22.03.2026",
+        "topicRef": "1",
+        "subTopicRef": "0474",
+        "overdue": false
+      },
+      {
+        "text": "Christian to check Memory parameters SAPCase # 996781 and get back",
+        "owner": "Christian",
+        "due": null,
+        "topicRef": "2",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Christian to create new SR for sapgui/user_scripting to be set statically for FMQ and maybe FMP dynamically",
+        "owner": "Christian",
+        "due": null,
+        "topicRef": "2",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "e-mail needed from Tobias or Christian to confirm parameter settings",
+        "owner": "Tobias/Christian",
+        "due": null,
+        "topicRef": "2",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Palash to share SLAs with Yeswanth — Yesh to come back with proposal",
+        "owner": "Palash",
+        "due": null,
+        "topicRef": "3",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Status of lower priority notes: Oana to check with Yesh",
+        "owner": "Oana",
+        "due": null,
+        "topicRef": "3",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Yesh to look into the slots and propose a time for a sync",
+        "owner": "Yesh",
+        "due": null,
+        "topicRef": "3",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "CAS team meeting needed — Oana to contact Yesh to release transports to production",
+        "owner": "Oana",
+        "due": null,
+        "topicRef": "3",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Christian to work on a step-by-step document of situation and then follow-up",
+        "owner": "Christian",
+        "due": null,
+        "topicRef": "3",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Christian to share details with Shruti and Japneet (Performance RCA)",
+        "owner": "Christian",
+        "due": null,
+        "topicRef": "4a",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Allianz to review and confirm path forward — Palash or Binu to check into parameter",
+        "owner": "Palash/Binu",
+        "due": null,
+        "topicRef": "4a",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "SR needed — Shruti looking into this (HANA base upgrade parameter)",
+        "owner": "Shruti",
+        "due": null,
+        "topicRef": "4a",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Oana to check details regarding technical conversion and Upgrade for Add on implementation",
+        "owner": "Oana",
+        "due": null,
+        "topicRef": "4b",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "In progress: Oana to set up meetings with Roman (simplification items) and Susanne + Markus",
+        "owner": "Oana",
+        "due": null,
+        "topicRef": "4b",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Volume migration SR to be submitted along with OS patching - Palash",
+        "owner": "Palash",
+        "due": null,
+        "topicRef": "8",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Action: Shruti or Japneet to confirm by EOD today/tomorrow morning if a new SR creation is needed (Prod and FMS schedule)",
+        "owner": "Shruti/Japneet",
+        "due": "16.03.2026",
+        "topicRef": "8",
+        "subTopicRef": null,
+        "overdue": true
+      },
+      {
+        "text": "Action: Palash also to confirm with Christian if the existing timing works",
+        "owner": "Palash",
+        "due": "16.03.2026",
+        "topicRef": "8",
+        "subTopicRef": null,
+        "overdue": true
+      },
+      {
+        "text": "Palash raised SRs to raise enqueue memory parameters — to be completed 22nd of March",
+        "owner": "Palash",
+        "due": "22.03.2026",
+        "topicRef": "10",
+        "subTopicRef": null,
+        "overdue": false
+      },
+      {
+        "text": "Sudhir to investigate FMX running full",
+        "owner": "Sudhir",
+        "due": null,
+        "topicRef": "12",
+        "subTopicRef": null,
+        "overdue": false
+      }
+    ],
+    "systemMap": {
+      "FMP": {
+        "topics": ["1", "2", "4a", "4b", "8"],
+        "mentions": 12,
+        "concentrationRisk": true
+      },
+      "FMQ": {
+        "topics": ["1", "2", "8"],
+        "mentions": 7,
+        "concentrationRisk": true
+      },
+      "FMX": {
+        "topics": ["1", "8a", "8b", "12"],
+        "mentions": 8,
+        "concentrationRisk": true
+      },
+      "FMS": {
+        "topics": ["1", "8"],
+        "mentions": 4,
+        "concentrationRisk": false
+      },
+      "FMD": {
+        "topics": ["1", "8"],
+        "mentions": 4,
+        "concentrationRisk": false
+      },
+      "HMD": {
+        "topics": ["1"],
+        "mentions": 3,
+        "concentrationRisk": false
+      },
+      "HMQ": {
+        "topics": ["1", "8"],
+        "mentions": 4,
+        "concentrationRisk": false
+      },
+      "HMP": {
+        "topics": ["1", "8"],
+        "mentions": 4,
+        "concentrationRisk": false
+      },
+      "HMX": {
+        "topics": ["4b", "8a"],
+        "mentions": 2,
+        "concentrationRisk": false
+      },
+      "WFD": {
+        "topics": ["1"],
+        "mentions": 2,
+        "concentrationRisk": false
+      },
+      "WFP": {
+        "topics": ["1"],
+        "mentions": 1,
+        "concentrationRisk": false
+      },
+      "WFB": {
+        "topics": ["1"],
+        "mentions": 1,
+        "concentrationRisk": false
+      },
+      "FME": {
+        "topics": ["8b"],
+        "mentions": 2,
+        "concentrationRisk": false
+      }
+    },
+    "staleTopics": [],
+    "upcomingActions": [
+      {
+        "description": "Volume migration FMP plus 0474 — SRs raised for FMD and FMQ",
+        "owner": "SAP/Palash",
+        "dueDate": "22.03.2026",
+        "topicRef": "1"
+      },
+      {
+        "description": "HMP — OS patching + volume migration",
+        "owner": "SAP",
+        "dueDate": "22.03.2026",
+        "topicRef": "1"
+      },
+      {
+        "description": "Palash SRs to raise enqueue memory parameters (FMPAZZ Enqueue Replication Server)",
+        "owner": "Palash",
+        "dueDate": "22.03.2026",
+        "topicRef": "10"
+      },
+      {
+        "description": "Update on Monthly PCE meeting — OS level triggering on 3 systems",
+        "owner": "SAP",
+        "dueDate": "Week of 23.03.2026",
+        "topicRef": "11"
+      }
+    ],
+    "rollup": {
+      "period": "weekly",
+      "totalTopics": 12,
+      "closedInPeriod": 1,
+      "openedInPeriod": 12,
+      "blocked": 0,
+      "decisionsInPeriod": 17,
+      "activeRisks": 2,
+      "avgAgeDaysOpenItems": 46,
+      "actionsDueNext7Days": 4,
+      "narrativeSummary": "As of 18 March 2026, 12 topics are being tracked across Allianz Technology SE. One topic was formally closed this period (PCA option, topic 8b). No topics are currently in Blocked status. Three systems (FMP, FMQ, FMX) are flagged for concentration risk, appearing across 4–5 topics each. The most urgent items for the coming week are the 22 March deadline shared by 0474 parameter SR work (FMD/FMQ), HMP volume migration/OS patching, and Enqueue Replication Server parameter SRs. 17 decisions were recorded across all topics. Two active risks are open: a process accountability gap around security notes implementation (RISK-001), and a conversion running over the weekend without team input on FMX (RISK-002). 4 actions are due in the next 7 days. The oldest open items date back to early January 2026, giving an average age of approximately 46 days for open workstreams."
+    },
+    "diff": null,
+    "config": {
+      "riskThresholdDays": 30,
+      "staleThresholdWeeks": 2,
+      "rollupPeriod": "weekly",
+      "systemConcentrationThreshold": 3,
+      "ownerFlipThreshold": 2
+    }
+  }
+}

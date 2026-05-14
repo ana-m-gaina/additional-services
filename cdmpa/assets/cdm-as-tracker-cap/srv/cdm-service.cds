@@ -41,12 +41,23 @@ service CDMService @(path: '/CDMService') {
   action savePersonaLayout(layoutJson: String) returns Boolean;
 
   // ── Conversation memory ────────────────────────────────────────────────────
-  entity ConversationTurns as projection on db.ConversationTurn;
+  entity ConversationSessions as projection on db.ConversationSession;
+  entity ConversationTurns    as projection on db.ConversationTurn;
+
+  action createConversationSession(
+    customerAgentId : String,
+    title           : String
+  ) returns ConversationSessions;
+
+  action linkSessionToCustomer(
+    sessionId       : String,
+    customerAgentId : String
+  ) returns Boolean;
 
   // ── Agent hierarchy ────────────────────────────────────────────────────────
-  entity ClientAgents        as projection on db.ClientAgent;
+  entity CustomerAgents      as projection on db.CustomerAgent;
   entity ContractSubagents   as projection on db.ContractSubagent;
-  entity AutomationAgents    as projection on db.AutomationAgent;
+  entity IntegrationAgents   as projection on db.IntegrationAgent;
   entity PendingActions      as projection on db.PendingAction;
 
   @readonly
@@ -100,4 +111,19 @@ service CDMService @(path: '/CDMService') {
     id    : String;
     roles : many String;
   };
+
+  // ── Meeting notes ──────────────────────────────────────────────────────────
+  entity MeetingNotes as projection on db.MeetingNote;
+
+  action saveMeetingNote(
+    customerAgentId : String,
+    clientName      : String,
+    meetingDate     : String,
+    rawText         : String,
+    extractedJson   : String,
+    topicsJson      : String,
+    actionItemsJson : String,
+    risksJson       : String,
+    decisionsJson   : String
+  ) returns String;
 }

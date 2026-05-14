@@ -1,0 +1,217 @@
+{
+  "client": "Document Guide — How to Read Your OPS Meeting Notes",
+  "processedDate": "2026-03-18",
+  "milestones": [
+    {
+      "date": "Date of the event",
+      "description": "What the event is — e.g. a DR test, a go-live, a deadline",
+      "comment": "How it went, or any follow-up note"
+    },
+    {
+      "date": "These rows come from the milestones table at the top of your notes.",
+      "description": "They capture important fixed dates that affect the whole project — not just one topic.",
+      "comment": "Useful for quickly seeing what is coming up or what recently happened at a high level."
+    }
+  ],
+  "absences": [
+    { "who": "Name of team member", "date": "Dates they are away", "substitute1": "Who covers for them", "substitute2Notes": "Any extra notes about cover" },
+    { "who": "Empty rows are kept intentionally.", "date": "", "substitute1": "", "substitute2Notes": "" },
+    { "who": "A blank row means the person has no absence — it does not mean they are absent.", "date": "", "substitute1": "", "substitute2Notes": "" },
+    { "who": "This section is taken directly from the Upcoming Absences table in your notes.", "date": "Why it is useful: before a meeting you can see at a glance who is away and who is covering, so you know who to chase for updates.", "substitute1": "", "substitute2Notes": "" }
+  ],
+  "topics": [
+    {
+      "id": "1",
+      "flags": ["Top Issue", "Action"],
+      "title": "Topic Title — what the topic is about",
+      "references": "Any SR numbers, SAP Notes, Case numbers or KBA numbers mentioned in this topic. These are clickable references so you can look them up instantly during a call.",
+      "status": "In Progress",
+      "owner": "Who is responsible for the next step — SAP, Allianz, or a specific person",
+      "due": "When the next action or deadline is due",
+      "summary": "A short paragraph written by the AI summarising what this topic is about and where things currently stand. This is the only part of the document that is not taken verbatim from your notes — everything else is your own words preserved as closely as possible. The summary is useful for quickly briefing someone who was not in the last meeting.",
+      "isSection": true,
+      "decisions": [
+        { "text": "A decision that was made in this topic. Decisions are detected from phrases like 'OK for', 'confirmed', 'agreed', 'no need to', 'considered permanent', 'completed', 'done'. They are pulled out so they are easy to find without reading all the bullets.", "date": "Date the decision was made, if mentioned" }
+      ],
+      "subTopics": [
+        {
+          "id": "1.1",
+          "title": "Sub-topic title — when a topic covers multiple separate items (e.g. different systems or SAP note numbers), each one becomes a sub-topic card",
+          "systems": ["FMP", "FMQ"],
+          "owner": "Who owns this specific sub-item",
+          "due": "Due date for this sub-item specifically",
+          "expiry": "If there is a compliance or license expiry date separate from the due date, it appears here — highlighted in red as a reminder",
+          "status": "In Progress",
+          "decisions": [
+            { "text": "Decisions that belong specifically to this sub-topic are listed here, not mixed in with the parent topic.", "date": null }
+          ],
+          "timeline": {
+            "current": [
+              {
+                "date": "Date of the most recent meeting where this was discussed",
+                "bullets": [
+                  "The most recent bullets from your notes for this sub-topic.",
+                  "These are preserved close to verbatim — the AI does not rewrite them.",
+                  "Current = what was said at the last meeting. This is what you read before joining a call to get up to speed quickly."
+                ]
+              }
+            ],
+            "earlier": [
+              {
+                "date": "Date of an older entry",
+                "bullets": [
+                  "Older bullets are moved here, grouped by the date they were written.",
+                  "Each date gets its own group — they are never mixed together.",
+                  "Earlier entries are shown in a lighter colour so they are visually separate from current ones.",
+                  "Useful for context and history without cluttering the current view."
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "sharedUpdates": [
+        { "text": "Some bullets in a section topic apply to all sub-topics, or cannot be clearly assigned to just one. These go here as Shared Updates rather than being placed in the wrong sub-topic. The rule is: it is better to leave a bullet here than to put it in the wrong place.", "date": null }
+      ],
+      "timeline": { "current": [], "earlier": [] }
+    },
+    {
+      "id": "2",
+      "flags": ["Action"],
+      "title": "A simple (non-section) topic — when a topic has no sub-items",
+      "references": null,
+      "status": "In Progress",
+      "owner": "Person or party responsible",
+      "due": "TBD",
+      "summary": "For topics that are not split into sub-items, the timeline appears directly here — no sub-topic cards. The layout is the same: Current at the top, Earlier below.",
+      "isSection": false,
+      "decisions": [],
+      "sharedUpdates": [],
+      "timeline": {
+        "current": [
+          {
+            "date": "Most recent meeting date",
+            "bullets": [
+              "What was discussed at the last meeting.",
+              "Shown in darker text — this is what matters most right now."
+            ]
+          }
+        ],
+        "earlier": [
+          {
+            "date": "An older date",
+            "bullets": [
+              "History from previous meetings, in lighter text.",
+              "Still there if you need to look back, but does not distract from the current status."
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "analysis": {
+    "decisions": [
+      {
+        "id": "DEC-2026-001",
+        "date": "Date of the decision",
+        "text": "DECISIONS AUDIT TRAIL — Every decision made across all topics is collected here in one sequential list. Each decision gets a unique ID (DEC-2026-001, DEC-2026-002, etc.) that never changes or gets reused. The reference in brackets tells you which topic and sub-topic it came from. Why it is useful: if someone on a call asks 'what did we agree about X?' you can search this list instead of hunting through all the topics. Also useful for DED reporting and audits.",
+        "topicRef": "Topic number",
+        "subTopicRef": "Sub-topic ID if applicable",
+        "agreedBy": "Who agreed, if mentioned in the notes"
+      }
+    ],
+    "references": [
+      {
+        "ref": "SR33551172",
+        "type": "SR",
+        "context": "REFERENCE INDEX — Every SR number, SAP Note, Case number and KBA mentioned anywhere in the notes is collected here in one deduplicated list. If the same reference appears in multiple topics, it gets one entry with all topic references listed. Why it is useful: when someone on a call says 'what happened with SR33551172?' you can find it instantly without remembering which topic it belongs to.",
+        "topicRefs": ["Topic numbers where this reference appears"],
+        "status": "Current status of this reference — implemented, pending, in progress, etc."
+      }
+    ],
+    "risks": [
+      {
+        "id": "RISK-001",
+        "description": "RISK REGISTER — Risks are automatically detected from the notes. A risk is flagged when: a topic has been blocked for more than 30 days, the notes contain process gap language ('how can this happen without', 'no checks being done'), or escalation language ('wondering why', 'not implemented for such a long time', 'impression was that'). Each risk stays open until you explicitly close it — it carries forward to every future run. Why it is useful: these are the things most likely to cause problems if not addressed. Having them in one place means you never have to re-read all the topics to find them.",
+        "detectedDate": "Date the risk was first detected",
+        "topicRef": "Which topic triggered this risk",
+        "trigger": "What specific language or condition caused this to be flagged as a risk",
+        "status": "Open",
+        "closedDate": null
+      }
+    ],
+    "ownerHistory": {
+      "Topic ID": [
+        {
+          "date": "OWNER FLIP TRACKER — When ownership of a topic moves from one party to another ('in progress on SAP side' then later 'in progress on Allianz side'), each change is recorded here. Topics with more than 2 ownership changes are flagged with a warning. Why it is useful: a topic that keeps bouncing between SAP and Allianz is a coordination problem, not a technical one. This makes that pattern visible so it can be addressed.",
+          "from": "Previous owner",
+          "to": "New owner"
+        }
+      ]
+    },
+    "actionItems": [
+      {
+        "text": "ACTION ITEMS — Every bullet where someone is assigned to do something is extracted into this flat list. Detected from patterns like 'X to check', 'X to raise SR', 'X to send', 'X to confirm', 'X to investigate'. Sorted with overdue items first, then by due date, then by owner. Why it is useful: this is the task list you can paste directly into the DED Action Tracker or use to chase people at the start of a meeting. You do not need to read all the topics to find who needs to do what.",
+        "owner": "Person responsible",
+        "due": "Due date if mentioned in the bullet",
+        "topicRef": "Which topic this action came from",
+        "subTopicRef": "Which sub-topic if applicable",
+        "overdue": false
+      }
+    ],
+    "staleTopics": [
+      {
+        "topicRef": "Topic number",
+        "topicTitle": "STALE TOPIC DETECTION — A topic is flagged as stale when no new entries have been added for more than 2 weeks (configurable). A topic can be 'In Progress' and also stale — stale means nobody mentioned it recently, which is different from being blocked. Why it is useful: these are the topics that are quietly falling through the cracks. If a topic has not been mentioned for 3 weeks it probably needs a nudge.",
+        "lastMentioned": "Most recent date found in this topic's timeline",
+        "gapDays": 14,
+        "owner": "Who owns this topic"
+      }
+    ],
+    "upcomingActions": [
+      {
+        "description": "UPCOMING — NEXT 7 DAYS — All actions due within the next 7 days from the date the notes were processed, pulled from due dates across all topics and sub-topics. Sorted by date ascending. Why it is useful: this is your week-ahead view. At a glance you can see what needs to happen before the next meeting.",
+        "owner": "Who is responsible",
+        "dueDate": "Due date",
+        "topicRef": "Which topic this comes from"
+      }
+    ],
+    "rollup": {
+      "period": "weekly",
+      "totalTopics": 0,
+      "closedInPeriod": 0,
+      "openedInPeriod": 0,
+      "blocked": 0,
+      "decisionsInPeriod": 0,
+      "activeRisks": 0,
+      "avgAgeDaysOpenItems": 0,
+      "actionsDueNext7Days": 0,
+      "narrativeSummary": "ROLLUP SUMMARY — A single paragraph summarising the current state of all topics. Covers: total topics tracked, topics closed and opened in the period, topics currently blocked, decisions made, active risks, average age of open items, and actions due in the next 7 days. The period is weekly by default but can be changed to monthly, quarterly, or annual. Why it is useful: this paragraph is designed to be pasted directly into the DED Weekly Status tab. You do not need to write it — it is generated automatically from the extracted data."
+    },
+    "diff": {
+      "previousDate": "Date of the previous processed notes for this client",
+      "newTopics": ["WHAT CHANGED THIS WEEK — When you process a new set of notes, this section compares them against the previous run and shows exactly what changed: new topics added, topics whose status changed (e.g. In Progress → Closed), new decisions made, new risks detected, new action items, topics that became stale since last time, and ownership changes. Why it is useful: instead of reading the whole document every week, you can go straight to this section and see only what is new. On the first run this section does not appear."],
+      "statusChanges": [],
+      "newDecisions": [],
+      "newRisks": [],
+      "newActionItems": 0,
+      "newlyStale": [],
+      "ownerChanges": []
+    },
+    "config": {
+      "riskThresholdDays": 30,
+      "staleThresholdWeeks": 2,
+      "rollupPeriod": "weekly",
+      "systemConcentrationThreshold": 3,
+      "ownerFlipThreshold": 2
+    },
+    "systemMap": {
+      "FMP": {
+        "topics": ["1", "2", "4a", "8"],
+        "mentions": 10,
+        "concentrationRisk": true,
+        "_explanation": "SYSTEM IMPACT MAP — Every system code mentioned across all topics (FMP, FMQ, FMX, HMD, etc.) is listed here with a count of how many topics reference it and how many times it was mentioned. Systems appearing in 3 or more topics are flagged as concentration risk. Why it is useful: if FMP is referenced in 4 topics, any change to FMP affects 4 active workstreams. This map is useful for impact assessment before a maintenance window or patching event."
+      }
+    }
+  }
+}

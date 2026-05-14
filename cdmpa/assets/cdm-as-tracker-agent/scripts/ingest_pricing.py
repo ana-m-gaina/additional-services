@@ -12,6 +12,8 @@ Usage:
   python scripts/ingest_pricing.py --xlsm /path/to/pricing.xlsm --cap-url http://localhost:4004
 """
 import argparse
+from dotenv import load_dotenv
+load_dotenv()
 import asyncio
 import json
 import logging
@@ -27,10 +29,11 @@ log = logging.getLogger(__name__)
 DEFAULT_XLSM = Path(__file__).resolve().parents[4] / "specs" / \
     "SAP_Enterprise_Cloud_Services_Additional Service Pricing List January2026.xlsm"
 DEFAULT_CAP_URL = "http://localhost:4004"
-VOYAGE_URL      = "https://api.anthropic.com/v1/embeddings"
-EMBED_MODEL     = "voyage-3"
+VOYAGE_URL      = "https://api.voyageai.com/v1/embeddings"
+EMBED_MODEL     = "voyage-4"
 CAP_USER        = os.environ.get("CAP_USER", "pricingadmin")
 CAP_PASSWORD    = os.environ.get("CAP_PASSWORD", "pricingadmin")
+_API_KEY        = os.environ.get("VOYAGE_API_KEY", "")
 
 
 # ── Extract entries from xlsm ─────────────────────────────────────────────────
@@ -135,16 +138,23 @@ def _extract_entries(xlsm_path: Path) -> list[dict]:
 
 # ── Voyage embedding ─────────────────────────────────────────────────────────
 
-async def _embed(text: str) -> list[float]:
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    async with httpx.AsyncClient(timeout=60.0) as c:
-        resp = await c.post(
-            VOYAGE_URL,
-            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"},
-            json={"model": EMBED_MODEL, "input": [text]},
-        )
+async def _embed_batch(texts: list[str]) -> list[list[float]]:
+    for attempt in range(6):
+        async with httpx.AsyncClient(timeout=60.0) as c:
+            resp = await c.post(
+                VOYAGE_URL,
+                headers={"Authorization": f"Bearer {_API_KEY}", "Content-Type": "application/json"},
+                json={"model": EMBED_MODEL, "input": texts},
+            )
+        if resp.status_code == 429:
+            wait = 20 * (attempt + 1)
+            log.info("  Rate limited — waiting %ds (attempt %d/6)", wait, attempt + 1)
+            await asyncio.sleep(wait)
+            continue
         resp.raise_for_status()
-    return resp.json()["data"][0]["embedding"]
+        data = resp.json()["data"]
+        return [item["embedding"] for item in sorted(data, key=lambda x: x["index"])]
+    raise RuntimeError("Exceeded retry limit on rate limit")
 
 
 # ── CAP helpers ───────────────────────────────────────────────────────────────
@@ -181,30 +191,32 @@ async def ingest(xlsm_path: Path, cap_url: str) -> None:
         existing_codes = {c["serviceCode"] for c in existing.get("value", [])}
         log.info("%d PricingChunks already in DB", len(existing_codes))
 
-        for i, entry in enumerate(entries):
-            code = entry["code"]
-            if code in existing_codes:
-                log.info("Skipping (already ingested): %s", code)
-                continue
+        # Filter out already-ingested entries
+        pending = [e for e in entries if e["code"] not in existing_codes]
+        log.info("%d entries to ingest", len(pending))
 
+        BATCH = 10
+        done = 0
+        for i in range(0, len(pending), BATCH):
+            batch = pending[i:i + BATCH]
             try:
-                vector = await _embed(entry["text"])
+                vectors = await _embed_batch([e["text"] for e in batch])
             except Exception as exc:
-                log.warning("Embed failed for %s: %s", code, exc)
+                log.warning("Batch %d-%d failed: %s — skipping", i, i + BATCH, exc)
                 continue
-
-            payload = {
-                "serviceCode":   code,
-                "text":          entry["text"],
-                "embedding":     json.dumps(vector),
-                "effortType":    entry["effort_type"] or None,
-                "unitOfMeasure": entry["unit_measure"] or None,
-            }
-            if entry["price_eur"] is not None:
-                payload["priceEur"] = entry["price_eur"]
-
-            await _cap_post(cap, cap_url, "PricingChunks", payload)
-            log.info("  [%d/%d] Ingested %s", i + 1, len(entries), code)
+            for entry, vector in zip(batch, vectors):
+                payload = {
+                    "serviceCode":   entry["code"],
+                    "text":          entry["text"],
+                    "embedding":     json.dumps(vector),
+                    "effortType":    entry["effort_type"] or None,
+                    "unitOfMeasure": entry["unit_measure"] or None,
+                }
+                if entry["price_eur"] is not None:
+                    payload["priceEur"] = entry["price_eur"]
+                await _cap_post(cap, cap_url, "PricingChunks", payload)
+                done += 1
+            log.info("  ... %d/%d ingested", done, len(pending))
 
     log.info("Pricing ingestion complete.")
 

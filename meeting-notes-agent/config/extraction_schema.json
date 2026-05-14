@@ -1,0 +1,364 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ClientRecord",
+  "description": "Structured client record extracted from raw OPS meeting notes. Includes topic data and accumulated analysis.",
+  "type": "object",
+  "required": ["client", "processedDate", "milestones", "absences", "topics"],
+  "properties": {
+    "client": {
+      "type": "string",
+      "description": "Client name, e.g. 'Allianz Technology SE'"
+    },
+    "processedDate": {
+      "type": "string",
+      "description": "ISO 8601 date when the notes were processed (system-stamped, not from notes)"
+    },
+    "milestones": {
+      "type": "array",
+      "description": "Important events or milestones table. Keep all rows including empty ones.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string" },
+          "description": { "type": "string" },
+          "comment": { "type": "string" }
+        }
+      }
+    },
+    "absences": {
+      "type": "array",
+      "description": "Upcoming absences/holidays. KEEP empty rows for team members with no absence — empty row != absent person.",
+      "items": {
+        "type": "object",
+        "required": ["who"],
+        "properties": {
+          "who": { "type": "string" },
+          "date": { "type": "string" },
+          "substitute1": { "type": "string" },
+          "substitute2Notes": { "type": "string" }
+        }
+      }
+    },
+    "topics": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/topic" }
+    },
+    "analysis": {
+      "type": "object",
+      "description": "Accumulated analysis data. Persists and grows across runs. Never delete — only append or update status.",
+      "properties": {
+        "decisions": {
+          "type": "array",
+          "description": "Sequential audit trail of all decisions across all topics. IDs are global and never reused.",
+          "items": { "$ref": "#/definitions/auditDecision" }
+        },
+        "references": {
+          "type": "array",
+          "description": "Deduplicated index of all SR, SAPNote, Case#, KBA numbers found.",
+          "items": { "$ref": "#/definitions/referenceEntry" }
+        },
+        "risks": {
+          "type": "array",
+          "description": "Risk register. Entries persist until explicitly closed by user. Carry forward all open risks on every run.",
+          "items": { "$ref": "#/definitions/riskEntry" }
+        },
+        "ownerHistory": {
+          "type": "object",
+          "description": "Per-topic owner change log. Keys are topic IDs. Accumulates across runs.",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/ownerChange" }
+          }
+        },
+        "actionItems": {
+          "type": "array",
+          "description": "Flat list of all detected action items. Regenerated each run from current data.",
+          "items": { "$ref": "#/definitions/actionItem" }
+        },
+        "systemMap": {
+          "type": "object",
+          "description": "System code → topic references. Keys are system codes (FMP, FMQ, etc). Regenerated each run.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "topics": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of topic IDs where this system appears"
+              },
+              "mentions": {
+                "type": "integer",
+                "description": "Total mention count across all topics"
+              },
+              "concentrationRisk": {
+                "type": "boolean",
+                "description": "True if system appears in 3+ topics (configurable threshold)"
+              }
+            }
+          }
+        },
+        "staleTopics": {
+          "type": "array",
+          "description": "Topics with no new entries beyond the stale threshold. Regenerated each run.",
+          "items": { "$ref": "#/definitions/staleEntry" }
+        },
+        "upcomingActions": {
+          "type": "array",
+          "description": "Actions due within 7 days of processing date. Regenerated each run.",
+          "items": { "$ref": "#/definitions/upcomingAction" }
+        },
+        "rollup": {
+          "$ref": "#/definitions/rollupSummary",
+          "description": "Period summary. Regenerated each run."
+        },
+        "diff": {
+          "$ref": "#/definitions/meetingDiff",
+          "description": "Comparison against previous JSON for same client. null on first run."
+        },
+        "config": {
+          "type": "object",
+          "description": "Analysis configuration. Persists across runs. User can modify via /feedback.",
+          "properties": {
+            "riskThresholdDays": { "type": "integer", "default": 30 },
+            "staleThresholdWeeks": { "type": "integer", "default": 2 },
+            "rollupPeriod": { "type": "string", "enum": ["weekly", "monthly", "quarterly", "half-year", "annual"], "default": "weekly" },
+            "systemConcentrationThreshold": { "type": "integer", "default": 3 },
+            "ownerFlipThreshold": { "type": "integer", "default": 2 }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "statusBadge": {
+      "type": "string",
+      "enum": ["In Progress", "Blocked", "Completed", "Closed", "Monitoring"],
+      "description": "Use ONLY what appears in the notes. 'Blocked' ONLY if the word 'blocked' is literally written."
+    },
+    "flag": {
+      "type": "string",
+      "enum": ["Top Issue", "Action", "Risk", "Info", "Monitoring", "Closed"],
+      "description": "Flags are assigned from the notes. Do not infer flags unless explicitly marked."
+    },
+    "decision": {
+      "type": "object",
+      "required": ["text"],
+      "description": "Extracted from trigger phrases: 'OK for', 'confirmed', 'agreed', 'no need to', 'considered permanent', 'to be closed', 'completed', 'done'",
+      "properties": {
+        "text": { "type": "string" },
+        "date": { "type": "string" }
+      }
+    },
+    "sharedUpdate": {
+      "type": "object",
+      "required": ["text"],
+      "description": "Bullet that applies to all sub-topics or cannot be mapped. Over-aggregate rather than misplace.",
+      "properties": {
+        "text": { "type": "string" },
+        "date": { "type": "string" }
+      }
+    },
+    "timelineEntry": {
+      "type": "object",
+      "required": ["date", "bullets"],
+      "properties": {
+        "date": {
+          "type": ["string", "null"],
+          "description": "Content date as written. null only if genuinely no date context."
+        },
+        "bullets": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Bullet text preserved close to verbatim."
+        }
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "description": "Current = most recent date group. Earlier = all older, each date separate.",
+      "properties": {
+        "current": { "type": "array", "items": { "$ref": "#/definitions/timelineEntry" } },
+        "earlier": { "type": "array", "items": { "$ref": "#/definitions/timelineEntry" } }
+      }
+    },
+    "subTopic": {
+      "type": "object",
+      "required": ["id", "title", "status", "owner", "due"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "systems": { "type": "array", "items": { "type": "string" } },
+        "owner": { "type": "string" },
+        "due": { "type": "string" },
+        "expiry": { "type": "string" },
+        "status": { "$ref": "#/definitions/statusBadge" },
+        "decisions": { "type": "array", "items": { "$ref": "#/definitions/decision" } },
+        "timeline": { "$ref": "#/definitions/timeline" }
+      }
+    },
+    "topic": {
+      "type": "object",
+      "required": ["id", "flags", "title", "status", "owner", "due", "summary", "isSection"],
+      "properties": {
+        "id": { "type": "string" },
+        "flags": { "type": "array", "items": { "$ref": "#/definitions/flag" } },
+        "title": { "type": "string" },
+        "references": { "type": "string" },
+        "status": { "$ref": "#/definitions/statusBadge" },
+        "owner": { "type": "string" },
+        "due": { "type": "string" },
+        "summary": { "type": "string" },
+        "decisions": { "type": "array", "items": { "$ref": "#/definitions/decision" } },
+        "isSection": { "type": "boolean" },
+        "subTopics": { "type": "array", "items": { "$ref": "#/definitions/subTopic" } },
+        "sharedUpdates": { "type": "array", "items": { "$ref": "#/definitions/sharedUpdate" } },
+        "timeline": { "$ref": "#/definitions/timeline" }
+      },
+      "_computedFields": {
+        "description": "Renderer computes: (1) summary count line, (2) overview matrix. Not stored."
+      }
+    },
+    "auditDecision": {
+      "type": "object",
+      "required": ["id", "text", "topicRef"],
+      "description": "Sequential decision record. IDs are global: DEC-YYYY-NNN. Never reuse an ID.",
+      "properties": {
+        "id": { "type": "string", "description": "DEC-2026-001 format. Sequential, never reused." },
+        "date": { "type": "string" },
+        "text": { "type": "string" },
+        "topicRef": { "type": "string", "description": "Topic ID, e.g. '1' or '3'" },
+        "subTopicRef": { "type": "string", "description": "Sub-topic ID if applicable, e.g. '0451'" },
+        "agreedBy": { "type": "string", "description": "Who agreed, if identifiable from context" }
+      }
+    },
+    "referenceEntry": {
+      "type": "object",
+      "required": ["ref"],
+      "description": "Deduplicated. Same ref across multiple topics = one entry with multiple topicRefs.",
+      "properties": {
+        "ref": { "type": "string", "description": "Verbatim: 'SR33551172', 'SAPNote# 2600030', 'Case # 1240521', 'KBA 2903167'" },
+        "type": { "type": "string", "enum": ["SR", "SAPNote", "Case", "KBA", "Other"] },
+        "context": { "type": "string", "description": "Brief context from surrounding text" },
+        "topicRefs": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "description": "If mentioned: 'implemented', 'pending', etc." }
+      }
+    },
+    "riskEntry": {
+      "type": "object",
+      "required": ["id", "description", "topicRef", "trigger", "status"],
+      "description": "Persists until explicitly closed. Carry forward every run.",
+      "properties": {
+        "id": { "type": "string", "description": "RISK-NNN format" },
+        "description": { "type": "string" },
+        "detectedDate": { "type": "string" },
+        "topicRef": { "type": "string" },
+        "trigger": {
+          "type": "string",
+          "description": "What caused the flag: 'blocked >30d', 'process gap language', 'escalation language', 'no owner and no due'"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Open", "Closed"],
+          "description": "Open until user explicitly closes it"
+        },
+        "closedDate": { "type": "string" }
+      }
+    },
+    "ownerChange": {
+      "type": "object",
+      "required": ["date", "from", "to"],
+      "description": "One ownership change event. Accumulates per topic across runs.",
+      "properties": {
+        "date": { "type": "string" },
+        "from": { "type": "string" },
+        "to": { "type": "string" }
+      }
+    },
+    "actionItem": {
+      "type": "object",
+      "required": ["text", "owner"],
+      "description": "Regenerated each run. Detected from 'X to check/raise/send/share/confirm/create/investigate'.",
+      "properties": {
+        "text": { "type": "string", "description": "Verbatim bullet text" },
+        "owner": { "type": "string" },
+        "due": { "type": "string", "description": "If a date is in the bullet" },
+        "topicRef": { "type": "string" },
+        "subTopicRef": { "type": "string" },
+        "overdue": { "type": "boolean", "description": "True if due date is before processing date" }
+      }
+    },
+    "staleEntry": {
+      "type": "object",
+      "required": ["topicRef", "lastMentioned", "gapDays"],
+      "description": "Regenerated each run.",
+      "properties": {
+        "topicRef": { "type": "string" },
+        "topicTitle": { "type": "string" },
+        "lastMentioned": { "type": "string", "description": "Most recent date found in topic timeline" },
+        "gapDays": { "type": "integer" },
+        "owner": { "type": "string" }
+      }
+    },
+    "upcomingAction": {
+      "type": "object",
+      "required": ["description", "dueDate"],
+      "description": "Regenerated each run. Actions due within 7 days.",
+      "properties": {
+        "description": { "type": "string" },
+        "owner": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "topicRef": { "type": "string" }
+      }
+    },
+    "rollupSummary": {
+      "type": "object",
+      "description": "Regenerated each run. Configurable period.",
+      "properties": {
+        "period": { "type": "string" },
+        "totalTopics": { "type": "integer" },
+        "closedInPeriod": { "type": "integer" },
+        "openedInPeriod": { "type": "integer" },
+        "blocked": { "type": "integer" },
+        "decisionsInPeriod": { "type": "integer" },
+        "activeRisks": { "type": "integer" },
+        "avgAgeDaysOpenItems": { "type": "number" },
+        "actionsDueNext7Days": { "type": "integer" },
+        "narrativeSummary": { "type": "string", "description": "AI-generated paragraph for DED Weekly Status tab" }
+      }
+    },
+    "meetingDiff": {
+      "type": ["object", "null"],
+      "description": "Comparison against previous JSON. null on first run or if no previous data found.",
+      "properties": {
+        "previousDate": { "type": "string", "description": "processedDate of the previous JSON" },
+        "newTopics": { "type": "array", "items": { "type": "string" }, "description": "Topic titles not in previous" },
+        "statusChanges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "topicRef": { "type": "string" },
+              "from": { "type": "string" },
+              "to": { "type": "string" }
+            }
+          }
+        },
+        "newDecisions": { "type": "array", "items": { "type": "string" }, "description": "Decision texts not in previous" },
+        "newRisks": { "type": "array", "items": { "type": "string" }, "description": "Risk IDs not in previous" },
+        "newActionItems": { "type": "integer" },
+        "newlyStale": { "type": "array", "items": { "type": "string" }, "description": "Topics that became stale since last run" },
+        "ownerChanges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "topicRef": { "type": "string" },
+              "from": { "type": "string" },
+              "to": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

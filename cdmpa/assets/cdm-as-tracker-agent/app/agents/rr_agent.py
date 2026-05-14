@@ -11,8 +11,8 @@ from app import cap_client, anthropic_client
 
 logger = logging.getLogger(__name__)
 
-VOYAGE_URL       = "https://api.anthropic.com/v1/embeddings"
-EMBED_MODEL      = "voyage-3"
+VOYAGE_URL       = "https://api.voyageai.com/v1/embeddings"
+EMBED_MODEL      = "voyage-4"
 COSINE_THRESHOLD = 0.3
 COSINE_TOP_K     = 15
 MAX_CONTEXT_CHARS = 40000
@@ -54,11 +54,11 @@ def capabilities() -> list[str]:
 
 
 async def _embed(text: str) -> np.ndarray:
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    api_key = os.environ.get("VOYAGE_API_KEY", "")
     async with httpx.AsyncClient(timeout=30.0) as c:
         resp = await c.post(
             VOYAGE_URL,
-            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"},
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={"model": EMBED_MODEL, "input": [text]},
         )
         resp.raise_for_status()

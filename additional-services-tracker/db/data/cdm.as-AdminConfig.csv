@@ -1,6 +1,0 @@
-configKey,configValue,description
-sharepoint_base_url,,SharePoint customer folder base URL — configure before pilot
-llm_provider,anthropic,LLM backend: anthropic or gen_ai_hub
-llm_model,claude-opus-4-7,Active LLM model — CDM can change this conversationally ('use Sonnet instead')
-pricing_data_version,2026-01-01,Date of last pricing data update — matches January 2026 ECS pricing sheet
-assistant_name,Beacon,Display name of the main PA agent — CDM can rename conversationally ('call yourself Atlas')

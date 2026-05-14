@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@ui5/webcomponents-react'
-import { sendChat, getAssistantName } from '../api.js'
+import { sendChat, getAssistantName, getConversationTurns, createConversationSession } from '../api.js'
 import PanelRenderer from './PanelRenderer.jsx'
+import ChatSessionHeader from './ChatSessionHeader.jsx'
 
 function mdToHtml(text) {
   let s = text
@@ -32,21 +33,66 @@ function mdToHtml(text) {
 
 const SEND_TRIGGER = /\bsend\b/i
 
-export default function ChatShell({ sessionId, cdmEmail, cardContext = null }) {
+export default function ChatShell({ sessionId, cdmEmail, cardContext = null, customerAgentId = null, sessionTitle = null, onNewSession = null, onSelectSession = null, onRename = null, onSessionCreated = null, onDataRefresh = null }) {
   const [messages, setMessages] = useState([])
   const [input, setInput]       = useState('')
+  const [attachments, setAttachments] = useState([])
   const [busy, setBusy]         = useState(false)
   const [assistantName, setAssistantName] = useState(null)
   const [listening, setListening] = useState(false)
+  const [activeSessionId, setActiveSessionId] = useState(sessionId)
   const bottomRef  = useRef(null)
   const textRef    = useRef(null)
   const recognitionRef = useRef(null)
+  const selfCreatedRef = useRef(null)
+  const sendTextRef = useRef(null)
+
+  // Sync ref on every render so the fire-prompt handler always calls the latest version
+  useEffect(() => { sendTextRef.current = sendText })
+
+  // Sync from parent only when parent is pushing a genuinely different session
+  // (not echoing back the ID we just created ourselves)
+  useEffect(() => {
+    if (sessionId === selfCreatedRef.current) return
+    setActiveSessionId(sessionId)
+  }, [sessionId])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
   useEffect(() => { getAssistantName().then(setAssistantName).catch(() => setAssistantName('Beacon')) }, [])
 
+  // Load history when switching to an existing (non-pending) session
+  useEffect(() => {
+    if (!sessionId) return
+    if (sessionId === selfCreatedRef.current) return
+    setMessages([])
+    if (sessionId.startsWith('pending-')) return
+    getConversationTurns(sessionId).then(turns => {
+      if (!turns.length) return
+      const loaded = turns
+        .filter(t => t.role === 'user' || t.role === 'assistant')
+        .map(t => {
+          let text = t.content
+          if (t.role === 'assistant' && text?.startsWith('{')) {
+            try { text = JSON.parse(text).reply || text } catch { /* keep raw */ }
+          }
+          return { role: t.role, text }
+        })
+      setMessages(loaded)
+    }).catch(() => {})
+  }, [sessionId])
+
   // Clean up recognition on unmount
   useEffect(() => () => recognitionRef.current?.stop(), [])
+
+  // Fire prompt from nav sidebar
+  useEffect(() => {
+    const handler = (e) => {
+      const text = e.detail?.content
+      if (text) sendTextRef.current?.(text)
+    }
+    document.addEventListener('cdm:fire-prompt', handler)
+    return () => document.removeEventListener('cdm:fire-prompt', handler)
+  }, [])
 
   function startListening() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -55,7 +101,7 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null }) {
       return
     }
     const rec = new SpeechRecognition()
-    rec.continuous = true
+    rec.continuous = false
     rec.interimResults = true
     rec.lang = 'en-US'
     recognitionRef.current = rec
@@ -83,13 +129,11 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null }) {
       if (e.results[e.results.length - 1].isFinal) {
         const last = e.results[e.results.length - 1][0].transcript.trim()
         if (SEND_TRIGGER.test(last)) {
-          // Strip trailing "send" and submit
           const cleaned = committed.replace(/\s*send\s*$/i, '').trim()
           committed = ''
           stopListening()
           if (cleaned) {
-            setInput(cleaned)
-            // Use a short delay so state updates before send
+            setInput('')
             setTimeout(() => sendText(cleaned), 50)
           }
         }
@@ -99,7 +143,9 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null }) {
     rec.onerror = (e) => {
       if (e.error !== 'no-speech') console.error('Speech error:', e.error)
     }
-    rec.onend = () => setListening(false)
+    rec.onend = () => {
+      setListening(false)
+    }
 
     rec.start()
     setListening(true)
@@ -117,10 +163,25 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null }) {
   }
 
   async function sendText(text) {
-    if (!text || busy) return
+    if (!text && attachments.length === 0) return
+    if (busy) return
     setInput('')
     if (textRef.current) textRef.current.style.height = 'auto'
-    setMessages(m => [...m, { role: 'user', text }])
+
+    // Build the full message: attachment content prepended, then user text
+    const parts = []
+    attachments.forEach(a => parts.push(`[Attached: ${a.name}]\n${a.text}`))
+    if (text) parts.push(text)
+    const fullMessage = parts.join('\n\n')
+
+    // Show in chat: filename chips + user text (not the raw file content)
+    const displayText = [
+      ...attachments.map(a => `📎 ${a.name}`),
+      ...(text ? [text] : []),
+    ].join('\n')
+    setAttachments([])
+
+    setMessages(m => [...m, { role: 'user', text: displayText }])
     setBusy(true)
     const thinkingId = Date.now()
     setMessages(m => [...m, { role: 'thinking', id: thinkingId, activity: '' }])
@@ -130,13 +191,25 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null }) {
     }
 
     try {
-      const res = await sendChat(text, sessionId, cardContext, cdmEmail, assistantName, onActivity)
+      // Lazily create the session on first real message
+      let sid = activeSessionId
+      if (!sid || sid.startsWith('pending-')) {
+        const title = sessionTitle || (customerAgentId ? `Session — ${new Date().toLocaleDateString()}` : `General — ${new Date().toLocaleDateString()}`)
+        const sess = await createConversationSession(customerAgentId || null, title)
+        sid = sess?.ID || ('session-' + Date.now())
+        selfCreatedRef.current = sid
+        setActiveSessionId(sid)
+        onSessionCreated?.(sid, title)
+      }
+
+      const res = await sendChat(fullMessage, sid, cardContext, cdmEmail, assistantName, onActivity, customerAgentId)
       setMessages(m => m.filter(x => x.id !== thinkingId))
 
-      if (res.renameAssistant) setAssistantName(res.renameAssistant)
+      if (res.renameAssistant) { setAssistantName(res.renameAssistant); onRename?.(res.renameAssistant) }
+      if (res.refreshData) onDataRefresh?.()
       if (res.reply) setMessages(m => [...m, { role: 'assistant', text: res.reply }])
       if (res.panels?.length) setMessages(m => [...m, { role: 'panels', panels: res.panels }])
-      if (res.proposedLayout) setMessages(m => [...m, { role: 'panels', panels: [{ type: 'confirm-dialog', title: 'Update your workspace?', config: res.proposedLayout }] }])
+      if (res.proposedLayout) setMessages(m => [...m, { role: 'panels', panels: [{ type: 'confirm-dialog', title: 'Update your workspace?', proposedLayout: res.proposedLayout }] }])
     } catch (err) {
       setMessages(m => m.filter(x => x.id !== thinkingId))
       setMessages(m => [...m, { role: 'system', text: `Error: ${err.message}` }])
@@ -155,6 +228,13 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <ChatSessionHeader
+        customerAgentId={customerAgentId}
+        currentSessionId={activeSessionId}
+        currentTitle={sessionTitle}
+        onNewSession={onNewSession}
+        onSelectSession={onSelectSession}
+      />
       {messages.length === 0 && (
         <div style={{ padding: '2rem', color: '#666', fontSize: '0.9rem' }}>
           Hi — I'm <strong>{name}</strong>. Ask me about requests, pricing, R&R codes, or paste a customer email.
@@ -182,14 +262,77 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null }) {
         })}
         <div ref={bottomRef} />
       </div>
-      <div className="chat-input-row">
+      <div className="chat-input-area">
+        {attachments.length > 0 && (
+          <div className="chat-attachments">
+            {attachments.map((a, i) => (
+              <div key={i} className="chat-attachment-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+                <span>{a.name}</span>
+                <button
+                  className="chat-attachment-remove"
+                  onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
+                  title="Remove"
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="chat-input-row">
+        <button
+          className="voice-btn"
+          onClick={() => document.getElementById('chat-file-input').click()}
+          title="Attach file"
+          disabled={busy}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <input
+          id="chat-file-input"
+          type="file"
+          accept=".txt,.md,.html,.csv,.pdf,.docx"
+          style={{ display: 'none' }}
+          onChange={async e => {
+            const file = e.target.files?.[0]
+            if (!file) return
+            e.target.value = ''
+
+            const isBinary = /\.(pdf|docx)$/i.test(file.name)
+
+            if (isBinary) {
+              const formData = new FormData()
+              formData.append('file', file)
+              try {
+                const res = await fetch('/api/extract-text', { method: 'POST', body: formData })
+                if (!res.ok) throw new Error(`Extraction failed: ${res.status}`)
+                const { text } = await res.json()
+                setAttachments(prev => [...prev, { name: file.name, text }])
+              } catch (err) {
+                setAttachments(prev => [...prev, { name: file.name, text: `[Could not extract: ${err.message}]` }])
+              }
+            } else {
+              const reader = new FileReader()
+              reader.onload = ev => {
+                setAttachments(prev => [...prev, { name: file.name, text: ev.target.result }])
+              }
+              reader.readAsText(file)
+            }
+          }}
+        />
         <button
           className={`voice-btn${listening ? ' active' : ''}`}
           onClick={toggleVoice}
           title={listening ? 'Stop listening (or say "send")' : 'Start voice input'}
           disabled={busy}
         >
-          {listening ? '⏹' : '🎤'}
+          {listening
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>
+          }
         </button>
         <textarea
           ref={textRef}
@@ -204,9 +347,10 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null }) {
           onKeyDown={onKey}
           disabled={busy}
         />
-        <Button design="Emphasized" onClick={handleSend} disabled={busy || !input.trim()}>
+        <Button design="Emphasized" onClick={handleSend} disabled={busy || (!input.trim() && attachments.length === 0)}>
           Send
         </Button>
+        </div>
       </div>
     </div>
   )

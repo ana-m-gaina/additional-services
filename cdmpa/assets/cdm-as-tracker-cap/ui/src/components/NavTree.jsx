@@ -1,103 +1,200 @@
 import { useState, useEffect } from 'react'
-import { getClientAgents, getContractSubagents, getAutomationAgents, patchAgent, postAgent } from '../api.js'
+import { Dialog, Input, Button, Label } from '@ui5/webcomponents-react'
+import { getCustomerAgents, postAgent, patchAgent, savePersonalTemplate, getPersonalTemplates } from '../api.js'
 
-export default function NavTree({ currentUser }) {
-  const [clients, setClients]         = useState([])
-  const [contracts, setContracts]     = useState([])
-  const [automations, setAutomations] = useState([])
-  const [clientsOpen, setClientsOpen]         = useState(true)
-  const [automationsOpen, setAutomationsOpen] = useState(true)
+function ChevronIcon({ open }) {
+  return (
+    <svg
+      width="10" height="10" viewBox="0 0 10 10"
+      style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.18s ease', flexShrink: 0 }}
+      fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+    >
+      <polyline points="3,2 7,5 3,8"/>
+    </svg>
+  )
+}
+
+function SectionHeader({ label, open, onToggle, onNavigate }) {
+  return (
+    <div className="nav-section-header nav-section-header--toggle">
+      <span
+        onClick={onNavigate || onToggle}
+        style={onNavigate ? { cursor: 'pointer', flex: 1 } : { flex: 1 }}
+      >{label}</span>
+      <span onClick={onToggle} style={{ display: 'flex', alignItems: 'center', padding: '0 4px' }}>
+        <ChevronIcon open={open} />
+      </span>
+    </div>
+  )
+}
+
+export default function NavTree({ currentUser, onSelectClient, onFirePrompt, onOpenPrompts, refreshToken = 0 }) {
+  const [customers, setCustomers] = useState([])
+  const [prompts, setPrompts]     = useState([])
+  const [customersOpen, setCustomersOpen] = useState(true)
+  const [promptsOpen, setPromptsOpen]     = useState(true)
+  const [customerDialogOpen, setCustomerDialogOpen] = useState(false)
+  const [newCustomerId, setNewCustomerId]   = useState('')
+  const [newCustomerName, setNewCustomerName] = useState('')
+
+  const [promptDialogOpen, setPromptDialogOpen] = useState(false)
+  const [newPromptKey, setNewPromptKey]         = useState('')
+  const [newPromptContent, setNewPromptContent] = useState('')
 
   async function load() {
     try {
-      const [c, ct, a] = await Promise.all([getClientAgents(), getContractSubagents(), getAutomationAgents()])
-      setClients(c); setContracts(ct); setAutomations(a)
+      const [c, p] = await Promise.all([getCustomerAgents(), getPersonalTemplates()])
+      setCustomers(c)
+      setPrompts(p)
     } catch { /* ignore */ }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [refreshToken])
 
-  async function rename(entity, id, oldName) {
-    const newName = window.prompt(`Rename:`, oldName)
-    if (!newName?.trim() || newName === oldName) return
-    await patchAgent(entity, id, { displayName: newName.trim() })
+  async function submitAddCustomer() {
+    if (!newCustomerId.trim() || !newCustomerName.trim()) return
+    await postAgent('CustomerAgents', {
+      ID: crypto.randomUUID(),
+      customerId: newCustomerId.trim(),
+      displayName: newCustomerName.trim(),
+      createdBy: currentUser,
+      createdAt: new Date().toISOString(),
+    })
+    setCustomerDialogOpen(false)
+    setNewCustomerId('')
+    setNewCustomerName('')
     load()
   }
 
-  async function addClient() {
-    const customerId = window.prompt('Customer name or ID:')
-    if (!customerId?.trim()) return
-    const displayName = window.prompt('Display name:', customerId.trim())
-    if (!displayName?.trim()) return
-    await postAgent('ClientAgents', {
-      ID: crypto.randomUUID(), customerId: customerId.trim(), displayName: displayName.trim(),
-      createdBy: currentUser, createdAt: new Date().toISOString()
-    })
-    load()
-  }
-
-  async function addAutomation() {
-    const eventType = window.prompt('Event type (e.g. customer.acceptance):')
-    if (!eventType?.trim()) return
-    const displayName = window.prompt('Display name:', eventType.trim())
-    if (!displayName?.trim()) return
-    await postAgent('AutomationAgents', {
-      ID: crypto.randomUUID(), eventType: eventType.trim(), displayName: displayName.trim(),
-      enabled: true, createdBy: currentUser, createdAt: new Date().toISOString()
-    })
+  async function submitAddPrompt() {
+    if (!newPromptKey.trim() || !newPromptContent.trim()) return
+    await savePersonalTemplate(newPromptKey.trim(), newPromptKey.trim(), newPromptContent.trim())
+    setPromptDialogOpen(false)
+    setNewPromptKey('')
+    setNewPromptContent('')
     load()
   }
 
   return (
-    <div>
+    <nav className="nav-tree">
+
+      {/* ── Customers ── */}
       <div className="nav-section">
-        <div className="nav-section-header nav-section-header--toggle" onClick={() => setClientsOpen(o => !o)}>
-          <span>Clients</span>
-          <span className={`nav-chevron${clientsOpen ? ' open' : ''}`}>›</span>
-        </div>
-        {clientsOpen && (
+        <SectionHeader label="Customers" open={customersOpen} onToggle={() => setCustomersOpen(o => !o)} />
+        {customersOpen && (
           <ul className="nav-list">
-            {clients.map(c => (
-              <li key={c.ID} className="nav-item nav-item-client">
-                <span onDoubleClick={() => rename('ClientAgents', c.ID, c.displayName)} style={{ cursor: 'default' }}>
+            {customers.map(c => (
+              <li key={c.ID} className="nav-item nav-item-row">
+                <span
+                  className="nav-item-name"
+                  onClick={() => onSelectClient?.(c)}
+                  onDoubleClick={() => {
+                    const n = window.prompt('Rename:', c.displayName)
+                    if (n?.trim() && n !== c.displayName) patchAgent('CustomerAgents', c.ID, { displayName: n.trim() }).then(load)
+                  }}
+                >
                   {c.displayName}
                 </span>
-                <span className="nav-item-sub">{c.customerId}</span>
-                <ul className="nav-sublist">
-                  {contracts.filter(ct => ct.clientId === c.ID).map(ct => (
-                    <li key={ct.ID} className="nav-item nav-item-contract">
-                      <span onDoubleClick={() => rename('ContractSubagents', ct.ID, ct.displayName)}>
-                        {ct.displayName}
-                      </span>
-                      <span className="nav-item-sub">{ct.sid} · {ct.contractType}</span>
-                    </li>
-                  ))}
-                </ul>
               </li>
             ))}
-            <li className="nav-add-btn" onClick={addClient}>+ Add client</li>
+            <li className="nav-add-btn" onClick={() => setCustomerDialogOpen(true)}>+ Add customer</li>
           </ul>
         )}
       </div>
+
+      {/* ── Prompts ── */}
       <div className="nav-section">
-        <div className="nav-section-header nav-section-header--toggle" onClick={() => setAutomationsOpen(o => !o)}>
-          <span>Automations</span>
-          <span className={`nav-chevron${automationsOpen ? ' open' : ''}`}>›</span>
-        </div>
-        {automationsOpen && (
+        <SectionHeader label="Prompts" open={promptsOpen} onToggle={() => setPromptsOpen(o => !o)} onNavigate={onOpenPrompts} />
+        {promptsOpen && (
           <ul className="nav-list">
-            {automations.map(a => (
-              <li key={a.ID} className="nav-item nav-item-automation">
-                <span onDoubleClick={() => rename('AutomationAgents', a.ID, a.displayName)}>
-                  {a.displayName}
-                </span>
-                <span className="nav-item-sub">{a.eventType}</span>
+            {prompts.length === 0 && (
+              <li className="nav-empty">No prompts yet</li>
+            )}
+            {prompts.map(p => (
+              <li
+                key={p.ID}
+                className="nav-item nav-item-prompt"
+                onClick={() => onFirePrompt?.(p.content)}
+                title={p.content?.slice(0, 120)}
+              >
+                <span className="nav-prompt-label">{p.templateKey || p.description}</span>
               </li>
             ))}
-            <li className="nav-add-btn" onClick={addAutomation}>+ Add automation</li>
+            <li className="nav-add-btn" onClick={() => setPromptDialogOpen(true)}>+ Add prompt</li>
           </ul>
         )}
       </div>
-    </div>
+
+      {/* ── Add Customer Dialog ── */}
+      <Dialog
+        open={customerDialogOpen}
+        headerText="Add customer"
+        onClose={() => setCustomerDialogOpen(false)}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', minWidth: '280px' }}>
+          <div>
+            <Label for="cust-id-input" required>Customer number</Label>
+            <Input
+              id="cust-id-input"
+              placeholder="SAP account ID"
+              value={newCustomerId}
+              onInput={e => setNewCustomerId(e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div>
+            <Label for="cust-name-input" required>Display name</Label>
+            <Input
+              id="cust-name-input"
+              placeholder="Customer name"
+              value={newCustomerName}
+              onInput={e => setNewCustomerName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') submitAddCustomer() }}
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.5rem' }}>
+            <Button design="Emphasized" onClick={submitAddCustomer}>Add</Button>
+            <Button design="Transparent" onClick={() => { setCustomerDialogOpen(false); setNewCustomerId(''); setNewCustomerName('') }}>Cancel</Button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* ── Add Prompt Dialog ── */}
+      <Dialog
+        open={promptDialogOpen}
+        headerText="Add prompt"
+        onClose={() => setPromptDialogOpen(false)}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', minWidth: '320px' }}>
+          <div>
+            <Label for="prompt-key-input" required>Name</Label>
+            <Input
+              id="prompt-key-input"
+              placeholder="Short label (e.g. Weekly summary)"
+              value={newPromptKey}
+              onInput={e => setNewPromptKey(e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div>
+            <Label for="prompt-content-input" required>Prompt text</Label>
+            <textarea
+              id="prompt-content-input"
+              placeholder="What gets sent to the assistant…"
+              value={newPromptContent}
+              onChange={e => setNewPromptContent(e.target.value)}
+              rows={4}
+              style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', fontSize: '0.85rem', padding: '0.4rem 0.6rem', border: '1px solid var(--sapField_BorderColor, #89919a)', borderRadius: '4px', background: 'var(--sapField_Background, #fff)', color: 'var(--sapTextColor, #32363a)' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.5rem' }}>
+            <Button design="Emphasized" onClick={submitAddPrompt}>Add</Button>
+            <Button design="Transparent" onClick={() => { setPromptDialogOpen(false); setNewPromptKey(''); setNewPromptContent('') }}>Cancel</Button>
+          </div>
+        </div>
+      </Dialog>
+
+    </nav>
   )
 }

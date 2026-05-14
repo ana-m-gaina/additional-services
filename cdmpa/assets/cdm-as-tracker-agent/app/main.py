@@ -22,7 +22,7 @@ from pathlib import Path
 
 import httpx
 import jwt
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -112,6 +112,7 @@ class ChatRequest(BaseModel):
     card_context: str | None = None
     cdm_email: str | None = None
     assistant_name: str | None = None
+    customer_agent_id: str | None = None
 
 
 class ChatResponse(BaseModel):
@@ -159,6 +160,7 @@ async def chat(req: ChatRequest, request: Request):
             card_context=req.card_context,
             cdm_email=cdm_email,
             assistant_name=req.assistant_name,
+            customer_agent_id=req.customer_agent_id,
         )
         return ChatResponse(**result)
     except Exception as exc:
@@ -190,6 +192,7 @@ async def chat_stream(req: ChatRequest, request: Request):
                 cdm_email=cdm_email,
                 assistant_name=req.assistant_name,
                 activity_callback=activity_cb,
+                customer_agent_id=req.customer_agent_id,
             )
             await queue.put({"type": "result", **result})
         except Exception as exc:
@@ -230,3 +233,50 @@ async def serve_rr_document(doc_id: str):
         filename=doc.get("filename", "document.pdf"),
         headers={"Content-Disposition": "inline"},
     )
+
+
+@app.post("/api/extract-text")
+async def extract_text(file: UploadFile = File(...)):
+    """Extract plain text from an uploaded PDF, DOCX, or text file."""
+    content = await file.read()
+    filename = (file.filename or "").lower()
+
+    try:
+        if filename.endswith(".pdf"):
+            import io
+            from pypdf import PdfReader
+            reader = PdfReader(io.BytesIO(content))
+            pages = [page.extract_text() or "" for page in reader.pages]
+            text = "\n".join(pages).strip()
+
+        elif filename.endswith(".docx"):
+            import io
+            import re
+            import zipfile
+            import xml.etree.ElementTree as ET
+            with zipfile.ZipFile(io.BytesIO(content)) as z:
+                with z.open("word/document.xml") as f:
+                    tree = ET.parse(f)
+            ns = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            lines = []
+            for para in tree.findall(f".//{{{ns}}}p"):
+                runs = "".join(r.text or "" for r in para.findall(f".//{{{ns}}}t"))
+                if runs.strip():
+                    lines.append(runs)
+            text = "\n".join(lines).strip()
+
+        elif filename.endswith((".txt", ".md", ".html", ".csv")):
+            text = content.decode("utf-8", errors="replace").strip()
+
+        else:
+            raise HTTPException(status_code=415, detail=f"Unsupported file type: {file.filename}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Extraction failed: {e}")
+
+    if not text:
+        raise HTTPException(status_code=422, detail="No text could be extracted from the file.")
+
+    return {"text": text, "filename": file.filename, "chars": len(text)}
