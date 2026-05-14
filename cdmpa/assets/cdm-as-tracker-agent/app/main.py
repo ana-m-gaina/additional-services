@@ -127,16 +127,52 @@ async def agent_card():
     return {
         "name": "CDM AS Tracker Agent v2",
         "version": "2.0.0",
-        "description": "Agent-native AI orchestrator for CDM Additional Services.",
-        "capabilities": {"skills": [
-            {"name": "rr-lookup"},
-            {"name": "pricing-lookup"},
-            {"name": "request-management"},
-            {"name": "jira-o2i"},
-            {"name": "panel-rendering"},
-            {"name": "client-routing"},
-            {"name": "inbox-management"},
-        ]},
+        "description": (
+            "Agent-native AI orchestrator for CDM Additional Services. Claude drives the "
+            "UI by returning panel specs (render_panel tool). Routes to R&R, Pricing, "
+            "Request Management, and O2I specialist subagents. Maintains per-session "
+            "conversation memory. Supports Customer→Contract agent delegation and "
+            "Inbox/PendingActions automation."
+        ),
+        "capabilities": {
+            "skills": [
+                {
+                    "name": "rr-lookup",
+                    "description": "Look up R&R service code chargeability and category",
+                },
+                {
+                    "name": "pricing-lookup",
+                    "description": "Look up current prices for AS service codes",
+                },
+                {
+                    "name": "request-management",
+                    "description": "Create and manage AS request lifecycle",
+                },
+                {
+                    "name": "jira-o2i",
+                    "description": "Generate and submit JIRA Order-to-Invoice tickets",
+                },
+                {
+                    "name": "panel-rendering",
+                    "description": "Render UI panels (record-card, table, email-draft, kpi-strip, etc.)",
+                },
+                {
+                    "name": "inbox-management",
+                    "description": "Surface and resolve PendingAction items in CDM Inbox",
+                },
+                {
+                    "name": "meeting-notes",
+                    "description": "Process OPS meeting notes into structured JSON with 10 analysis sections",
+                },
+            ]
+        },
+        "authentication": {"type": "bearer"},
+        "streaming": {"enabled": True, "endpoint": "/api/chat/stream"},
+        "models": [{"name": "claude-opus-4-7", "executableId": "anthropic"}],
+        "endpoints": [
+            {"path": "/api/chat", "method": "POST"},
+            {"path": "/api/chat/stream", "method": "POST"},
+        ],
     }
 
 
