@@ -14,6 +14,15 @@ TOOL_SCHEMA = {
             "automationId":     {"type": "string"},
             "prompt":           {"type": "string"},
             "relatedRequestId": {"type": "string"},
+            "navigateTo":       {
+                "type": "string",
+                "description": (
+                    "JSON string describing where clicking this notification should go. "
+                    "Examples: '{\"page\":\"client\",\"customerAgentId\":\"<id>\"}' or "
+                    "'{\"page\":\"inbox\"}' or "
+                    "'{\"page\":\"client\",\"customerAgentId\":\"<id>\",\"requestId\":\"<req-id\"}'"
+                ),
+            },
         },
     },
 }
@@ -24,6 +33,7 @@ async def handle(tool_input: dict, *, user_id: str, session_id: str, **_kwargs) 
     automation_id = tool_input.get("automationId", "")
     prompt_text   = tool_input.get("prompt", "")
     related       = tool_input.get("relatedRequestId")
+    navigate_to   = tool_input.get("navigateTo")
     if not automation_id or not prompt_text:
         return {"error": "automationId and prompt required"}
     now = datetime.utcnow().isoformat() + "Z"
@@ -35,6 +45,7 @@ async def handle(tool_input: dict, *, user_id: str, session_id: str, **_kwargs) 
         "prompt": prompt_text,
         "status": "pending",
         "relatedRequestId": related,
+        "navigateTo": navigate_to,
         "createdAt": now,
     })
     return {"created": True, "pendingActionId": result.get("ID")}

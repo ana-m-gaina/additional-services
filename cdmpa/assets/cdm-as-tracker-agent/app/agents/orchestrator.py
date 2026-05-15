@@ -318,7 +318,7 @@ TOOLS AVAILABLE:
 - propose_layout_change: suggest workspace layout changes (CDM must confirm) — always call get_layout first to read existing panels before adding or removing
 - get_reminder_status: check which reminder rules are firing
 - route_to_agent: delegate to a Customer Orchestrator or Contract Subagent (invisible to CDM)
-- surface_pending_action: push a card to CDM Inbox for actions requiring human input
+- surface_pending_action: push a card to CDM Inbox for actions requiring human input. Include navigateTo JSON so clicking the notification goes directly to the right place (e.g. '{{"page":"client","customerAgentId":"<id>"}}' for a customer page, '{{"page":"inbox"}}' for inbox, or '{{"page":"client","customerAgentId":"<id>","requestId":"<req-id>"}}' to open a specific request). When the CDM says "notify me when X" or "watch for Y", call surface_pending_action with an appropriate prompt and navigateTo immediately.
 - resolve_pending_action: mark a pending action as responded or dismissed
 - register_customer: add a new customer to the nav
 - register_contract: add a new contract under a customer
