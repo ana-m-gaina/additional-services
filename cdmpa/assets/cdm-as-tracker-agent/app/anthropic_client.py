@@ -5,6 +5,8 @@ Port of AnthropicDirectClient.js with adaptive thinking and a 10-iteration cap.
 import asyncio
 import logging
 import os
+import time
+from contextlib import contextmanager
 from typing import Any, Callable, Awaitable
 
 import anthropic
@@ -15,6 +17,25 @@ _MODEL         = os.environ.get("HAI_MODEL") or os.environ.get("ANTHROPIC_MODEL"
 _MAX_TOKENS    = int(os.environ.get("ANTHROPIC_MAX_TOKENS", "4096"))
 _MAX_ITER      = int(os.environ.get("ANTHROPIC_MAX_TOOL_ITERATIONS", "10"))
 _USE_HAI       = bool(os.environ.get("HAI_BASE_URL") and os.environ.get("HAI_API_KEY"))
+
+
+@contextmanager
+def _claude_api_span(iteration: int, model: str):
+    """Wrap a single Claude API call in an OTel chat_span. Yields the span (or None)."""
+    span_ctx = None
+    try:
+        from sap_cloud_sdk.core.telemetry import chat_span
+        span_ctx = chat_span(model=model, provider="anthropic")
+    except Exception:
+        pass  # SDK not available in local dev
+
+    if span_ctx is not None:
+        with span_ctx as span:
+            span.set_attribute("gen_ai.request.model", model)
+            span.set_attribute("iteration", iteration)
+            yield span
+    else:
+        yield None
 
 
 def _make_client() -> anthropic.AsyncAnthropic:
@@ -84,12 +105,25 @@ async def chat_with_tools(
         if not _USE_HAI:
             create_kwargs["thinking"] = {"type": "adaptive"}
 
-        resp = await client.messages.create(**create_kwargs)
+        with _claude_api_span(iteration=iterations, model=_MODEL) as api_span:
+            resp = await client.messages.create(**create_kwargs)
+
+            usage = getattr(resp, "usage", None)
+            input_tokens  = getattr(usage, "input_tokens",  0) if usage else 0
+            output_tokens = getattr(usage, "output_tokens", 0) if usage else 0
+            cache_read    = getattr(usage, "cache_read_input_tokens",  0) if usage else 0
+            cache_write   = getattr(usage, "cache_creation_input_tokens", 0) if usage else 0
+
+            if api_span:
+                api_span.set_attribute("gen_ai.usage.input_tokens",  input_tokens)
+                api_span.set_attribute("gen_ai.usage.output_tokens", output_tokens)
+                api_span.set_attribute("cache_read_tokens",  cache_read)
+                api_span.set_attribute("cache_write_tokens", cache_write)
 
         logger.info(
             "[LLM] model=%s iteration=%d stop_reason=%s tokens=%s",
             _MODEL, iterations, resp.stop_reason,
-            getattr(resp.usage, "output_tokens", "?"),
+            output_tokens or getattr(resp.usage, "output_tokens", "?"),
         )
 
         if resp.stop_reason == "end_turn":

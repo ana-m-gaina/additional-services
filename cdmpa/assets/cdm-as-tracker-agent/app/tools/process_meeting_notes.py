@@ -1,7 +1,11 @@
 """Tool: process_meeting_notes — extract structured data from raw ops meeting notes."""
 import json
+import logging
 from datetime import datetime, timezone
 from app import cap_client, anthropic_client
+from app.tools._shared import tool_span
+
+logger = logging.getLogger(__name__)
 
 TOOL_SCHEMA = {
     "name": "process_meeting_notes",
@@ -23,7 +27,7 @@ TOOL_SCHEMA = {
 }
 
 
-async def handle(tool_input: dict, *, refresh_data_ref: list, activity_callback=None, **_kwargs) -> dict:
+async def handle(tool_input: dict, *, refresh_data_ref: list, user_id: str = "", session_id: str = "", activity_callback=None, **_kwargs) -> dict:
     async def _activity(msg: str):
         if activity_callback:
             await activity_callback(msg)
@@ -222,74 +226,86 @@ Set to null — this is a first-run extraction with no previous data to compare 
 - Never confuse entry dates (when discussed) with due dates (when something must happen)
 - sharedUpdates items are objects with "text" field, not plain strings"""
 
-    try:
-        extracted_text = await anthropic_client.chat_with_history(
-            EXTRACTION_SYSTEM,
-            [{"role": "user", "content": raw_text}],
-            max_tokens=16000,
+    with tool_span("process_meeting_notes", session_id=session_id, cdm_email=user_id) as span:
+        try:
+            extracted_text = await anthropic_client.chat_with_history(
+                EXTRACTION_SYSTEM,
+                [{"role": "user", "content": raw_text}],
+                max_tokens=16000,
+            )
+            # Strip markdown code fences if present
+            cleaned = extracted_text.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+            extracted = json.loads(cleaned)
+        except Exception as e:
+            return {"error": f"Extraction failed: {e}"}
+
+        client_name  = extracted.get("client", "")
+        meeting_date = extracted.get("processedDate") or extracted.get("meetingDate") or today
+        topics       = extracted.get("topics", [])
+        analysis     = extracted.get("analysis", {})
+        action_items = analysis.get("actionItems", [])
+        risks        = analysis.get("risks", [])
+        decisions    = analysis.get("decisions", [])
+
+        # Match client name to a CustomerAgent
+        customer_agent_id = None
+        agents = []
+        try:
+            agents = await cap_client.get_customer_agents()
+            client_lower = client_name.lower()
+            for agent in agents:
+                agent_name = (agent.get("displayName") or "").lower()
+                if client_lower and (client_lower in agent_name or agent_name in client_lower):
+                    customer_agent_id = agent.get("ID")
+                    client_name = agent.get("displayName", client_name)
+                    break
+        except Exception:
+            pass
+
+        if not customer_agent_id:
+            return {
+                "error": f"Could not match client '{client_name}' to any known customer. "
+                         f"Available customers: {[a.get('displayName') for a in agents]}. "
+                         "Please check the client name in the notes."
+            }
+
+        await _activity(f"Saving meeting notes for {client_name}…")
+
+        try:
+            await cap_client.save_meeting_note(
+                customer_agent_id=customer_agent_id,
+                client_name=client_name,
+                meeting_date=meeting_date,
+                raw_text=raw_text,
+                extracted_json=json.dumps(extracted),
+                topics_json=json.dumps(topics),
+                action_items_json=json.dumps(action_items),
+                risks_json=json.dumps(risks),
+                decisions_json=json.dumps(decisions),
+            )
+        except Exception as e:
+            return {"error": f"Failed to save meeting note: {e}"}
+
+        refresh_data_ref[0] = True
+        open_risks = len([r for r in risks if r.get("status") == "Open"])
+        logger.info(
+            "[M6].achieved: meeting notes processed client=%s topics=%d actions=%d risks=%d decisions=%d",
+            client_name, len(topics), len(action_items), open_risks, len(decisions),
         )
-        # Strip markdown code fences if present
-        cleaned = extracted_text.strip()
-        if cleaned.startswith("```"):
-            cleaned = cleaned.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-        extracted = json.loads(cleaned)
-    except Exception as e:
-        return {"error": f"Extraction failed: {e}"}
+        if span:
+            span.set_attribute("client_name", client_name)
+            span.set_attribute("topics_count", len(topics))
+            span.set_attribute("action_items_count", len(action_items))
+            span.set_attribute("open_risks_count", open_risks)
 
-    client_name  = extracted.get("client", "")
-    meeting_date = extracted.get("processedDate") or extracted.get("meetingDate") or today
-    topics       = extracted.get("topics", [])
-    analysis     = extracted.get("analysis", {})
-    action_items = analysis.get("actionItems", [])
-    risks        = analysis.get("risks", [])
-    decisions    = analysis.get("decisions", [])
-
-    # Match client name to a CustomerAgent
-    customer_agent_id = None
-    agents = []
-    try:
-        agents = await cap_client.get_customer_agents()
-        client_lower = client_name.lower()
-        for agent in agents:
-            agent_name = (agent.get("displayName") or "").lower()
-            if client_lower and (client_lower in agent_name or agent_name in client_lower):
-                customer_agent_id = agent.get("ID")
-                client_name = agent.get("displayName", client_name)
-                break
-    except Exception:
-        pass
-
-    if not customer_agent_id:
         return {
-            "error": f"Could not match client '{client_name}' to any known customer. "
-                     f"Available customers: {[a.get('displayName') for a in agents]}. "
-                     "Please check the client name in the notes."
+            "saved": True,
+            "clientName": client_name,
+            "customerAgentId": customer_agent_id,
+            "topicsCount": len(topics),
+            "actionItemsCount": len(action_items),
+            "risksCount": open_risks,
+            "decisionsCount": len(decisions),
         }
-
-    await _activity(f"Saving meeting notes for {client_name}…")
-
-    try:
-        await cap_client.save_meeting_note(
-            customer_agent_id=customer_agent_id,
-            client_name=client_name,
-            meeting_date=meeting_date,
-            raw_text=raw_text,
-            extracted_json=json.dumps(extracted),
-            topics_json=json.dumps(topics),
-            action_items_json=json.dumps(action_items),
-            risks_json=json.dumps(risks),
-            decisions_json=json.dumps(decisions),
-        )
-    except Exception as e:
-        return {"error": f"Failed to save meeting note: {e}"}
-
-    refresh_data_ref[0] = True
-    return {
-        "saved": True,
-        "clientName": client_name,
-        "customerAgentId": customer_agent_id,
-        "topicsCount": len(topics),
-        "actionItemsCount": len(action_items),
-        "risksCount": len([r for r in risks if r.get("status") == "Open"]),
-        "decisionsCount": len(decisions),
-    }

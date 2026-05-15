@@ -1,6 +1,10 @@
 """Tool: create_request — create a new AS request entry in the database."""
+import logging
 import uuid
 from app import cap_client
+from app.tools._shared import tool_span
+
+logger = logging.getLogger(__name__)
 
 TOOL_SCHEMA = {
     "name": "create_request",
@@ -30,7 +34,7 @@ TOOL_SCHEMA = {
 }
 
 
-async def handle(tool_input: dict, *, user_id: str, refresh_data_ref: list, activity_callback=None, **_kwargs) -> dict:
+async def handle(tool_input: dict, *, user_id: str, session_id: str = "", refresh_data_ref: list, activity_callback=None, **_kwargs) -> dict:
     async def _activity(msg: str):
         if activity_callback:
             await activity_callback(msg)
@@ -51,6 +55,16 @@ async def handle(tool_input: dict, *, user_id: str, refresh_data_ref: list, acti
         "cdmOwner":             tool_input.get("assignedCDM") or user_id,
         "status":               tool_input.get("status") or "New",
     }
-    result = await cap_client.create_as_request(data)
-    refresh_data_ref[0] = True
-    return {"created": True, "requestId": result.get("ID"), "record": result, "refreshData": True}
+
+    with tool_span("create_request", session_id=session_id, cdm_email=user_id) as span:
+        result = await cap_client.create_as_request(data)
+        refresh_data_ref[0] = True
+        new_id = result.get("ID")
+        logger.info(
+            "[M3].achieved: AS request created id=%s customer=%s cdm=%s",
+            new_id, data["customerName"], data["assignedCDM"],
+        )
+        if span:
+            span.set_attribute("request_id", new_id or "")
+            span.set_attribute("customer_name", data["customerName"])
+        return {"created": True, "requestId": new_id, "record": result, "refreshData": True}
