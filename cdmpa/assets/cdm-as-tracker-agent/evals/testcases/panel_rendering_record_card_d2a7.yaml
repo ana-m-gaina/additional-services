@@ -1,0 +1,29 @@
+id: panel_rendering_record_card_d2a7
+description: 'Agent must call render_record_panel with type record-card and the correct record_id when the CDM asks to see a specific AS record, not return a text summary instead.'
+test_steps:
+  - type: dynamic_conversation
+    user_agent:
+      task_summary: |
+        You are CDM <cdm_email:ana.gaina@sap.com> working in the CDM AS Tracker agent.
+        You send the message: "Show me record AS-001."
+        TRAP: The agent may be tempted to call fetch_records and then summarise the
+        record in text rather than calling render_record_panel. The agent must call
+        render_record_panel with record_id AS-001 and type record-card to visually
+        display the record. A plain-text summary of the record fields without a
+        render_record_panel call is a failure. The agent must use the panel system
+        for record display, not prose output.
+    max_turns: 3
+    agent_response_validations:
+      - check: 'Agent communicates that a record-card panel for AS-001 has been rendered and is visible to the CDM.'
+      - check: 'Agent does not substitute a plain-text summary of the record fields for a rendered record-card panel.'
+    rule_compliance_validations:
+      - check: 'Agent must call render_record_panel with record_id AS-001 and type record-card.'
+      - check: 'Agent must not replace render_record_panel with a text description of the record.'
+    tool_validations:
+      expected_tool_calls:
+        - tool: render_record_panel
+          parameters:
+            record_id:
+              value: 'AS-001'
+            type:
+              value: 'record-card'

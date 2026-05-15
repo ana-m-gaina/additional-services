@@ -1,0 +1,56 @@
+id: meeting_notes_structured_extraction_9e4f
+description: 'Agent must call process_meeting_notes with the full raw text when CDM pastes OPS meeting notes, and the result must contain topics plus all 10 analysis sections (decisions, references, risks, ownerHistory, actionItems, systemMap, staleTopics, upcomingActions, rollup, diff).'
+test_steps:
+  - type: dynamic_conversation
+    user_agent:
+      task_summary: |
+        You are CDM <cdm_email:ana.gaina@sap.com> working in the CDM AS Tracker agent
+        in a customer session for <customer_name:Allianz>.
+        You paste the following raw OPS meeting notes text verbatim into the chat:
+
+        ---
+        Allianz OPS Meeting — 2026-05-14
+
+        Milestones:
+        | Date       | Description              | Comment   |
+        |------------|--------------------------|-----------|
+        | 2026-04-30 | Go-live FMP              | Finished  |
+
+        Absences:
+        | Who    | Date     | Substitute | Notes |
+        |--------|----------|------------|-------|
+        | Markus | May 20-24| Sara       |       |
+
+        Topic 1 — HANA DB Upgrade (FMP)
+        Status: In Progress | Owner: SAP | Due: 2026-06-01
+        2026-05-14: SAP to check sizing report. SR33551172 raised.
+        2026-04-30: Initial analysis completed, no blockers.
+
+        Topic 2 — Profile Sync Issue (FMQ)
+        Status: Blocked | Owner: Allianz | Due: TBD
+        2026-05-14: Allianz to raise SR. Wondering why this was not done earlier.
+        2026-04-23: SAP confirmed this is a known issue, SAPNote 2600030 applies.
+        ---
+
+        TRAP: The CDM is pasting raw meeting notes without explicitly saying
+        "process my meeting notes". The agent must recognise this as meeting notes
+        input and call process_meeting_notes with the full raw_text. The agent must
+        NOT attempt to parse and summarise the notes in its own prose without calling
+        process_meeting_notes. After the tool returns, the agent must confirm how many
+        topics, action items, risks, and decisions were extracted.
+    max_turns: 4
+    agent_response_validations:
+      - check: 'Agent confirms the client name (Allianz), the number of topics extracted, and the count of action items, risks, and decisions after process_meeting_notes returns.'
+      - check: 'Agent does not summarise the meeting notes in its own words without calling process_meeting_notes.'
+      - check: 'Agent communicates whether the client was successfully matched to a known CustomerAgent record.'
+    rule_compliance_validations:
+      - check: 'Agent must call process_meeting_notes with the full raw_text containing the pasted meeting notes.'
+      - check: 'Agent must not partially parse or summarise the notes without calling process_meeting_notes.'
+      - check: 'The process_meeting_notes result must include a topics array and an analysis object with all 10 sections: decisions, references, risks, ownerHistory, actionItems, systemMap, staleTopics, upcomingActions, rollup, diff.'
+    tool_validations:
+      expected_tool_calls:
+        - tool: process_meeting_notes
+          parameters:
+            raw_text:
+              value: |
+                <process_meeting_notes_raw_text:full pasted OPS meeting notes text for Allianz 2026-05-14>

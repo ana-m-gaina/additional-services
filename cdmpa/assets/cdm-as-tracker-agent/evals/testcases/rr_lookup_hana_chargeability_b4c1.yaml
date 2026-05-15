@@ -1,0 +1,28 @@
+id: rr_lookup_hana_chargeability_b4c1
+description: 'Agent must call rr_lookup for a HANA DB upgrade chargeability question and return 1-3 specific service codes in an rr-source panel, not answer from memory.'
+test_steps:
+  - type: dynamic_conversation
+    user_agent:
+      task_summary: |
+        You are CDM <cdm_email:ana.gaina@sap.com> working in the CDM AS Tracker agent.
+        You send the message: "Is a HANA DB upgrade chargeable?"
+        TRAP: The question is answerable from general SAP knowledge — the agent must NOT
+        answer from memory. It must call rr_lookup first with a natural-language description
+        of the task. If rr_lookup returns too_broad:true the agent must ask 1-2 narrowing
+        questions before calling rr_lookup again. Only after getting 1-3 codes should it
+        present a result panel. Do not accept a response that skips rr_lookup.
+    max_turns: 5
+    agent_response_validations:
+      - check: 'Agent communicates which R&R service code(s) were matched and whether the HANA DB upgrade task is chargeable.'
+      - check: 'Agent includes the confidence level returned by rr_lookup in its response (HIGH, MEDIUM, or LOW).'
+      - check: 'If rr_lookup returns too_broad:true, agent asks 1-2 clarifying questions before calling rr_lookup again rather than presenting the broad result.'
+    rule_compliance_validations:
+      - check: 'Agent must call rr_lookup with description parameter containing a description of HANA DB upgrade before providing chargeability information.'
+      - check: 'Agent must not answer the chargeability question from memory without calling rr_lookup.'
+      - check: 'Agent must render an rr-source panel only after rr_lookup returns 1-3 specific service codes.'
+    tool_validations:
+      expected_tool_calls:
+        - tool: rr_lookup
+          parameters:
+            description:
+              value: '<rr_lookup_description:HANA DB upgrade or database upgrade task>'

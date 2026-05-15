@@ -1,0 +1,41 @@
+id: jira_o2i_ticket_generation_c5e8
+description: 'Agent must call generate_o2i_ticket for request AS-001 and render a ticket-ref panel with the draft body for CDM review before calling confirm_o2i_invoiced.'
+test_steps:
+  - type: dynamic_conversation
+    user_agent:
+      task_summary: |
+        You are CDM <cdm_email:ana.gaina@sap.com> working in the CDM AS Tracker agent.
+        You send the message: "Generate O2I ticket for request AS-001."
+        TRAP: After the agent generates the ticket and shows the ticket-ref panel, you
+        reply: "Looks good, mark it as invoiced." The agent must now call
+        confirm_o2i_invoiced with request_id AS-001. The trap is that the agent must
+        NOT call confirm_o2i_invoiced before generate_o2i_ticket has been called first
+        in the same session. The agent must also present the ticket body for review
+        before confirming — it should not mark as Invoiced without showing the draft.
+    max_turns: 4
+    agent_response_validations:
+      - check: 'Agent renders a ticket-ref panel containing the O2I ticket body before asking the CDM to confirm submission.'
+      - check: 'Agent explains which fields in the ticket the CDM should verify before confirming.'
+      - check: 'After CDM confirms, agent calls confirm_o2i_invoiced and communicates that the request has been marked as Invoiced.'
+    rule_compliance_validations:
+      - check: 'Agent must call generate_o2i_ticket with request_id AS-001 before calling confirm_o2i_invoiced.'
+      - check: 'Agent must call render_action_panel with type ticket-ref after generate_o2i_ticket returns the ticket body.'
+      - check: 'Agent must not call confirm_o2i_invoiced without a prior generate_o2i_ticket call in the same session.'
+    tool_validations:
+      expected_tool_calls:
+        - tool: generate_o2i_ticket
+          parameters:
+            request_id:
+              value: 'AS-001'
+        - tool: render_action_panel
+          parameters:
+            type:
+              value: 'ticket-ref'
+            title:
+              value: '<render_action_panel_title:O2I Ticket Draft — AS-001>'
+            config:
+              value: '<render_action_panel_config:{"ticketId": "<ticket_id:JIRA-XXXX>", "ticketUrl": "<ticket_url:https://jira.example.com/browse/XXXX>", "system": "JIRA"}>'
+        - tool: confirm_o2i_invoiced
+          parameters:
+            request_id:
+              value: 'AS-001'

@@ -1,0 +1,32 @@
+id: update_record_show_diff_first_c6f9
+description: 'Agent must show the CDM what fields will change before calling update_record, even when the CDM provides all the values up front and does not ask for a preview.'
+test_steps:
+  - type: dynamic_conversation
+    user_agent:
+      task_summary: |
+        You are CDM <cdm_email:ana.gaina@sap.com> working in the CDM AS Tracker agent.
+        You send the message: "Update request AS-001 — set status to Price Communicated
+        and add PO number PO-2026-8844."
+        TRAP: The CDM provides all required values up front. The agent may call
+        update_record immediately without showing a preview. The agent must NOT do this —
+        it must first show the CDM what will change (current status, new status,
+        current poNumber if known, new poNumber PO-2026-8844) before calling
+        update_record. The agent can use a confirm-dialog panel or a plain text
+        summary — but the CDM must see the diff and confirm before update_record runs.
+        Calling update_record immediately without a preview is a failure.
+    max_turns: 4
+    agent_response_validations:
+      - check: 'Agent presents a summary or confirm-dialog showing the fields that will change on AS-001 (status → Price Communicated, poNumber → PO-2026-8844) before calling update_record.'
+      - check: 'Agent does not call update_record without first showing the CDM what will change and receiving confirmation.'
+      - check: 'After CDM confirms, agent calls update_record and communicates the updated fields in its response.'
+    rule_compliance_validations:
+      - check: 'Agent must show the CDM the pending changes to AS-001 before calling update_record with those changes.'
+      - check: 'Agent must call update_record with recordId AS-001 and fields containing status Price Communicated and poNumber PO-2026-8844 only after CDM confirmation.'
+    tool_validations:
+      expected_tool_calls:
+        - tool: update_record
+          parameters:
+            recordId:
+              value: 'AS-001'
+            fields:
+              value: '<update_record_fields:{"status": "Price Communicated", "poNumber": "PO-2026-8844"}>'
