@@ -257,7 +257,8 @@ entity PendingAction : cuid {
   sessionId        : String(100);
   prompt           : LargeString;
   status           : String(20)   default 'pending'; // pending | responded | dismissed
-  relatedRequestId : String(50);  // FK → ASRequest.ID (nullable)
+  relatedRequestId : String(50);   // FK → ASRequest.ID (nullable)
+  navigateTo       : String(500);  // JSON: {page, customerId?, customerAgentId?, requestId?}
   createdAt        : DateTime;
   resolvedAt       : DateTime;
 }
@@ -295,6 +296,26 @@ entity AdminConfig {
   configKey   : String(100)  not null;
   configValue : String(2000);
   description : String(500);
+}
+
+// ── User-registered agents — A2A-compatible agents the CDM adds personally ───
+
+entity UserAgent : cuid, managed {
+  cdmEmail    : String(200) not null;
+  name        : String(200) not null;
+  description : String(500);
+  endpointUrl : String(1000) not null;
+  status      : String(20)  default 'active';  // active | disabled
+}
+
+// ── User-registered skills — MCP-compatible skill endpoints ──────────────────
+
+entity UserSkill : cuid, managed {
+  cdmEmail    : String(200) not null;
+  name        : String(200) not null;
+  description : String(500);
+  endpointUrl : String(1000) not null;
+  status      : String(20)  default 'active';  // active | disabled
 }
 
 // ── Meeting notes — extracted from ops meeting notes pasted in chat ───────────

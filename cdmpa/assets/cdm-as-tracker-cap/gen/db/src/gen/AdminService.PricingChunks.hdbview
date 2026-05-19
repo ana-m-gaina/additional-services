@@ -1,0 +1,9 @@
+VIEW AdminService_PricingChunks AS SELECT
+  PricingChunk_0.ID,
+  PricingChunk_0.serviceCode,
+  PricingChunk_0."TEXT",
+  PricingChunk_0.embedding,
+  PricingChunk_0.priceEur,
+  PricingChunk_0.unitOfMeasure,
+  PricingChunk_0.effortType
+FROM cdm_tracker_PricingChunk AS PricingChunk_0

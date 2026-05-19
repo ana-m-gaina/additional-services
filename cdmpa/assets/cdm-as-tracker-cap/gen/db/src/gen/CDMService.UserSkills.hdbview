@@ -1,0 +1,13 @@
+VIEW CDMService_UserSkills AS SELECT
+  UserSkill_0.ID,
+  UserSkill_0.createdAt,
+  UserSkill_0.createdBy,
+  UserSkill_0.modifiedAt,
+  UserSkill_0.modifiedBy,
+  UserSkill_0.cdmEmail,
+  UserSkill_0.name,
+  UserSkill_0.description,
+  UserSkill_0.endpointUrl,
+  UserSkill_0.status
+FROM cdm_tracker_UserSkill AS UserSkill_0
+WHERE UserSkill_0.cdmEmail = SESSION_CONTEXT('APPLICATIONUSER')

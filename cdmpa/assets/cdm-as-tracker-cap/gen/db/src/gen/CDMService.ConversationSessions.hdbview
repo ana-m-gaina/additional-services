@@ -1,0 +1,8 @@
+VIEW CDMService_ConversationSessions AS SELECT
+  ConversationSession_0.ID,
+  ConversationSession_0.customerAgentId,
+  ConversationSession_0.title,
+  ConversationSession_0.createdBy,
+  ConversationSession_0.createdAt,
+  ConversationSession_0.lastActiveAt
+FROM cdm_tracker_ConversationSession AS ConversationSession_0

@@ -1,0 +1,13 @@
+VIEW CDMService_UserAgents AS SELECT
+  UserAgent_0.ID,
+  UserAgent_0.createdAt,
+  UserAgent_0.createdBy,
+  UserAgent_0.modifiedAt,
+  UserAgent_0.modifiedBy,
+  UserAgent_0.cdmEmail,
+  UserAgent_0.name,
+  UserAgent_0.description,
+  UserAgent_0.endpointUrl,
+  UserAgent_0.status
+FROM cdm_tracker_UserAgent AS UserAgent_0
+WHERE UserAgent_0.cdmEmail = SESSION_CONTEXT('APPLICATIONUSER')

@@ -1,0 +1,7 @@
+VIEW AdminService_RRDocuments AS SELECT
+  RRDocument_0.ID,
+  RRDocument_0.filename,
+  RRDocument_0.filepath,
+  RRDocument_0.pageCount,
+  RRDocument_0.uploadedAt
+FROM cdm_tracker_RRDocument AS RRDocument_0

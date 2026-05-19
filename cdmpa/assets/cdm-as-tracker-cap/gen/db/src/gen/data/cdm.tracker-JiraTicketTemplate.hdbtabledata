@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "imports": [
+    {
+      "target_table": "CDM_TRACKER_JIRATICKETTEMPLATE",
+      "source_data": {
+        "data_type": "CSV",
+        "file_name": "cdm.tracker-JiraTicketTemplate.csv",
+        "has_header": true,
+        "type_config": {
+          "delimiter": ","
+        }
+      },
+      "import_settings": {
+        "import_columns": [
+          "ID",
+          "SERVICETYPE",
+          "TEMPLATEBODY",
+          "ACTIVE"
+        ],
+        "include_filter": []
+      },
+      "column_mappings": {
+        "ID": "ID",
+        "SERVICETYPE": "serviceType",
+        "TEMPLATEBODY": "templateBody",
+        "ACTIVE": "active"
+      }
+    }
+  ]
+}

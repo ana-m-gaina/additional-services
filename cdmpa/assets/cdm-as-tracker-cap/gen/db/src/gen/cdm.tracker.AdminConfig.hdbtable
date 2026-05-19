@@ -1,0 +1,7 @@
+COLUMN TABLE cdm_tracker_AdminConfig (
+  ID NVARCHAR(100) NOT NULL,
+  configKey NVARCHAR(100) NOT NULL,
+  configValue NVARCHAR(2000),
+  description NVARCHAR(500),
+  PRIMARY KEY(ID)
+)

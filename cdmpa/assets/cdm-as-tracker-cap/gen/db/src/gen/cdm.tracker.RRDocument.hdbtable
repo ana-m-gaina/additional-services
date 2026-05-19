@@ -1,0 +1,8 @@
+COLUMN TABLE cdm_tracker_RRDocument (
+  ID NVARCHAR(36) NOT NULL,
+  filename NVARCHAR(300) NOT NULL,
+  filepath NVARCHAR(500) NOT NULL,
+  pageCount INTEGER,
+  uploadedAt SECONDDATE,
+  PRIMARY KEY(ID)
+)

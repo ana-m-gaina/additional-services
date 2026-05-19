@@ -1,0 +1,35 @@
+{
+  "format_version": 1,
+  "imports": [
+    {
+      "target_table": "CDM_TRACKER_CUSTOMERAGENT",
+      "source_data": {
+        "data_type": "CSV",
+        "file_name": "cdm.tracker-CustomerAgent.csv",
+        "has_header": true,
+        "type_config": {
+          "delimiter": ","
+        }
+      },
+      "import_settings": {
+        "import_columns": [
+          "ID",
+          "CUSTOMERID",
+          "DISPLAYNAME",
+          "CREATEDBY",
+          "CREATEDAT",
+          "STATUS"
+        ],
+        "include_filter": []
+      },
+      "column_mappings": {
+        "ID": "ID",
+        "CUSTOMERID": "customerId",
+        "DISPLAYNAME": "displayName",
+        "CREATEDBY": "createdBy",
+        "CREATEDAT": "createdAt",
+        "STATUS": "status"
+      }
+    }
+  ]
+}

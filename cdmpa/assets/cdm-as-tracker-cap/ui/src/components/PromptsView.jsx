@@ -83,11 +83,20 @@ export default function PromptsView() {
     document.body.removeChild(ta)
   }
 
+  function handleImportSkill() {
+    document.dispatchEvent(new CustomEvent('cdm:fire-prompt', {
+      detail: { content: '__skill_import_start__' }
+    }))
+  }
+
   return (
     <div className="prompts-view">
       <div className="prompts-header">
         <h2 className="prompts-title">Prompts</h2>
-        <button className="prompts-add-btn" onClick={() => setAdding(true)}>+ Add</button>
+        <div className="prompts-header-actions">
+          <button className="prompts-import-btn" onClick={handleImportSkill}>Import Skill</button>
+          <button className="prompts-add-btn" onClick={() => setAdding(true)}>+ Add</button>
+        </div>
       </div>
 
       {loading && <div className="prompts-empty">Loading…</div>}

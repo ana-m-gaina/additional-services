@@ -1,0 +1,13 @@
+COLUMN TABLE cdm_tracker_PersonalNote (
+  ID NVARCHAR(36) NOT NULL,
+  createdAt TIMESTAMP,
+  createdBy NVARCHAR(255),
+  modifiedAt TIMESTAMP,
+  modifiedBy NVARCHAR(255),
+  cdmEmail NVARCHAR(200) NOT NULL,
+  content NCLOB NOT NULL,
+  tags NVARCHAR(500),
+  relatedRequest NVARCHAR(50),
+  sessionId NVARCHAR(100),
+  PRIMARY KEY(ID)
+)

@@ -1,0 +1,8 @@
+COLUMN TABLE cdm_tracker_EmailTemplate (
+  ID NVARCHAR(36) NOT NULL,
+  templateKey NVARCHAR(50) NOT NULL,
+  subject NVARCHAR(500),
+  body NCLOB NOT NULL,
+  lastUpdated DATE,
+  PRIMARY KEY(ID)
+)

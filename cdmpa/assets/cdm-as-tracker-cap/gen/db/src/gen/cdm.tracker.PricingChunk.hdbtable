@@ -1,0 +1,10 @@
+COLUMN TABLE cdm_tracker_PricingChunk (
+  ID NVARCHAR(36) NOT NULL,
+  serviceCode NVARCHAR(30) NOT NULL,
+  "TEXT" NCLOB NOT NULL,
+  embedding NCLOB NOT NULL,
+  priceEur DECIMAL(10, 2),
+  unitOfMeasure NVARCHAR(100),
+  effortType NVARCHAR(20),
+  PRIMARY KEY(ID)
+)

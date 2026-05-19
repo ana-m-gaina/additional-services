@@ -249,6 +249,63 @@ async def serve_rr_document(doc_id: str):
     )
 
 
+class SkillAnalysisRequest(BaseModel):
+    skill_text: str
+
+
+@app.post("/api/analyze-skill")
+async def analyze_skill(req: SkillAnalysisRequest):
+    """Analyze a pasted skill definition and return structured metadata."""
+    if not req.skill_text.strip():
+        raise HTTPException(status_code=400, detail="skill_text is required")
+
+    from app.anthropic_client import chat_with_history
+
+    system = (
+        "You are a technical writer analyzing Claude Code skill definitions. "
+        "Return ONLY valid JSON — no prose, no markdown fences."
+    )
+    prompt = f"""Analyze this skill definition and return a JSON object with exactly these keys:
+
+{{
+  "title": "short human-readable name for the skill",
+  "summary": "one or two sentences describing what the skill does",
+  "inputs": [
+    {{"name": "...", "description": "..."}}
+  ],
+  "outputs": [
+    {{"name": "...", "description": "..."}}
+  ],
+  "gotchas": [
+    {{"severity": "high|medium|low", "text": "description of the risk or non-obvious constraint"}}
+  ]
+}}
+
+Rules:
+- inputs = what the user/caller must provide or what the skill reads
+- outputs = what artefacts or side-effects the skill produces
+- gotchas = risks, non-obvious constraints, tool calls it requires, or things that can silently fail
+- severity: high = blocks the skill from working, medium = degrades result quality, low = minor quirk
+- Be specific and concise. Maximum 5 items in each list.
+
+Skill text:
+\"\"\"
+{req.skill_text[:12000]}
+\"\"\"
+"""
+
+    try:
+        raw = await chat_with_history(system, [{"role": "user", "content": prompt}], max_tokens=1024)
+        result = json.loads(raw.strip())
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail="LLM returned non-JSON response")
+    except Exception as exc:
+        logger.exception("analyze-skill error")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return result
+
+
 @app.post("/api/extract-text")
 async def extract_text(file: UploadFile = File(...)):
     """Extract plain text from an uploaded PDF, DOCX, or text file."""

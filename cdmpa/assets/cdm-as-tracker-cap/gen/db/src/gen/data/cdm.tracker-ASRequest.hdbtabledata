@@ -1,0 +1,73 @@
+{
+  "format_version": 1,
+  "imports": [
+    {
+      "target_table": "CDM_TRACKER_ASREQUEST",
+      "source_data": {
+        "data_type": "CSV",
+        "file_name": "cdm.tracker-ASRequest.csv",
+        "has_header": true,
+        "type_config": {
+          "delimiter": ","
+        }
+      },
+      "import_settings": {
+        "import_columns": [
+          "ID",
+          "REQUESTTITLE",
+          "CUSTOMERNAME",
+          "CUSTOMERACCOUNTID",
+          "PROCESSTYPE",
+          "SERVICECODE",
+          "ADDITIONALSERVICEIDS",
+          "RRDESCRIPTION",
+          "SID",
+          "CASENO",
+          "CSRNO",
+          "PRICE",
+          "CURRENCY",
+          "STATUS",
+          "ASSIGNEDCDM",
+          "CDMOWNER",
+          "CREATIONDATE",
+          "PRICECOMMUNICATEDDATE",
+          "APPROVALRECEIVEDDATE",
+          "CHECKPRICEEMAILSENT",
+          "CHECKAPPROVALRECEIVED",
+          "CHECKSHAREPOINTUPLOADED",
+          "CHECKCASSDINFORMED",
+          "CHECKAMSCLOSED",
+          "CHECKO2ICREATED"
+        ],
+        "include_filter": []
+      },
+      "column_mappings": {
+        "ID": "ID",
+        "REQUESTTITLE": "requestTitle",
+        "CUSTOMERNAME": "customerName",
+        "CUSTOMERACCOUNTID": "customerAccountId",
+        "PROCESSTYPE": "processType",
+        "SERVICECODE": "serviceCode",
+        "ADDITIONALSERVICEIDS": "additionalServiceIds",
+        "RRDESCRIPTION": "rrDescription",
+        "SID": "sid",
+        "CASENO": "caseNo",
+        "CSRNO": "csrNo",
+        "PRICE": "price",
+        "CURRENCY": "currency",
+        "STATUS": "status",
+        "ASSIGNEDCDM": "assignedCDM",
+        "CDMOWNER": "cdmOwner",
+        "CREATIONDATE": "creationDate",
+        "PRICECOMMUNICATEDDATE": "priceCommunicatedDate",
+        "APPROVALRECEIVEDDATE": "approvalReceivedDate",
+        "CHECKPRICEEMAILSENT": "checkPriceEmailSent",
+        "CHECKAPPROVALRECEIVED": "checkApprovalReceived",
+        "CHECKSHAREPOINTUPLOADED": "checkSharePointUploaded",
+        "CHECKCASSDINFORMED": "checkCasSdInformed",
+        "CHECKAMSCLOSED": "checkAmsClosed",
+        "CHECKO2ICREATED": "checkO2iCreated"
+      }
+    }
+  ]
+}

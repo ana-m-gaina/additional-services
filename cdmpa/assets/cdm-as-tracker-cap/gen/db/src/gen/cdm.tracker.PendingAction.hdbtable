@@ -1,0 +1,13 @@
+COLUMN TABLE cdm_tracker_PendingAction (
+  ID NVARCHAR(36) NOT NULL,
+  userId NVARCHAR(200),
+  automationId NVARCHAR(50),
+  sessionId NVARCHAR(100),
+  prompt NCLOB,
+  status NVARCHAR(20) DEFAULT 'pending',
+  relatedRequestId NVARCHAR(50),
+  navigateTo NVARCHAR(500),
+  createdAt SECONDDATE,
+  resolvedAt SECONDDATE,
+  PRIMARY KEY(ID)
+)

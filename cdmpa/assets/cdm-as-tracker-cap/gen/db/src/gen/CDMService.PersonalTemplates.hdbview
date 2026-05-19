@@ -1,0 +1,12 @@
+VIEW CDMService_PersonalTemplates AS SELECT
+  PersonalTemplate_0.ID,
+  PersonalTemplate_0.createdAt,
+  PersonalTemplate_0.createdBy,
+  PersonalTemplate_0.modifiedAt,
+  PersonalTemplate_0.modifiedBy,
+  PersonalTemplate_0.cdmEmail,
+  PersonalTemplate_0.templateKey,
+  PersonalTemplate_0.description,
+  PersonalTemplate_0.content
+FROM cdm_tracker_PersonalTemplate AS PersonalTemplate_0
+WHERE PersonalTemplate_0.cdmEmail = SESSION_CONTEXT('APPLICATIONUSER')

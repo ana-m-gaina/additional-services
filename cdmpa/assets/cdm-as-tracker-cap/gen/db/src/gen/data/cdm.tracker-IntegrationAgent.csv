@@ -1,0 +1,4 @@
+ID,eventType,displayName,enabled,createdBy,createdAt,status
+auto-cust-acceptance,customer.acceptance,Customer Acceptance,true,system,2026-01-01,active
+auto-jira-update,jira.ticket.update,JIRA Ticket Update,true,system,2026-01-01,active
+auto-price-expiry,price.validity.expiry,Price Validity Expiry,true,system,2026-01-01,active

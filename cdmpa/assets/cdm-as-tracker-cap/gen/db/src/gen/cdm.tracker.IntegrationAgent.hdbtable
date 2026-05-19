@@ -1,0 +1,11 @@
+COLUMN TABLE cdm_tracker_IntegrationAgent (
+  ID NVARCHAR(36) NOT NULL,
+  eventType NVARCHAR(100),
+  displayName NVARCHAR(200),
+  enabled BOOLEAN DEFAULT TRUE,
+  createdBy NVARCHAR(200),
+  createdAt SECONDDATE,
+  status NVARCHAR(20) DEFAULT 'active',
+  archivedAt SECONDDATE,
+  PRIMARY KEY(ID)
+)

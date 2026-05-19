@@ -1,0 +1,17 @@
+VIEW CDMService_MeetingNotes AS SELECT
+  MeetingNote_0.ID,
+  MeetingNote_0.createdAt,
+  MeetingNote_0.createdBy,
+  MeetingNote_0.modifiedAt,
+  MeetingNote_0.modifiedBy,
+  MeetingNote_0.customerAgentId,
+  MeetingNote_0.clientName,
+  MeetingNote_0.meetingDate,
+  MeetingNote_0.rawText,
+  MeetingNote_0.extractedJson,
+  MeetingNote_0.topicsJson,
+  MeetingNote_0.actionItemsJson,
+  MeetingNote_0.risksJson,
+  MeetingNote_0.decisionsJson,
+  MeetingNote_0.processedBy
+FROM cdm_tracker_MeetingNote AS MeetingNote_0

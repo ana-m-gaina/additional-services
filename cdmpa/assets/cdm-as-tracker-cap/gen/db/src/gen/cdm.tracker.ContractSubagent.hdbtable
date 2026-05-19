@@ -1,0 +1,13 @@
+COLUMN TABLE cdm_tracker_ContractSubagent (
+  ID NVARCHAR(36) NOT NULL,
+  customerId NVARCHAR(50),
+  sid NVARCHAR(50),
+  displayName NVARCHAR(200),
+  contractType NVARCHAR(50),
+  createdAt SECONDDATE,
+  status NVARCHAR(20) DEFAULT 'active',
+  archivedAt SECONDDATE,
+  retentionPolicy NVARCHAR(50),
+  transferredTo NVARCHAR(200),
+  PRIMARY KEY(ID)
+)

@@ -1,0 +1,5 @@
+VIEW CDMService_PersonaLayouts AS SELECT
+  PersonaLayout_0.userId,
+  PersonaLayout_0.layoutJson,
+  PersonaLayout_0.updatedAt
+FROM cdm_tracker_PersonaLayout AS PersonaLayout_0

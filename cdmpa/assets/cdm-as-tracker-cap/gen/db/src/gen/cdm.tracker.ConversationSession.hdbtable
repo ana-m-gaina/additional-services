@@ -1,0 +1,9 @@
+COLUMN TABLE cdm_tracker_ConversationSession (
+  ID NVARCHAR(36) NOT NULL,
+  customerAgentId NVARCHAR(50),
+  title NVARCHAR(200),
+  createdBy NVARCHAR(200),
+  createdAt SECONDDATE,
+  lastActiveAt SECONDDATE,
+  PRIMARY KEY(ID)
+)

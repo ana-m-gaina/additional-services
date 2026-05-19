@@ -1,0 +1,7 @@
+VIEW AdminService_RRChunks AS SELECT
+  RRChunk_0.ID,
+  RRChunk_0.document_ID,
+  RRChunk_0.pageNumber,
+  RRChunk_0."TEXT",
+  RRChunk_0.embedding
+FROM cdm_tracker_RRChunk AS RRChunk_0

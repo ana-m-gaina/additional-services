@@ -1,0 +1,4 @@
+COLUMN TABLE CDMService_Currencies (
+  code NVARCHAR(5000) NOT NULL,
+  PRIMARY KEY(code)
+)

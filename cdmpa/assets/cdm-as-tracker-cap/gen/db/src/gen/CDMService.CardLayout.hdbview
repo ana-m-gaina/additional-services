@@ -1,0 +1,7 @@
+VIEW CDMService_CardLayout AS SELECT
+  CardLayout_0.ID,
+  CardLayout_0.userEmail,
+  CardLayout_0.cardId,
+  CardLayout_0.visible,
+  CardLayout_0.sortOrder
+FROM cdm_tracker_CardLayout AS CardLayout_0

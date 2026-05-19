@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "imports": [
+    {
+      "target_table": "CDM_TRACKER_ADMINCONFIG",
+      "source_data": {
+        "data_type": "CSV",
+        "file_name": "cdm.tracker-AdminConfig.csv",
+        "has_header": true,
+        "type_config": {
+          "delimiter": ","
+        }
+      },
+      "import_settings": {
+        "import_columns": [
+          "ID",
+          "CONFIGKEY",
+          "CONFIGVALUE",
+          "DESCRIPTION"
+        ],
+        "include_filter": []
+      },
+      "column_mappings": {
+        "ID": "ID",
+        "CONFIGKEY": "configKey",
+        "CONFIGVALUE": "configValue",
+        "DESCRIPTION": "description"
+      }
+    }
+  ]
+}

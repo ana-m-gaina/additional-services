@@ -1,11 +1,10 @@
 """
-Pricing data ingestion — reads the AS Pricing xlsm, builds one chunk per service
-entry, embeds with Anthropic Voyage, stores in CAP PricingChunks.
+Pricing data ingestion — reads the AS Pricing xlsm and writes structured rows
+to CAP AdminService/PricingTable (direct DB lookup, no embeddings).
 
 Setup (one-time):
-  1. Set ANTHROPIC_API_KEY in .env
-  2. Install deps:    pip install -r requirements.txt
-  3. Start CAP:       cd ../cdm-as-tracker-cap && cds watch
+  1. Start CAP:  cd ../cdm-as-tracker-cap && cds watch
+  2. No API keys needed — uses basic auth against AdminService.
 
 Usage:
   python scripts/ingest_pricing.py
@@ -15,7 +14,6 @@ import argparse
 from dotenv import load_dotenv
 load_dotenv()
 import asyncio
-import json
 import logging
 import os
 from pathlib import Path
@@ -29,11 +27,8 @@ log = logging.getLogger(__name__)
 DEFAULT_XLSM = Path(__file__).resolve().parents[4] / "specs" / \
     "SAP_Enterprise_Cloud_Services_Additional Service Pricing List January2026.xlsm"
 DEFAULT_CAP_URL = "http://localhost:4004"
-VOYAGE_URL      = "https://api.voyageai.com/v1/embeddings"
-EMBED_MODEL     = "voyage-4"
-CAP_USER        = os.environ.get("CAP_USER", "pricingadmin")
-CAP_PASSWORD    = os.environ.get("CAP_PASSWORD", "pricingadmin")
-_API_KEY        = os.environ.get("VOYAGE_API_KEY", "")
+CAP_USER     = os.environ.get("CAP_USER", "pricingadmin")
+CAP_PASSWORD = os.environ.get("CAP_PASSWORD", "pricingadmin")
 
 
 # ── Extract entries from xlsm ─────────────────────────────────────────────────
@@ -41,9 +36,7 @@ _API_KEY        = os.environ.get("VOYAGE_API_KEY", "")
 def _extract_entries(xlsm_path: Path) -> list[dict]:
     wb = openpyxl.load_workbook(str(xlsm_path), read_only=True, data_only=True)
 
-    # Complete+Efforts: Identifier, Task, Responsibility, Delivery, Remarks_PCE, ...
-    # cols: 0=Identifier, 1=Task, 2=Responsibility/Category, 4=Remarks for PCE,
-    #       17=Calculation Units (effort type), 18=Effort, 19=unit of measure
+    # Complete+Efforts: Identifier, Task, Responsibility/Category, ...
     ce_entries: dict[str, dict] = {}
     ce_ws = wb["Complete+Efforts"]
     headers_found = False
@@ -57,16 +50,13 @@ def _extract_entries(xlsm_path: Path) -> list[dict]:
         if not code or not isinstance(code, str) or "_" not in code:
             continue
         ce_entries[code] = {
-            "code":         code,
-            "task":         str(row[1] or "").strip(),
-            "category":     str(row[2] or "").strip(),
-            "remarks_pce":  str(row[4] or "").strip(),
-            "effort_type":  str(row[18] or "").strip(),
+            "code":        code,
+            "task":        str(row[1] or "").strip(),
+            "category":    str(row[2] or "").strip(),
             "unit_measure": str(row[19] or "").strip(),
         }
 
-    # Additional_Service_Pricing: rows 22+ have actual EUR prices for PCE
-    # cols: 0=service+name, 4=Price per Execution EUR, 7=Remarks
+    # Additional_Service_Pricing: EUR prices for PCE (col 4 = Price per Execution EUR)
     pricing_ws = wb["Additional_Service_Pricing"]
     price_map: dict[str, float] = {}
     for row in pricing_ws.iter_rows(min_row=22, values_only=True):
@@ -78,101 +68,39 @@ def _extract_entries(xlsm_path: Path) -> list[dict]:
         if isinstance(price, (int, float)) and price > 0:
             price_map[code] = float(price)
 
-    # Leadtime sheet: code, title, duration_min, leadtime_hours, description
-    lt_ws = wb["Leadtime+Execution_optional_IDs"]
-    lt_data: dict[str, dict] = {}
-    for row in lt_ws.iter_rows(min_row=2, values_only=True):
-        code = row[0]
-        if not code or not isinstance(code, str) or "_" not in code:
-            continue
-        if code not in lt_data:
-            lt_data[code] = {
-                "title":           str(row[1] or "").strip(),
-                "duration_min":    row[5],
-                "leadtime_hours":  row[6],
-                "sr_description":  str(row[7] or "").strip()[:500],
-            }
-
-    # Merge everything, keep only Additional Service entries
+    # Keep only Additional Service entries and merge price
     entries = []
     for code, d in ce_entries.items():
         if "Additional" not in d.get("category", ""):
             continue
-        lt = lt_data.get(code, {})
         price = price_map.get(code)
-
-        # Build a dense text chunk for embedding
-        lines = [
-            f"Service Code: {code}",
-            f"Name: {d['task']}",
-            f"Category: Additional Service",
-        ]
-        if d["unit_measure"]:
-            lines.append(f"Unit of Measure: {d['unit_measure']}")
-        if d["effort_type"] and d["effort_type"] != "via Macro":
-            lines.append(f"Effort: {d['effort_type']}")
-        if price:
-            lines.append(f"Price: {price:.2f} EUR per {d['unit_measure'] or 'execution'}")
-        else:
-            lines.append("Price: Case-by-case (contact topic owner for estimate)")
-        if lt.get("duration_min"):
-            lines.append(f"Execution Duration: ~{lt['duration_min']} min")
-        if lt.get("leadtime_hours"):
-            lines.append(f"Lead Time: ~{lt['leadtime_hours']} hours")
-        if d["remarks_pce"]:
-            lines.append(f"Remarks (PCE): {d['remarks_pce'][:400]}")
-        if lt.get("sr_description"):
-            lines.append(f"Description: {lt['sr_description'][:400]}")
-
         entries.append({
-            "code":        code,
-            "text":        "\n".join(lines),
-            "price_eur":   price,
-            "unit_measure": d["unit_measure"],
-            "effort_type": d["effort_type"],
+            "serviceCode": code,
+            "serviceName": d["task"],
+            "price":       price,
+            "currency":    "EUR",
+            "active":      True,
         })
 
     log.info("Extracted %d Additional Service entries from xlsm", len(entries))
     return entries
 
 
-# ── Voyage embedding ─────────────────────────────────────────────────────────
-
-async def _embed_batch(texts: list[str]) -> list[list[float]]:
-    for attempt in range(6):
-        async with httpx.AsyncClient(timeout=60.0) as c:
-            resp = await c.post(
-                VOYAGE_URL,
-                headers={"Authorization": f"Bearer {_API_KEY}", "Content-Type": "application/json"},
-                json={"model": EMBED_MODEL, "input": texts},
-            )
-        if resp.status_code == 429:
-            wait = 20 * (attempt + 1)
-            log.info("  Rate limited — waiting %ds (attempt %d/6)", wait, attempt + 1)
-            await asyncio.sleep(wait)
-            continue
-        resp.raise_for_status()
-        data = resp.json()["data"]
-        return [item["embedding"] for item in sorted(data, key=lambda x: x["index"])]
-    raise RuntimeError("Exceeded retry limit on rate limit")
-
-
 # ── CAP helpers ───────────────────────────────────────────────────────────────
 
-async def _cap_get(cap: httpx.AsyncClient, cap_url: str, path: str) -> dict:
-    resp = await cap.get(f"{cap_url}/AdminService/{path}", timeout=30.0)
+async def _cap_get_existing(cap: httpx.AsyncClient, cap_url: str) -> set[str]:
+    resp = await cap.get(f"{cap_url}/AdminService/PricingTable?$select=serviceCode", timeout=30.0)
     resp.raise_for_status()
-    return resp.json()
+    return {r["serviceCode"] for r in resp.json().get("value", [])}
 
 
-async def _cap_post(cap: httpx.AsyncClient, cap_url: str, path: str, data: dict) -> dict:
-    resp = await cap.post(f"{cap_url}/AdminService/{path}", json=data, timeout=30.0)
+async def _cap_post(cap: httpx.AsyncClient, cap_url: str, data: dict) -> None:
+    resp = await cap.post(f"{cap_url}/AdminService/PricingTable", json=data, timeout=30.0)
     resp.raise_for_status()
-    return resp.json()
 
 
-async def _cap_delete(cap: httpx.AsyncClient, cap_url: str, path: str) -> None:
-    resp = await cap.delete(f"{cap_url}/AdminService/{path}", timeout=30.0)
+async def _cap_patch(cap: httpx.AsyncClient, cap_url: str, key: str, data: dict) -> None:
+    resp = await cap.patch(f"{cap_url}/AdminService/PricingTable('{key}')", json=data, timeout=30.0)
     resp.raise_for_status()
 
 
@@ -186,43 +114,47 @@ async def ingest(xlsm_path: Path, cap_url: str) -> None:
 
     auth = (CAP_USER, CAP_PASSWORD)
     async with httpx.AsyncClient(auth=auth, headers={"Accept": "application/json"}) as cap:
-        # Check existing chunks to allow idempotent re-runs
-        existing = await _cap_get(cap, cap_url, "PricingChunks?$select=serviceCode")
-        existing_codes = {c["serviceCode"] for c in existing.get("value", [])}
-        log.info("%d PricingChunks already in DB", len(existing_codes))
+        existing_codes = await _cap_get_existing(cap, cap_url)
+        log.info("%d entries already in PricingTable", len(existing_codes))
 
-        # Filter out already-ingested entries
-        pending = [e for e in entries if e["code"] not in existing_codes]
-        log.info("%d entries to ingest", len(pending))
+        created = updated = skipped = 0
+        for e in entries:
+            code = e["serviceCode"]
+            # Entries without a price are still written (NULL price = case-by-case)
+            payload = {
+                "serviceCode": code,
+                "serviceName": e["serviceName"],
+                "currency":    e["currency"],
+                "active":      e["active"],
+            }
+            if e["price"] is not None:
+                payload["price"] = e["price"]
 
-        BATCH = 10
-        done = 0
-        for i in range(0, len(pending), BATCH):
-            batch = pending[i:i + BATCH]
-            try:
-                vectors = await _embed_batch([e["text"] for e in batch])
-            except Exception as exc:
-                log.warning("Batch %d-%d failed: %s — skipping", i, i + BATCH, exc)
-                continue
-            for entry, vector in zip(batch, vectors):
-                payload = {
-                    "serviceCode":   entry["code"],
-                    "text":          entry["text"],
-                    "embedding":     json.dumps(vector),
-                    "effortType":    entry["effort_type"] or None,
-                    "unitOfMeasure": entry["unit_measure"] or None,
-                }
-                if entry["price_eur"] is not None:
-                    payload["priceEur"] = entry["price_eur"]
-                await _cap_post(cap, cap_url, "PricingChunks", payload)
-                done += 1
-            log.info("  ... %d/%d ingested", done, len(pending))
+            if code in existing_codes:
+                try:
+                    await _cap_patch(cap, cap_url, code, payload)
+                    updated += 1
+                except Exception as exc:
+                    log.warning("PATCH %s failed: %s", code, exc)
+                    skipped += 1
+            else:
+                if e["price"] is None:
+                    # PricingTable.price is NOT NULL — skip entries with no price
+                    log.info("  SKIP %s — no price in xlsm (not null-safe)", code)
+                    skipped += 1
+                    continue
+                try:
+                    await _cap_post(cap, cap_url, payload)
+                    created += 1
+                except Exception as exc:
+                    log.warning("POST %s failed: %s", code, exc)
+                    skipped += 1
 
-    log.info("Pricing ingestion complete.")
+        log.info("Done — created=%d updated=%d skipped=%d", created, updated, skipped)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Ingest AS Pricing xlsm into CAP PricingChunks")
+    parser = argparse.ArgumentParser(description="Ingest AS Pricing xlsm into CAP PricingTable")
     parser.add_argument("--xlsm", type=Path, default=DEFAULT_XLSM)
     parser.add_argument("--cap-url", default=DEFAULT_CAP_URL)
     args = parser.parse_args()

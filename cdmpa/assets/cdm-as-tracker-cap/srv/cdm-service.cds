@@ -112,6 +112,13 @@ service CDMService @(path: '/CDMService') {
     roles : many String;
   };
 
+  // ── User-registered agents & skills ──────────────────────────────────────
+  entity UserAgents as projection on db.UserAgent
+    where cdmEmail = $user;
+
+  entity UserSkills as projection on db.UserSkill
+    where cdmEmail = $user;
+
   // ── Meeting notes ──────────────────────────────────────────────────────────
   entity MeetingNotes as projection on db.MeetingNote;
 

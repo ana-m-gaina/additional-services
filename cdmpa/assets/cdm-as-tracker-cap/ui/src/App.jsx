@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
 import ChatShell from './components/ChatShell.jsx'
 import PersonaShell from './components/PersonaShell.jsx'
 import InboxView from './components/InboxView.jsx'
@@ -6,7 +7,8 @@ import ClientDetailView from './components/ClientDetailView.jsx'
 import NavTree from './components/NavTree.jsx'
 import NewRequestModal from './components/NewRequestModal.jsx'
 import PromptsView from './components/PromptsView.jsx'
-import { getPendingActions, getCurrentUser, whoami, createConversationSession, getAssistantName } from './api.js'
+import PanelRenderer from './components/PanelRenderer.jsx'
+import { getPendingActions, getCurrentUser, whoami, getAssistantName, getCustomerAgents } from './api.js'
 
 function tempSessionId() { return 'pending-' + Date.now() }
 
@@ -26,7 +28,11 @@ export default function App() {
   const [chatOpen, setChatOpen]       = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [inboxCount, setInboxCount]   = useState(0)
-  const [showNewRequest, setShowNewRequest] = useState(false)
+  const [pendingActions, setPendingActions] = useState([])
+  const [notifOpen, setNotifOpen]     = useState(false)
+  const [customers, setCustomers]     = useState([])
+  const notifRef = useRef(null)
+  const [showNewRequest, setShowNewRequest]  = useState(false)
   const [profile, setProfile]         = useState(null)
   const [selectedClient, setSelectedClient] = useState(null)
   const [clientSession, setClientSession]   = useState(null)
@@ -34,7 +40,8 @@ export default function App() {
   const [globalSessionId, setGlobalSessionId] = useState(null)
   const [navRefreshToken, setNavRefreshToken] = useState(0)
   const [dataRefreshToken, setDataRefreshToken] = useState(0)
-
+  const [centerPanel, setCenterPanel] = useState(null)
+  const [chatSeedMessage, setChatSeedMessage] = useState(null)
   useEffect(() => {
     getCurrentUser()
       .then(async u => {
@@ -50,10 +57,14 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const poll = () => getPendingActions().then(a => setInboxCount(a.length)).catch(() => {})
+    const poll = () => getPendingActions().then(a => { setPendingActions(a); setInboxCount(a.length) }).catch(() => {})
     poll()
     const id = setInterval(poll, 15000)
     return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    getCustomerAgents().then(setCustomers).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -67,6 +78,52 @@ export default function App() {
     document.addEventListener('cdm:go-dashboard', handler)
     return () => document.removeEventListener('cdm:go-dashboard', handler)
   }, [])
+
+  useEffect(() => {
+    const handler = (e) => setCenterPanel(e.detail || null)
+    document.addEventListener('cdm:show-center-panel', handler)
+    return () => document.removeEventListener('cdm:show-center-panel', handler)
+  }, [])
+
+  // Intercept the skill-import sentinel before ChatShell sees it
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail?.content !== '__skill_import_start__') return
+      e.stopImmediatePropagation()
+      setGlobalSessionId(tempSessionId())
+      setSelectedClient(null)
+      setClientSession(null)
+      setPage('dashboard')
+      setChatSeedMessage('I\'d like to import and analyze a skill. Please paste the skill definition below and I\'ll extract its inputs, outputs, and any risks or gotchas — then you can save it as a prompt.')
+      setChatOpen(true)
+    }
+    document.addEventListener('cdm:fire-prompt', handler, true) // capture phase
+    return () => document.removeEventListener('cdm:fire-prompt', handler, true)
+  }, [])
+
+  useEffect(() => {
+    if (!notifOpen) return
+    function onOutside(e) {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false)
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [notifOpen])
+
+  function handleNotifNavigate(action) {
+    setNotifOpen(false)
+    let nav = null
+    try { nav = action.navigateTo ? JSON.parse(action.navigateTo) : null } catch { /* skip */ }
+    if (nav?.page === 'client' && nav.customerAgentId) {
+      const found = customers.find(c => c.ID === nav.customerAgentId)
+      const customer = found || { ID: nav.customerAgentId, customerId: nav.customerId || '', displayName: nav.displayName || nav.customerAgentId }
+      setSelectedClient(customer)
+      setPage('client')
+      setChatOpen(false)
+    } else {
+      setPage('inbox')
+    }
+  }
 
   function handleSelectClient(customer) {
     setSelectedClient(customer)
@@ -198,17 +255,42 @@ export default function App() {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </button>
-          <button
-            className={`cdm-topbar-btn${inboxCount > 0 ? ' has-badge' : ''}`}
-            onClick={() => setPage('inbox')}
-            title="Inbox"
-            data-badge={inboxCount > 0 ? inboxCount : undefined}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3Z"/>
-              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-            </svg>
-          </button>
+          <div className="cdm-notif-anchor" ref={notifRef}>
+            <button
+              className={`cdm-topbar-btn${inboxCount > 0 ? ' has-badge' : ''}${notifOpen ? ' active' : ''}`}
+              onClick={() => setNotifOpen(o => !o)}
+              title="Notifications"
+              data-badge={inboxCount > 0 ? inboxCount : undefined}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3Z"/>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+              </svg>
+            </button>
+            {notifOpen && (
+              <div className="cdm-notif-dropdown">
+                <div className="cdm-notif-header">
+                  <span>Notifications</span>
+                  <button className="cdm-notif-view-all" onClick={() => { setNotifOpen(false); setPage('inbox') }}>View all</button>
+                </div>
+                {pendingActions.length === 0 ? (
+                  <div className="cdm-notif-empty">No pending notifications</div>
+                ) : (
+                  <ul className="cdm-notif-list">
+                    {pendingActions.map(a => (
+                      <li key={a.ID} className="cdm-notif-item" onClick={() => handleNotifNavigate(a)}>
+                        <span className="cdm-notif-dot" />
+                        <div className="cdm-notif-body">
+                          <span className="cdm-notif-text">{a.prompt}</span>
+                          <span className="cdm-notif-time">{new Date(a.createdAt).toLocaleString()}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
           <button
             className="cdm-topbar-btn"
             onClick={() => { setPage('dashboard'); setSelectedClient(null) }}
@@ -259,7 +341,12 @@ export default function App() {
             cardContext={page === 'client' ? { customerId: selectedClient?.customerId, displayName: selectedClient?.displayName } : null}
             onClose={() => setChatOpen(false)}
             onRename={setAssistantName}
-            onDataRefresh={() => setDataRefreshToken(t => t + 1)}
+            seedMessage={chatSeedMessage}
+            onSeedConsumed={() => setChatSeedMessage(null)}
+            onDataRefresh={() => {
+              setDataRefreshToken(t => t + 1)
+              getPendingActions().then(a => { setPendingActions(a); setInboxCount(a.length) }).catch(() => {})
+            }}
             onSessionCreated={(sid, title) => {
               if (page === 'client' && clientSession) {
                 setClientSession(s => ({ ...s, sessionId: sid }))
@@ -278,6 +365,15 @@ export default function App() {
           onClose={() => setShowNewRequest(false)}
           onCreated={() => { setShowNewRequest(false); document.dispatchEvent(new CustomEvent('cdm:request-created')) }}
         />
+      )}
+
+      {centerPanel && (
+        <div className="center-panel-backdrop" onClick={() => setCenterPanel(null)}>
+          <div className="center-panel-overlay" onClick={e => e.stopPropagation()}>
+            <button className="center-panel-close" onClick={() => setCenterPanel(null)} title="Close">×</button>
+            <PanelRenderer panel={centerPanel} cdmEmail={userId} />
+          </div>
+        </div>
       )}
     </div>
   )

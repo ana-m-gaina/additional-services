@@ -1,0 +1,14 @@
+COLUMN TABLE cdm_tracker_ConversationTurn (
+  ID NVARCHAR(36) NOT NULL,
+  createdAt TIMESTAMP,
+  createdBy NVARCHAR(255),
+  modifiedAt TIMESTAMP,
+  modifiedBy NVARCHAR(255),
+  userId NVARCHAR(200),
+  role NVARCHAR(10),
+  content NCLOB,
+  sessionId NVARCHAR(100),
+  agentName NVARCHAR(100),
+  customerAgentId NVARCHAR(50),
+  PRIMARY KEY(ID)
+)

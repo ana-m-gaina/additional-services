@@ -1,0 +1,6 @@
+COLUMN TABLE cdm_tracker_PersonaLayout (
+  userId NVARCHAR(200) NOT NULL,
+  layoutJson NCLOB,
+  updatedAt SECONDDATE,
+  PRIMARY KEY(userId)
+)

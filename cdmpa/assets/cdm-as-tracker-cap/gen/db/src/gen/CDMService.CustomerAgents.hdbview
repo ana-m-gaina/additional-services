@@ -1,0 +1,11 @@
+VIEW CDMService_CustomerAgents AS SELECT
+  CustomerAgent_0.ID,
+  CustomerAgent_0.customerId,
+  CustomerAgent_0.displayName,
+  CustomerAgent_0.createdBy,
+  CustomerAgent_0.createdAt,
+  CustomerAgent_0.status,
+  CustomerAgent_0.archivedAt,
+  CustomerAgent_0.retentionPolicy,
+  CustomerAgent_0.transferredTo
+FROM cdm_tracker_CustomerAgent AS CustomerAgent_0

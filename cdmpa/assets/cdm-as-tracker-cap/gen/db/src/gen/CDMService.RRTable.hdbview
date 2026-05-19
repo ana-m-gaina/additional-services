@@ -1,0 +1,16 @@
+VIEW CDMService_RRTable AS SELECT
+  RRTable_0.ID,
+  RRTable_0.createdAt,
+  RRTable_0.createdBy,
+  RRTable_0.modifiedAt,
+  RRTable_0.modifiedBy,
+  RRTable_0.serviceCode,
+  RRTable_0.serviceName,
+  RRTable_0.category,
+  RRTable_0.chargeable,
+  RRTable_0.notes,
+  RRTable_0.active,
+  RRTable_0.rrId,
+  RRTable_0.description,
+  RRTable_0.isActive
+FROM cdm_tracker_RRTable AS RRTable_0

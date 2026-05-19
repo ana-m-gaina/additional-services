@@ -1,0 +1,37 @@
+{
+  "format_version": 1,
+  "imports": [
+    {
+      "target_table": "CDM_TRACKER_INTEGRATIONAGENT",
+      "source_data": {
+        "data_type": "CSV",
+        "file_name": "cdm.tracker-IntegrationAgent.csv",
+        "has_header": true,
+        "type_config": {
+          "delimiter": ","
+        }
+      },
+      "import_settings": {
+        "import_columns": [
+          "ID",
+          "EVENTTYPE",
+          "DISPLAYNAME",
+          "ENABLED",
+          "CREATEDBY",
+          "CREATEDAT",
+          "STATUS"
+        ],
+        "include_filter": []
+      },
+      "column_mappings": {
+        "ID": "ID",
+        "EVENTTYPE": "eventType",
+        "DISPLAYNAME": "displayName",
+        "ENABLED": "enabled",
+        "CREATEDBY": "createdBy",
+        "CREATEDAT": "createdAt",
+        "STATUS": "status"
+      }
+    }
+  ]
+}

@@ -33,7 +33,7 @@ function mdToHtml(text) {
 
 const SEND_TRIGGER = /\bsend\b/i
 
-export default function ChatShell({ sessionId, cdmEmail, cardContext = null, customerAgentId = null, sessionTitle = null, onNewSession = null, onSelectSession = null, onRename = null, onSessionCreated = null, onDataRefresh = null }) {
+export default function ChatShell({ sessionId, cdmEmail, cardContext = null, customerAgentId = null, sessionTitle = null, onNewSession = null, onSelectSession = null, onRename = null, onSessionCreated = null, onDataRefresh = null, seedMessage = null, onSeedConsumed = null, onClose = null }) {
   const [messages, setMessages] = useState([])
   const [input, setInput]       = useState('')
   const [attachments, setAttachments] = useState([])
@@ -41,14 +41,22 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null, cus
   const [assistantName, setAssistantName] = useState(null)
   const [listening, setListening] = useState(false)
   const [activeSessionId, setActiveSessionId] = useState(sessionId)
-  const bottomRef  = useRef(null)
-  const textRef    = useRef(null)
+  const bottomRef     = useRef(null)
+  const textRef       = useRef(null)
   const recognitionRef = useRef(null)
   const selfCreatedRef = useRef(null)
-  const sendTextRef = useRef(null)
+  const sendTextRef   = useRef(null)
+  const fileInputRef  = useRef(null)
 
   // Sync ref on every render so the fire-prompt handler always calls the latest version
   useEffect(() => { sendTextRef.current = sendText })
+
+  // Inject a seed message from the parent (e.g. skill import intro) without an API call
+  useEffect(() => {
+    if (!seedMessage) return
+    setMessages([{ role: 'assistant', text: seedMessage }])
+    onSeedConsumed?.()
+  }, [seedMessage])
 
   // Sync from parent only when parent is pushing a genuinely different session
   // (not echoing back the ID we just created ourselves)
@@ -251,7 +259,7 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null, cus
           )
           if (m.role === 'panels') return (
             <div key={i} className="inline-panels">
-              {m.panels.map((p, j) => <PanelRenderer key={j} panel={p} cdmEmail={cdmEmail} />)}
+              {m.panels.map((p, j) => <PanelRenderer key={j} panel={p} cdmEmail={cdmEmail} inline={true} />)}
             </div>
           )
           if (m.role === 'assistant') return (
@@ -281,22 +289,21 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null, cus
           </div>
         )}
         <div className="chat-input-row">
-        <button
-          className="voice-btn"
-          onClick={() => document.getElementById('chat-file-input').click()}
+        <label
+          className={`voice-btn${busy ? ' disabled' : ''}`}
           title="Attach file"
-          disabled={busy}
+          style={{ cursor: busy ? 'not-allowed' : 'pointer' }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
-        </button>
-        <input
-          id="chat-file-input"
-          type="file"
-          accept=".txt,.md,.html,.csv,.pdf,.docx"
-          style={{ display: 'none' }}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".txt,.md,.html,.csv,.pdf,.docx"
+            style={{ display: 'none' }}
           onChange={async e => {
+            if (busy) return
             const file = e.target.files?.[0]
             if (!file) return
             e.target.value = ''
@@ -323,6 +330,7 @@ export default function ChatShell({ sessionId, cdmEmail, cardContext = null, cus
             }
           }}
         />
+        </label>
         <button
           className={`voice-btn${listening ? ' active' : ''}`}
           onClick={toggleVoice}

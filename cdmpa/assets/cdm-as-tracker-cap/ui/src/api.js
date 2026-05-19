@@ -177,3 +177,27 @@ export const getConversationTurns = (sessionId) =>
 export const getMeetingNotes = (customerAgentId) =>
   _odata(`${BASE_CDM}/MeetingNotes?$filter=customerAgentId eq '${customerAgentId}'&$orderby=createdAt desc`)
     .then(d => d.value || [])
+
+export const getUserAgents = () =>
+  _odata(`${BASE_CDM}/UserAgents?$orderby=name`).then(d => d.value || [])
+
+export const postUserAgent = (data) =>
+  _odata(`${BASE_CDM}/UserAgents`, { method: 'POST', body: JSON.stringify(data) })
+
+export const patchUserAgent = (id, data) =>
+  fetch(`${BASE_CDM}/UserAgents('${id}')`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+
+export const deleteUserAgent = (id) =>
+  fetch(`${BASE_CDM}/UserAgents('${id}')`, { method: 'DELETE' })
+
+export const getUserSkills = () =>
+  _odata(`${BASE_CDM}/UserSkills?$orderby=name`).then(d => d.value || [])
+
+export const postUserSkill = (data) =>
+  _odata(`${BASE_CDM}/UserSkills`, { method: 'POST', body: JSON.stringify(data) })
+
+export const patchUserSkill = (id, data) =>
+  fetch(`${BASE_CDM}/UserSkills('${id}')`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+
+export const deleteUserSkill = (id) =>
+  fetch(`${BASE_CDM}/UserSkills('${id}')`, { method: 'DELETE' })

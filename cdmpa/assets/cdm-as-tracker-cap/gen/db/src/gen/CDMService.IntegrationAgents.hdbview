@@ -1,0 +1,10 @@
+VIEW CDMService_IntegrationAgents AS SELECT
+  IntegrationAgent_0.ID,
+  IntegrationAgent_0.eventType,
+  IntegrationAgent_0.displayName,
+  IntegrationAgent_0.enabled,
+  IntegrationAgent_0.createdBy,
+  IntegrationAgent_0.createdAt,
+  IntegrationAgent_0.status,
+  IntegrationAgent_0.archivedAt
+FROM cdm_tracker_IntegrationAgent AS IntegrationAgent_0

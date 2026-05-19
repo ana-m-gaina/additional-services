@@ -1,0 +1,12 @@
+VIEW CDMService_ContractSubagents AS SELECT
+  ContractSubagent_0.ID,
+  ContractSubagent_0.customerId,
+  ContractSubagent_0.sid,
+  ContractSubagent_0.displayName,
+  ContractSubagent_0.contractType,
+  ContractSubagent_0.createdAt,
+  ContractSubagent_0.status,
+  ContractSubagent_0.archivedAt,
+  ContractSubagent_0.retentionPolicy,
+  ContractSubagent_0.transferredTo
+FROM cdm_tracker_ContractSubagent AS ContractSubagent_0

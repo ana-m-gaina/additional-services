@@ -1,0 +1,11 @@
+COLUMN TABLE cdm_tracker_RetiredAgent (
+  ID NVARCHAR(36) NOT NULL,
+  originalId NVARCHAR(50) NOT NULL,
+  agentType NVARCHAR(30) NOT NULL,
+  displayName NVARCHAR(200) NOT NULL,
+  retiredBy NVARCHAR(200),
+  retiredAt SECONDDATE NOT NULL,
+  reason NVARCHAR(500),
+  snapshotJson NCLOB,
+  PRIMARY KEY(ID)
+)

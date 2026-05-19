@@ -6,6 +6,7 @@
     "ui"
   ],
   "dependencies": {
+    "@cap-js/hana": "^2.8.0",
     "@sap/cds": "^9",
     "express": "^4",
     "http-proxy-middleware": "^3.0.5"

@@ -1,0 +1,11 @@
+COLUMN TABLE cdm_tracker_ActivityLog (
+  ID NVARCHAR(36) NOT NULL,
+  request_ID NVARCHAR(50),
+  action NVARCHAR(200) NOT NULL,
+  description NVARCHAR(1000),
+  performedBy NVARCHAR(100),
+  performedAt SECONDDATE NOT NULL,
+  oldStatus NVARCHAR(50),
+  newStatus NVARCHAR(50),
+  PRIMARY KEY(ID)
+)

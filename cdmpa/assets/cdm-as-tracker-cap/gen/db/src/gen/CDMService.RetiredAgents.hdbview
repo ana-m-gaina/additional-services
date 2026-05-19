@@ -1,0 +1,10 @@
+VIEW CDMService_RetiredAgents AS SELECT
+  RetiredAgent_0.ID,
+  RetiredAgent_0.originalId,
+  RetiredAgent_0.agentType,
+  RetiredAgent_0.displayName,
+  RetiredAgent_0.retiredBy,
+  RetiredAgent_0.retiredAt,
+  RetiredAgent_0.reason,
+  RetiredAgent_0.snapshotJson
+FROM cdm_tracker_RetiredAgent AS RetiredAgent_0

@@ -1,0 +1,8 @@
+COLUMN TABLE cdm_tracker_RRChunk (
+  ID NVARCHAR(36) NOT NULL,
+  document_ID NVARCHAR(36) NOT NULL,
+  pageNumber INTEGER NOT NULL,
+  "TEXT" NCLOB NOT NULL,
+  embedding NCLOB NOT NULL,
+  PRIMARY KEY(ID)
+)

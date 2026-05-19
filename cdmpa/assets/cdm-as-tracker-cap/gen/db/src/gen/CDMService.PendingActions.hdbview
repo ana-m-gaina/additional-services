@@ -1,0 +1,12 @@
+VIEW CDMService_PendingActions AS SELECT
+  PendingAction_0.ID,
+  PendingAction_0.userId,
+  PendingAction_0.automationId,
+  PendingAction_0.sessionId,
+  PendingAction_0.prompt,
+  PendingAction_0.status,
+  PendingAction_0.relatedRequestId,
+  PendingAction_0.navigateTo,
+  PendingAction_0.createdAt,
+  PendingAction_0.resolvedAt
+FROM cdm_tracker_PendingAction AS PendingAction_0

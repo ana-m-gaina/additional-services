@@ -42,6 +42,7 @@ from app.tools import (
     patch_meeting_note as t_patch_meeting_note,
     confirm_meeting_note_patch as t_confirm_meeting_note_patch,
     process_meeting_notes as t_process_meeting_notes,
+    analyze_skill as t_analyze_skill,
 )
 from app.tools.panels import (
     ALL_TOOL_SCHEMAS as _PANEL_SCHEMAS,
@@ -99,9 +100,10 @@ ORCHESTRATOR_TOOLS = [
     t_process_meeting_notes.TOOL_SCHEMA,
     t_patch_meeting_note.TOOL_SCHEMA,
     t_confirm_meeting_note_patch.TOOL_SCHEMA,
+    t_analyze_skill.TOOL_SCHEMA,
 ]
 
-assert len(ORCHESTRATOR_TOOLS) == 32, f"Expected 32 schemas, got {len(ORCHESTRATOR_TOOLS)}"
+assert len(ORCHESTRATOR_TOOLS) == 33, f"Expected 33 schemas, got {len(ORCHESTRATOR_TOOLS)}"
 
 # ── Context builder ────────────────────────────────────────────────────────────
 
@@ -326,6 +328,9 @@ TOOLS AVAILABLE:
 - process_meeting_notes: extract structured data from raw ops meeting notes and store on the client's dashboard. Call this immediately when the CDM pastes a block of meeting notes text (recognisable by date headings, topic numbers, owner/status lines, action items). Do NOT ask for confirmation first — just call it.
 - patch_meeting_note: apply targeted updates to the stored meeting notes when the CDM types a natural-language change ("topic 3 is closed", "mark risk 1 resolved", "add action: Palash to check FMX by Friday"). Call patch_meeting_note to build the diff, show it to the CDM, then call confirm_meeting_note_patch only after explicit confirmation.
 - confirm_meeting_note_patch: write pending patches to the database. Only call after CDM confirms.
+- analyze_skill: analyze a pasted skill definition — extract inputs, outputs, risks. Call this immediately when the user pastes text that looks like a skill or prompt definition (markdown with ## headings like Workflow, Tools, Guardrails, or structured instruction blocks).
+
+SKILL IMPORT DETECTION: If the user message is a long block of structured text with ## headings, instruction lists, or tool references that reads like a skill or prompt template — call analyze_skill immediately with the full text.
 
 MEETING NOTES DETECTION: If the user message looks like raw meeting notes (contains topic numbers or bullet points with owners/status/dates, company name at top, or action items like "X to check"), call process_meeting_notes immediately with the entire message as raw_text.
 
@@ -379,7 +384,7 @@ RULES:
 
     # ── 5. Run tool-use loop ──────────────────────────────────────────────────
     result = await anthropic_client.chat_with_tools(
-        system_prompt, conversation_messages, ORCHESTRATOR_TOOLS, tool_dispatcher
+        system_prompt, conversation_messages, ORCHESTRATOR_TOOLS, tool_dispatcher,
     )
     reply = result["reply"]
 
@@ -508,5 +513,7 @@ async def _dispatch(
         return await t_patch_meeting_note.handle(tool_input, **ctx)
     if tool_name == "confirm_meeting_note_patch":
         return await t_confirm_meeting_note_patch.handle(tool_input, **ctx)
+    if tool_name == "analyze_skill":
+        return await t_analyze_skill.handle(tool_input, **ctx)
 
     return {"error": f"Unknown tool: {tool_name}"}

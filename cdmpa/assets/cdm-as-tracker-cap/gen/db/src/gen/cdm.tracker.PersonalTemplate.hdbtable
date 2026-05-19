@@ -1,0 +1,12 @@
+COLUMN TABLE cdm_tracker_PersonalTemplate (
+  ID NVARCHAR(36) NOT NULL,
+  createdAt TIMESTAMP,
+  createdBy NVARCHAR(255),
+  modifiedAt TIMESTAMP,
+  modifiedBy NVARCHAR(255),
+  cdmEmail NVARCHAR(200) NOT NULL,
+  templateKey NVARCHAR(100) NOT NULL,
+  description NVARCHAR(500),
+  content NCLOB NOT NULL,
+  PRIMARY KEY(ID)
+)

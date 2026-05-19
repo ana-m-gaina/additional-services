@@ -13,6 +13,7 @@ import PdfViewer from './panels/PdfViewer.jsx'
 import MeetingTopics      from './panels/MeetingTopics.jsx'
 import MeetingActionItems from './panels/MeetingActionItems.jsx'
 import MeetingRisks       from './panels/MeetingRisks.jsx'
+import SkillReader        from './panels/SkillReader.jsx'
 
 const MAP = {
   'record-card':     RecordCard,
@@ -30,6 +31,7 @@ const MAP = {
   'meeting-topics':       MeetingTopics,
   'meeting-action-items': MeetingActionItems,
   'meeting-risks':        MeetingRisks,
+  'skill-reader':         SkillReader,
 }
 
 export default function PanelRenderer({ panel, cdmEmail, inline = false }) {
@@ -41,5 +43,14 @@ export default function PanelRenderer({ panel, cdmEmail, inline = false }) {
       </div>
     )
   }
+
+  // skill-reader always opens as a center overlay, not inline in the chat thread
+  if (panel?.type === 'skill-reader' && inline) {
+    setTimeout(() => {
+      document.dispatchEvent(new CustomEvent('cdm:show-center-panel', { detail: panel }))
+    }, 0)
+    return null
+  }
+
   return <Component panel={panel} cdmEmail={cdmEmail} inline={inline} />
 }

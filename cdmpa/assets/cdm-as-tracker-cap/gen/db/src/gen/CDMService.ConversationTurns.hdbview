@@ -1,0 +1,13 @@
+VIEW CDMService_ConversationTurns AS SELECT
+  ConversationTurn_0.ID,
+  ConversationTurn_0.createdAt,
+  ConversationTurn_0.createdBy,
+  ConversationTurn_0.modifiedAt,
+  ConversationTurn_0.modifiedBy,
+  ConversationTurn_0.userId,
+  ConversationTurn_0.role,
+  ConversationTurn_0.content,
+  ConversationTurn_0.sessionId,
+  ConversationTurn_0.agentName,
+  ConversationTurn_0.customerAgentId
+FROM cdm_tracker_ConversationTurn AS ConversationTurn_0

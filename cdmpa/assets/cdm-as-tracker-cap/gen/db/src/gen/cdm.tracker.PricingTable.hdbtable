@@ -1,0 +1,17 @@
+COLUMN TABLE cdm_tracker_PricingTable (
+  ID NVARCHAR(36) NOT NULL,
+  createdAt TIMESTAMP,
+  createdBy NVARCHAR(255),
+  modifiedAt TIMESTAMP,
+  modifiedBy NVARCHAR(255),
+  serviceCode NVARCHAR(20) NOT NULL,
+  serviceName NVARCHAR(200),
+  price DECIMAL(10, 2) NOT NULL,
+  currency NVARCHAR(3) DEFAULT 'EUR',
+  effectiveFrom DATE,
+  active BOOLEAN DEFAULT TRUE,
+  lastUpdatedBy NVARCHAR(100),
+  rrId NVARCHAR(50),
+  lastUpdated DATE,
+  PRIMARY KEY(ID)
+)

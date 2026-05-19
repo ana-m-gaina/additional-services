@@ -1,0 +1,16 @@
+VIEW CDMService_PricingTable AS SELECT
+  PricingTable_0.ID,
+  PricingTable_0.createdAt,
+  PricingTable_0.createdBy,
+  PricingTable_0.modifiedAt,
+  PricingTable_0.modifiedBy,
+  PricingTable_0.serviceCode,
+  PricingTable_0.serviceName,
+  PricingTable_0.price,
+  PricingTable_0.currency,
+  PricingTable_0.effectiveFrom,
+  PricingTable_0.active,
+  PricingTable_0.lastUpdatedBy,
+  PricingTable_0.rrId,
+  PricingTable_0.lastUpdated
+FROM cdm_tracker_PricingTable AS PricingTable_0

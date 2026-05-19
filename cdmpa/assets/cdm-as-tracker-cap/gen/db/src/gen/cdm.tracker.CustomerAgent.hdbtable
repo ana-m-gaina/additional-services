@@ -1,0 +1,12 @@
+COLUMN TABLE cdm_tracker_CustomerAgent (
+  ID NVARCHAR(36) NOT NULL,
+  customerId NVARCHAR(200),
+  displayName NVARCHAR(200),
+  createdBy NVARCHAR(200),
+  createdAt SECONDDATE,
+  status NVARCHAR(20) DEFAULT 'active',
+  archivedAt SECONDDATE,
+  retentionPolicy NVARCHAR(50),
+  transferredTo NVARCHAR(200),
+  PRIMARY KEY(ID)
+)

@@ -1,0 +1,17 @@
+COLUMN TABLE cdm_tracker_RRTable (
+  ID NVARCHAR(36) NOT NULL,
+  createdAt TIMESTAMP,
+  createdBy NVARCHAR(255),
+  modifiedAt TIMESTAMP,
+  modifiedBy NVARCHAR(255),
+  serviceCode NVARCHAR(20) NOT NULL,
+  serviceName NVARCHAR(200) NOT NULL,
+  category NVARCHAR(100),
+  chargeable BOOLEAN DEFAULT TRUE,
+  notes NVARCHAR(500),
+  active BOOLEAN DEFAULT TRUE,
+  rrId NVARCHAR(50),
+  description NVARCHAR(500),
+  isActive BOOLEAN DEFAULT TRUE,
+  PRIMARY KEY(ID)
+)

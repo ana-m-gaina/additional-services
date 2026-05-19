@@ -1,0 +1,6 @@
+VIEW AdminService_AdminConfigs AS SELECT
+  AdminConfig_0.ID,
+  AdminConfig_0.configKey,
+  AdminConfig_0.configValue,
+  AdminConfig_0.description
+FROM cdm_tracker_AdminConfig AS AdminConfig_0

@@ -1,0 +1,13 @@
+VIEW CDMService_PersonalNotes AS SELECT
+  PersonalNote_0.ID,
+  PersonalNote_0.createdAt,
+  PersonalNote_0.createdBy,
+  PersonalNote_0.modifiedAt,
+  PersonalNote_0.modifiedBy,
+  PersonalNote_0.cdmEmail,
+  PersonalNote_0.content,
+  PersonalNote_0.tags,
+  PersonalNote_0.relatedRequest,
+  PersonalNote_0.sessionId
+FROM cdm_tracker_PersonalNote AS PersonalNote_0
+WHERE PersonalNote_0.cdmEmail = SESSION_CONTEXT('APPLICATIONUSER')

@@ -1,0 +1,10 @@
+VIEW CDMService_ActivityLog AS SELECT
+  ActivityLog_0.ID,
+  ActivityLog_0.request_ID,
+  ActivityLog_0.action,
+  ActivityLog_0.description,
+  ActivityLog_0.performedBy,
+  ActivityLog_0.performedAt,
+  ActivityLog_0.oldStatus,
+  ActivityLog_0.newStatus
+FROM cdm_tracker_ActivityLog AS ActivityLog_0

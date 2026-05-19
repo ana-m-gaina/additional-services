@@ -1,0 +1,7 @@
+COLUMN TABLE cdm_tracker_JiraTicketTemplate (
+  ID NVARCHAR(36) NOT NULL,
+  serviceType NVARCHAR(100) NOT NULL,
+  templateBody NVARCHAR(5000) NOT NULL,
+  active BOOLEAN DEFAULT TRUE,
+  PRIMARY KEY(ID)
+)

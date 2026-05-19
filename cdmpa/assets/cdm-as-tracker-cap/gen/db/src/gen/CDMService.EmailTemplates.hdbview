@@ -1,0 +1,7 @@
+VIEW CDMService_EmailTemplates AS SELECT
+  EmailTemplate_0.ID,
+  EmailTemplate_0.templateKey,
+  EmailTemplate_0.subject,
+  EmailTemplate_0.body,
+  EmailTemplate_0.lastUpdated
+FROM cdm_tracker_EmailTemplate AS EmailTemplate_0

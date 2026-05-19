@@ -11,6 +11,9 @@ node_modules/
 dist/
 build/
 
+# CAP HANA credentials (never commit)
+default-env.json
+
 # DB & OS
 *.sqlite
 *.sqlite-shm

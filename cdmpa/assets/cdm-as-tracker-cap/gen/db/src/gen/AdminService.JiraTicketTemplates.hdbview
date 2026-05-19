@@ -1,0 +1,6 @@
+VIEW AdminService_JiraTicketTemplates AS SELECT
+  JiraTicketTemplate_0.ID,
+  JiraTicketTemplate_0.serviceType,
+  JiraTicketTemplate_0.templateBody,
+  JiraTicketTemplate_0.active
+FROM cdm_tracker_JiraTicketTemplate AS JiraTicketTemplate_0

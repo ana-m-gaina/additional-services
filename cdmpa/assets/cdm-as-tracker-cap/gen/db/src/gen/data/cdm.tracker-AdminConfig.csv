@@ -1,0 +1,5 @@
+ID,configKey,configValue,description
+cfg-assistant-name,assistant_name,Beacon,Default assistant display name (CDM can rename conversationally)
+cfg-llm-model,llm_model,claude-opus-4-7,Active Claude model for the orchestrator agent
+cfg-max-tool-iter,max_tool_iterations,10,Maximum tool-use loop iterations per orchestrate call
+cfg-agent-url,agent_url,http://localhost:8000,Python agent service base URL (overridden by AGENT_URL env var)

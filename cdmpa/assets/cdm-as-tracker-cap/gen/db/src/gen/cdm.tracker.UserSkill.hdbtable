@@ -1,0 +1,13 @@
+COLUMN TABLE cdm_tracker_UserSkill (
+  ID NVARCHAR(36) NOT NULL,
+  createdAt TIMESTAMP,
+  createdBy NVARCHAR(255),
+  modifiedAt TIMESTAMP,
+  modifiedBy NVARCHAR(255),
+  cdmEmail NVARCHAR(200) NOT NULL,
+  name NVARCHAR(200) NOT NULL,
+  description NVARCHAR(500),
+  endpointUrl NVARCHAR(1000) NOT NULL,
+  status NVARCHAR(20) DEFAULT 'active',
+  PRIMARY KEY(ID)
+)

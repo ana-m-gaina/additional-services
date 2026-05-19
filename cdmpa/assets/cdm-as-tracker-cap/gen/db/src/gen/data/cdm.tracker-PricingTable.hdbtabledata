@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "imports": [
+    {
+      "target_table": "CDM_TRACKER_PRICINGTABLE",
+      "source_data": {
+        "data_type": "CSV",
+        "file_name": "cdm.tracker-PricingTable.csv",
+        "has_header": true,
+        "type_config": {
+          "delimiter": ","
+        }
+      },
+      "import_settings": {
+        "import_columns": [
+          "ID",
+          "SERVICECODE",
+          "SERVICENAME",
+          "PRICE",
+          "CURRENCY",
+          "EFFECTIVEFROM",
+          "ACTIVE",
+          "LASTUPDATEDBY",
+          "RRID",
+          "LASTUPDATED"
+        ],
+        "include_filter": []
+      },
+      "column_mappings": {
+        "ID": "ID",
+        "SERVICECODE": "serviceCode",
+        "SERVICENAME": "serviceName",
+        "PRICE": "price",
+        "CURRENCY": "currency",
+        "EFFECTIVEFROM": "effectiveFrom",
+        "ACTIVE": "active",
+        "LASTUPDATEDBY": "lastUpdatedBy",
+        "RRID": "rrId",
+        "LASTUPDATED": "lastUpdated"
+      }
+    }
+  ]
+}
