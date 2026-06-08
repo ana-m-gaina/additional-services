@@ -1,23 +1,43 @@
 /* ── Design tokens ─────────────────────────────────────────────────────────── */
 :root {
-  --bg:         #ffffff;
-  --bg-subtle:  #f7f8f9;
-  --border:     #e8eaed;
-  --primary:    #0070f2;
-  --primary-bg: #e8f2fe;
-  --text:       #1d2124;
-  --text-muted: #6e7681;
+  /* Beacon palette */
+  --bg:         #F7F6F2;
+  --surface:    #FFFFFF;
+  --border:     #E8E6DF;
+  --border-md:  #D3D1C7;
+  --text:       #1C1B18;
+  --text-2:     #6B6962;
+  --text-3:     #9C9A92;
+
+  --blue-bg:    #E6F1FB;
+  --blue:       #185FA5;
+  --blue-dark:  #0C447C;
+
+  --green-bg:   #EAF3DE;
+  --green:      #3B6D11;
+
+  --amber-bg:   #FAEEDA;
+  --amber:      #854F0B;
+
+  --red-bg:     #FCEBEB;
+  --red:        #A32D2D;
+
+  /* legacy aliases — keep existing components working */
+  --bg-subtle:  var(--bg);
+  --primary:    var(--blue);
+  --primary-bg: var(--blue-bg);
+  --text-muted: var(--text-2);
   --radius:     6px;
   --shadow:     0 1px 4px rgba(0,0,0,0.08);
-  --font:       '72', 'SAP72', -apple-system, Arial, sans-serif;
+  --font:       'DM Sans', -apple-system, Arial, sans-serif;
+  --font-mono:  'DM Mono', 'Courier New', monospace;
 
-  /* keep old names as aliases so existing components don't break */
-  --cdm-bg:         var(--bg-subtle);
-  --cdm-surface:    var(--bg);
+  --cdm-bg:         var(--bg);
+  --cdm-surface:    var(--surface);
   --cdm-border:     var(--border);
-  --cdm-primary:    var(--primary);
+  --cdm-primary:    var(--blue);
   --cdm-text:       var(--text);
-  --cdm-text-muted: var(--text-muted);
+  --cdm-text-muted: var(--text-2);
   --cdm-radius:     var(--radius);
   --cdm-shadow:     var(--shadow);
 }
@@ -35,7 +55,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   align-items: center;
   height: 44px;
   padding: 0 0.75rem 0 0.5rem;
-  background: var(--bg);
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   gap: 0.5rem;
@@ -160,7 +180,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 
 /* ── Sidebar ───────────────────────────────────────────────────────────────── */
 .cdm-sidebar {
-  background: var(--bg);
+  background: var(--surface);
   border-right: 1px solid var(--border);
   overflow-y: auto;
   flex-shrink: 0;
@@ -186,7 +206,56 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   font-size: 0.65rem !important;
 }
 
-/* ── Nav tree ──────────────────────────────────────────────────────────────── */
+/* ── Beacon left rail ──────────────────────────────────────────────────────── */
+.lr-add-btn {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--blue); cursor: pointer;
+  padding: 4px 10px; border: 1px solid var(--border-md);
+  border-radius: var(--radius); background: var(--surface);
+  font-family: var(--font); transition: background .12s;
+}
+.lr-add-btn:hover { background: var(--blue-bg); }
+
+.lr-cust-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 14px; cursor: pointer;
+  border-left: 2px solid transparent; transition: all .12s;
+}
+.lr-cust-item:hover { background: var(--bg); }
+.lr-cust-item.active { background: var(--blue-bg); border-left-color: var(--blue); }
+
+.lr-nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; cursor: pointer;
+  border-left: 2px solid transparent; transition: background .12s;
+  font-size: 12px; color: var(--text-2);
+}
+.lr-nav-item:hover { background: var(--bg); }
+.lr-nav-item svg { color: var(--text-3); flex-shrink: 0; }
+
+.lr-input {
+  width: 100%; padding: 6px 9px;
+  border: 1px solid var(--border-md); border-radius: var(--radius);
+  font-size: 12px; font-family: var(--font); color: var(--text);
+  background: var(--bg); outline: none; box-sizing: border-box;
+}
+.lr-input:focus { border-color: var(--blue); background: var(--surface); }
+
+.lr-btn-primary {
+  flex: 1; padding: 7px 0; background: var(--blue); color: #fff;
+  border: none; border-radius: var(--radius); font-size: 12px;
+  font-weight: 600; cursor: pointer; font-family: var(--font); transition: background .12s;
+}
+.lr-btn-primary:hover { background: var(--blue-dark); }
+
+.lr-btn-ghost {
+  flex: 1; padding: 7px 0; background: none; color: var(--text-2);
+  border: 1px solid var(--border-md); border-radius: var(--radius);
+  font-size: 12px; cursor: pointer; font-family: var(--font); transition: all .12s;
+}
+.lr-btn-ghost:hover { background: var(--bg); }
+
+/* ── Nav tree (legacy) ─────────────────────────────────────────────────────── */
 .nav-tree { display: flex; flex-direction: column; }
 .nav-section-header-right {
   display: flex; align-items: center; gap: 0.35rem;
@@ -237,7 +306,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .nav-prompt-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── Main area ─────────────────────────────────────────────────────────────── */
-.cdm-main { flex: 1; overflow-y: auto; }
+.cdm-main { flex: 1; min-height: 0; overflow-y: auto; }
 
 /* ── Nav tree ──────────────────────────────────────────────────────────────── */
 .nav-section        { padding: 0.25rem 0 0.5rem; }
@@ -638,7 +707,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .cdv-tabs-wrapper {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -649,7 +717,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 }
 .cdv-tab-content {
   overflow-y: auto;
-  max-height: calc(100vh - 280px);
+  max-height: calc(100vh - 184px);
 }
 
 /* section wrapper inside a tab */

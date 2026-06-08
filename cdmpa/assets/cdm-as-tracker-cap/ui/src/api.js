@@ -201,3 +201,24 @@ export const patchUserSkill = (id, data) =>
 
 export const deleteUserSkill = (id) =>
   fetch(`${BASE_CDM}/UserSkills('${id}')`, { method: 'DELETE' })
+
+export const getLandscapePhases = (customerAgentId) =>
+  _odata(`${BASE_CDM}/LandscapePhases?$filter=customerAgentId eq '${customerAgentId}'&$orderby=phaseNo`).then(d => d.value || [])
+
+export const getLandscapeWeeklyStatus = (customerAgentId) =>
+  _odata(`${BASE_CDM}/LandscapeWeeklyStatus?$filter=customerAgentId eq '${customerAgentId}'&$orderby=statusDate desc`).then(d => d.value || [])
+
+export const getLandscapeTopIssues = (customerAgentId) =>
+  _odata(`${BASE_CDM}/LandscapeTopIssues?$filter=customerAgentId eq '${customerAgentId}'&$orderby=dateIdentified desc`).then(d => d.value || [])
+
+export const getLandscapeSystems = (customerAgentId) =>
+  _odata(`${BASE_CDM}/LandscapeSystems?$filter=customerAgentId eq '${customerAgentId}'&$orderby=sortKey`).then(d => d.value || [])
+
+export const getLandscapeComponents = (customerAgentId) =>
+  _odata(`${BASE_CDM}/LandscapeComponents?$filter=customerAgentId eq '${customerAgentId}'`).then(d => d.value || [])
+
+export const getContractEngagements = (customerAgentId) =>
+  _odata(`${BASE_CDM}/ContractEngagements?$filter=customerAgentId eq '${customerAgentId}'&$orderby=engagementId desc`).then(d => d.value || [])
+
+export const getContractDocuments = (customerAgentId) =>
+  _odata(`${BASE_CDM}/ContractDocuments?$filter=customerAgentId eq '${customerAgentId}'&$orderby=engagementId desc`).then(d => d.value || [])

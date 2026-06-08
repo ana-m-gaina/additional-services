@@ -19,6 +19,18 @@ entity ASRequest : managed {
   rrDescription          : String(1000);
   description            : String(2000);
 
+  // DED Supplementary Services fields
+  amount                 : Integer;
+  storageGB              : Integer;       // Storage (in GB)
+  dataCenter             : String(200);
+  drSite                 : Boolean        default false;
+  phase                  : Integer;
+  duration               : Integer;       // in months
+  monthStart             : Integer;
+  monthEnd               : Integer;
+  startDate              : Date;
+  endDate                : Date;
+
   // System identifiers
   sid                    : String(20);
   caseNo                 : String(100);
@@ -209,6 +221,28 @@ entity CustomerAgent : cuid {
   archivedAt      : DateTime;
   retentionPolicy : String(50);  // e.g. 'keep-5y', 'delete-on-retire'
   transferredTo   : String(200); // userId if ownership transferred
+  // DED Landscape scalar fields
+  dedOpportunityId     : String(20);
+  deliveryStatus       : String(50);
+  operationsMode       : String(20);
+  dataCenterName       : String(200);
+  dataCenterCode       : String(20);
+  iaas                 : String(20);
+  hecCloudOption       : String(50);
+  cloudStartDate       : Date;
+  contractEndDate      : Date;
+  businessGoLive       : Date;
+  implementationType   : String(50);
+  duration             : String(50);  // e.g. "60 month"
+  overallStatus        : String(20);
+  projectDocuments     : String(1000);
+  defaultCesmUserCode  : String(20);
+  defaultCesmUserName  : String(200);
+  customerContactName  : String(200);
+  customerContactEmail : String(200);
+  bpName               : String(200);
+  crmOpportunityId     : String(50);
+  erpCustomerId        : String(50);
 }
 
 entity ContractSubagent : cuid {
@@ -316,6 +350,182 @@ entity UserSkill : cuid, managed {
   description : String(500);
   endpointUrl : String(1000) not null;
   status      : String(20)  default 'active';  // active | disabled
+}
+
+// ── DED Landscape — phases ────────────────────────────────────────────────────
+
+entity LandscapePhase : cuid {
+  customerAgentId  : String(50);   // FK → CustomerAgent.ID
+  phaseKey         : String(50);
+  phaseNo          : Integer;
+  phaseName        : String(200);
+  phaseStartMonth  : Integer;
+  phaseEndMonth    : Integer;
+  phaseDescription : String(1000);
+  phaseDurationUnit: String(20);
+  phaseStartDate   : Date;
+  phaseEndDate     : Date;
+}
+
+// ── DED Landscape — weekly status entries ────────────────────────────────────
+
+entity LandscapeWeeklyStatus : cuid {
+  customerAgentId : String(50);   // FK → CustomerAgent.ID
+  dedCode         : String(100);  // DED internal Code
+  opprId          : String(20);
+  statusDate      : Date;
+  customerPulse   : String(5);
+  statusText      : LargeString;
+  createUserId    : String(20);
+  createUserName  : String(200);
+  createDateTime  : DateTime;
+}
+
+// ── DED Landscape — top issues / risk log ────────────────────────────────────
+
+entity LandscapeTopIssue : cuid {
+  customerAgentId       : String(50);   // FK → CustomerAgent.ID
+  dedCode               : String(100);
+  issueId               : String(20);
+  dateIdentified        : Date;
+  rating                : String(20);
+  category              : String(100);
+  statusSummary         : LargeString;
+  businessImpact        : LargeString;
+  actionPlan            : LargeString;
+  statusOfActionPlan    : LargeString;
+  resolutionDate        : Date;
+  status                : String(50);
+  priority              : String(5);
+  responsible           : String(200);
+  internalOnly          : Boolean default false;
+  createUserId          : String(20);
+  createUserName        : String(200);
+  createDateTime        : DateTime;
+  updateUserId          : String(20);
+  updateUserName        : String(200);
+  updateDateTime        : DateTime;
+}
+
+// ── DED Landscape — systems / tiers ──────────────────────────────────────────
+
+entity LandscapeSystem : cuid {
+  customerAgentId      : String(50);   // FK → CustomerAgent.ID
+  sortKey              : String(50);
+  tierKey              : String(50);
+  solutionCode         : String(50);
+  solutionDescr        : String(200);
+  solutionKey          : String(100);
+  itemCode             : String(50);
+  description          : String(500);
+  tier                 : String(50);
+  sid                  : String(20);
+  dbSid                : String(20);
+  prodNonProd          : String(10);
+  isDR                 : Boolean default false;
+  isHA                 : Boolean default false;
+  haType               : String(50);
+  isActive             : Boolean default true;
+  isLoadBalancer       : Boolean default false;
+  deliveryStatus       : String(50);
+  overallStatus        : String(20);
+  projectStatusSummary : LargeString;
+  hecCloudOption       : String(50);
+  hecPhase             : String(20);
+  dataCenter           : String(20);
+  dataCenterName       : String(200);
+  implementationType   : String(50);
+  migrationScenario    : String(100);
+  installationNumber   : String(50);
+  sismObjectKey        : String(100);
+  crNo                 : String(50);
+  crComment            : String(500);
+  startDate            : Date;
+  endDate              : Date;
+  componentStartMonth  : Integer;
+  componentEndMonth    : Integer;
+  tierVerified         : String(5);
+  components           : Composition of many LandscapeComponent on components.tierKey = $self.tierKey;
+}
+
+// ── DED Landscape — components per system/tier ───────────────────────────────
+
+entity LandscapeComponent : cuid {
+  tierKey              : String(50);   // FK → LandscapeSystem.tierKey
+  customerAgentId      : String(50);   // denormalised for easy querying
+  itemCode             : String(50);
+  description          : String(500);
+  qty                  : Integer;
+  systemType           : String(50);
+  prodNonProd          : String(10);
+  usageDetails         : String(500);
+  flexTBChunkAmount    : Decimal(10,2);
+  storageGB            : Integer;
+  storageDescr         : String(100);
+  storage2GB           : Integer;
+  storageDescr2        : String(100);
+  additionalIOPS       : String(50);
+  additionalThroughput : String(50);
+  faultTolerance       : Boolean default false;
+  numOfCPUs            : Integer;
+  operatingSystem      : String(100);
+  sla                  : String(20);
+  instanceType         : String(100);
+  isHA                 : Boolean default false;
+  availabilityZone     : String(100);
+  poolName             : String(100);
+  dbEncryption         : Boolean default false;
+  componentStartMonth  : Integer;
+  componentEndMonth    : Integer;
+  duration             : Integer;
+  sismObjectKey        : String(100);
+  crNo                 : String(50);
+  crComment            : String(500);
+  projectStatusSummary : LargeString;
+  active               : Boolean default true;
+  spcProvisioned       : Boolean default false;
+  startDate            : Date;
+  endDate              : Date;
+}
+
+// ── Contract engagements + documents — scraped from DED Contract Details ──────
+
+entity ContractEngagement : cuid {
+  customerAgentId  : String(50);
+  engagementId     : String(20);
+  crNumber         : String(20);
+  cmsContractId    : String(20);
+  cmsContractUrl   : String(500);
+  sidAffected      : String(200);
+  issueDescription : LargeString;
+  contractValue    : Decimal(15,2);
+  currency         : String(5);
+  startDate        : Date;
+  endDate          : Date;
+  duration         : Integer;
+  contractStatus   : String(50);
+  extractedJson    : LargeString;
+  importedAt       : DateTime;
+}
+
+entity ContractDocument : cuid {
+  customerAgentId  : String(50);
+  engagementId     : String(20);
+  cmsContractId    : String(20);
+  fileName         : String(500);
+  subject          : String(200);
+  uploadedBy       : String(200);
+  uploadedById     : String(20);
+  uploadDate       : Date;
+  sourceSystem     : String(10);
+  docCategory      : String(100);
+  docRelease       : String(20);
+  eSignatureStatus : String(50);
+  proxyUrl         : String(1000);
+  localPath        : String(500);
+  mimeType         : String(100);
+  fileSizeBytes    : Integer;
+  importedAt       : DateTime;
 }
 
 // ── Meeting notes — extracted from ops meeting notes pasted in chat ───────────

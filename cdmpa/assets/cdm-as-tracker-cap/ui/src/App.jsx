@@ -4,6 +4,7 @@ import ChatShell from './components/ChatShell.jsx'
 import PersonaShell from './components/PersonaShell.jsx'
 import InboxView from './components/InboxView.jsx'
 import ClientDetailView from './components/ClientDetailView.jsx'
+import BeaconDashboard from './components/BeaconDashboard.jsx'
 import NavTree from './components/NavTree.jsx'
 import NewRequestModal from './components/NewRequestModal.jsx'
 import PromptsView from './components/PromptsView.jsx'
@@ -319,10 +320,10 @@ export default function App() {
           </aside>
         )}
 
-        <main className="cdm-main" style={{ padding: (page === 'dashboard' || page === 'client') ? 0 : '1.5rem', display: 'flex', flexDirection: 'column' }}>
+        <main className="cdm-main" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
           {page === 'dashboard' && <PersonaShell cdmEmail={userId} />}
           {page === 'inbox'     && <InboxView cdmEmail={userId} onCountChange={setInboxCount} />}
-          {page === 'client'    && <ClientDetailView customer={selectedClient} cdmEmail={userId} onStartChat={handleStartChat} refreshToken={dataRefreshToken} />}
+          {page === 'client'    && <BeaconDashboard customer={selectedClient} cdmEmail={userId} onStartChat={handleStartChat} refreshToken={dataRefreshToken} />}
           {page === 'prompts'   && <PromptsView />}
         </main>
 

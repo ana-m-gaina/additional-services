@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { TabContainer, Tab } from '@ui5/webcomponents-react'
-import { getActiveRequests, getConversationSessions, getMeetingNotes } from '../api.js'
+import { getActiveRequests, getConversationSessions, getMeetingNotes,
+         getLandscapePhases, getLandscapeWeeklyStatus, getLandscapeTopIssues, getLandscapeSystems, getLandscapeComponents,
+         getContractEngagements, getContractDocuments } from '../api.js'
 import RequestDetailDrawer from './RequestDetailDrawer.jsx'
 import MeetingTopics      from './panels/MeetingTopics.jsx'
 import MeetingActionItems from './panels/MeetingActionItems.jsx'
@@ -87,6 +89,17 @@ function RequestsTab({ requests, loading, onSelectReq }) {
             <tr>
               <th>Title</th>
               <th>Status</th>
+              <th>Service Code</th>
+              <th>Amount</th>
+              <th>Storage (GB)</th>
+              <th>Data Center</th>
+              <th>DR Site</th>
+              <th>Phase</th>
+              <th>Duration</th>
+              <th>Month Start</th>
+              <th>Month End</th>
+              <th>Start Date</th>
+              <th>End Date</th>
               <th>SID</th>
               <th>Price</th>
               <th>Age</th>
@@ -105,6 +118,17 @@ function RequestsTab({ requests, loading, onSelectReq }) {
                     {r.status}
                   </span>
                 </td>
+                <td style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>{r.serviceCode || '—'}</td>
+                <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{r.amount ?? '—'}</td>
+                <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{r.storageGB != null ? r.storageGB : '—'}</td>
+                <td style={{ fontSize: '0.82rem' }}>{r.dataCenter || '—'}</td>
+                <td style={{ textAlign: 'center' }}>{r.drSite ? '✓' : '—'}</td>
+                <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{r.phase ?? '—'}</td>
+                <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{r.duration != null ? `${r.duration}m` : '—'}</td>
+                <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{r.monthStart ?? '—'}</td>
+                <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{r.monthEnd ?? '—'}</td>
+                <td style={{ fontFamily: 'monospace', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{r.startDate || '—'}</td>
+                <td style={{ fontFamily: 'monospace', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{r.endDate || '—'}</td>
                 <td style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>{r.sid || '—'}</td>
                 <td style={{ fontVariantNumeric: 'tabular-nums' }}>
                   {r.price ? `€ ${Number(r.price).toLocaleString('de-DE')}` : '—'}
@@ -411,14 +435,415 @@ function DiffSection({ diff }) {
   )
 }
 
+/* ── Landscape tabs ────────────────────────────────────────────────────────── */
+function LandscapeSystemsTab({ systems, components, customer }) {
+  const PULSE_COLOR = { GREEN: '#137333', YELLOW: '#b06000', RED: '#c5221f' }
+  const [expanded, setExpanded] = useState({})
+  const compByTier = {}
+  components.forEach(c => {
+    if (!compByTier[c.tierKey]) compByTier[c.tierKey] = []
+    compByTier[c.tierKey].push(c)
+  })
+
+  return (
+    <div className="cdv-section">
+      {customer.dataCenterName && (
+        <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+          <strong>Data center:</strong> {customer.dataCenterName} &nbsp;·&nbsp;
+          <strong>Cloud start:</strong> {customer.cloudStartDate || '—'} &nbsp;·&nbsp;
+          <strong>Contract end:</strong> {customer.contractEndDate || '—'} &nbsp;·&nbsp;
+          <strong>Go-live:</strong> {customer.businessGoLive || '—'} &nbsp;·&nbsp;
+          <strong>Status:</strong>&nbsp;
+          <span style={{ fontWeight: 700, color: PULSE_COLOR[customer.overallStatus] || 'inherit' }}>
+            {customer.overallStatus || '—'}
+          </span>
+        </div>
+      )}
+      <table className="client-req-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>SID</th><th>DB SID</th><th>Solution</th><th>Type</th>
+            <th>DR</th><th>HA</th><th>Active</th><th>Status</th>
+            <th>Start</th><th>End</th>
+          </tr>
+        </thead>
+        <tbody>
+          {systems.map(s => {
+            const tierComps = s.tierKey ? (compByTier[s.tierKey] || []) : []
+            const isOpen = expanded[s.ID]
+            return (
+              <>
+                <tr key={s.ID} style={{ cursor: tierComps.length ? 'pointer' : 'default', background: !s.sid ? 'var(--bg-subtle, #f5f5f5)' : undefined }}
+                    onClick={() => tierComps.length && setExpanded(e => ({ ...e, [s.ID]: !e[s.ID] }))}>
+                  <td style={{ width: 20, textAlign: 'center', color: 'var(--text-muted)' }}>
+                    {tierComps.length > 0 ? (isOpen ? '▼' : '▶') : ''}
+                  </td>
+                  <td style={{ fontFamily: 'monospace', fontWeight: s.sid ? 600 : 400 }}>{s.sid || <em style={{ color: 'var(--text-muted)', fontStyle: 'normal' }}>{s.solutionDescr}</em>}</td>
+                  <td style={{ fontFamily: 'monospace' }}>{s.dbSid || '—'}</td>
+                  <td style={{ fontSize: '0.82rem' }}>{s.sid ? (s.solutionDescr || s.description || '—') : ''}</td>
+                  <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{s.prodNonProd || '—'}</td>
+                  <td style={{ textAlign: 'center' }}>{s.isDR ? '✓' : '—'}</td>
+                  <td style={{ textAlign: 'center' }}>{s.isHA ? '✓' : '—'}</td>
+                  <td style={{ textAlign: 'center', color: s.isActive ? '#137333' : '#c5221f' }}>{s.isActive !== false ? '✓' : '✗'}</td>
+                  <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{s.deliveryStatus || '—'}</td>
+                  <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{s.startDate?.slice(0,10) || '—'}</td>
+                  <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{s.endDate?.slice(0,10) || '—'}</td>
+                </tr>
+                {isOpen && tierComps.map((c, ci) => (
+                  <tr key={c.ID || ci} style={{ background: 'var(--bg-subtle, #fafafa)', fontSize: '0.78rem' }}>
+                    <td></td>
+                    <td colSpan={2} style={{ paddingLeft: '1.5rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>
+                      {c.instanceType || c.systemType || '—'}
+                    </td>
+                    <td style={{ fontSize: '0.78rem' }}>{c.description}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{c.qty ? `×${c.qty}` : '—'}</td>
+                    <td></td>
+                    <td style={{ textAlign: 'center' }}>{c.isHA ? '✓' : '—'}</td>
+                    <td style={{ textAlign: 'center', color: c.active ? '#137333' : '#c5221f' }}>{c.active ? '✓' : '✗'}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{c.operatingSystem || '—'}</td>
+                    <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{c.componentStartMonth ?? '—'}</td>
+                    <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{c.componentEndMonth ?? '—'}</td>
+                  </tr>
+                ))}
+              </>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function LandscapeComponentsTab({ components, systems }) {
+  const systemBySid = {}
+  systems.forEach(s => { if (s.sid) systemBySid[s.sid] = s })
+  const compByTier = {}
+  components.forEach(c => {
+    if (!compByTier[c.tierKey]) compByTier[c.tierKey] = []
+    compByTier[c.tierKey].push(c)
+  })
+
+  return (
+    <div className="cdv-section">
+      {Object.entries(compByTier).map(([tierKey, comps]) => {
+        const sys = systems.find(s => s.tierKey === tierKey)
+        return (
+          <div key={tierKey} style={{ marginBottom: '1.5rem' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.4rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.25rem' }}>
+              {sys ? `${sys.solutionDescr} — ${sys.sid || '?'}${sys.isDR ? ' (DR)' : ''}` : tierKey}
+              <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.78rem', marginLeft: '0.5rem' }}>
+                {sys?.deliveryStatus}
+              </span>
+            </div>
+            <table className="client-req-table">
+              <thead>
+                <tr>
+                  <th>Active</th><th>SPC</th><th>Qty</th><th>Description</th>
+                  <th>FlexTB</th><th>Storage #1</th><th>Storage #2</th>
+                  <th>vCPUs</th><th>OS</th><th>SLA</th><th>Instance Type</th>
+                  <th>HA</th><th>Avail. Zone</th><th>Pool</th><th>DB Enc.</th>
+                  <th>Usage Details</th><th>Month Start</th><th>Start Date</th>
+                  <th>Month End</th><th>End Date</th>
+                  <th>Duration</th><th>SISM Key</th><th>CR No.</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comps.map((c, i) => (
+                  <tr key={c.ID || i}>
+                    <td style={{ textAlign: 'center', color: c.active ? '#137333' : '#c5221f' }}>{c.active ? '✓' : '✗'}</td>
+                    <td style={{ textAlign: 'center' }}>{c.spcProvisioned ? '✓' : '—'}</td>
+                    <td style={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{c.qty ?? '—'}</td>
+                    <td style={{ fontSize: '0.78rem' }}>{c.description || '—'}</td>
+                    <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{c.flexTBChunkAmount ?? '—'}</td>
+                    <td style={{ fontSize: '0.75rem' }}>{c.storageGB ? `${c.storageGB} GB` : '—'}{c.storageDescr ? ` (${c.storageDescr})` : ''}</td>
+                    <td style={{ fontSize: '0.75rem' }}>{c.storage2GB ? `${c.storage2GB} GB` : '—'}{c.storageDescr2 ? ` (${c.storageDescr2})` : ''}</td>
+                    <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{c.numOfCPUs ?? '—'}</td>
+                    <td style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{c.operatingSystem || '—'}</td>
+                    <td style={{ fontSize: '0.75rem' }}>{c.sla || '—'}</td>
+                    <td style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{c.instanceType || '—'}</td>
+                    <td style={{ textAlign: 'center' }}>{c.isHA ? '✓' : '—'}</td>
+                    <td style={{ fontSize: '0.75rem' }}>{c.availabilityZone || '—'}</td>
+                    <td style={{ fontSize: '0.75rem' }}>{c.poolName || '—'}</td>
+                    <td style={{ textAlign: 'center' }}>{c.dbEncryption ? '✓' : '—'}</td>
+                    <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{c.usageDetails || '—'}</td>
+                    <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{c.componentStartMonth ?? '—'}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{c.startDate || '—'}</td>
+                    <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{c.componentEndMonth ?? '—'}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{c.endDate || '—'}</td>
+                    <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{c.duration ?? '—'}</td>
+                    <td style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{c.sismObjectKey || '—'}</td>
+                    <td style={{ fontSize: '0.75rem' }}>{c.crNo || '—'}</td>
+                    <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{c.projectStatusSummary || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      })}
+      {components.length === 0 && (
+        <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No component data imported yet.</div>
+      )}
+    </div>
+  )
+}
+
+function LandscapePhasesTab({ phases }) {
+  return (
+    <div className="cdv-section">
+      <table className="client-req-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Name</th><th>Description</th>
+            <th>Start date</th><th>End date</th><th>Months</th>
+          </tr>
+        </thead>
+        <tbody>
+          {phases.map(p => (
+            <tr key={p.ID}>
+              <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{p.phaseNo}</td>
+              <td style={{ fontWeight: 600 }}>{p.phaseName}</td>
+              <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{p.phaseDescription || '—'}</td>
+              <td style={{ fontFamily: 'monospace', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{p.phaseStartDate || '—'}</td>
+              <td style={{ fontFamily: 'monospace', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{p.phaseEndDate || '—'}</td>
+              <td style={{ fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: 'var(--text-muted)' }}>
+                {p.phaseStartMonth != null ? `${p.phaseStartMonth}–${p.phaseEndMonth}` : '—'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+const RATING_COLOR = { GREEN: '#137333', YELLOW: '#b06000', RED: '#c5221f' }
+
+function LandscapeTopIssuesTab({ issues }) {
+  const [expanded, setExpanded] = useState(null)
+
+  return (
+    <div className="cdv-section">
+      {issues.map(iss => (
+        <div key={iss.ID} style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer' }}
+               onClick={() => setExpanded(e => e === iss.ID ? null : iss.ID)}>
+            <span style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text-muted)', width: 28, flexShrink: 0 }}>#{iss.issueId}</span>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: RATING_COLOR[iss.rating] || '#aaa', flexShrink: 0 }} />
+            <span style={{ fontWeight: 600, flex: 1 }}>{iss.status}</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{iss.dateIdentified || ''}</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: 4 }}>▶</span>
+          </div>
+          {expanded === iss.ID && (
+            <div style={{ marginTop: '0.5rem', paddingLeft: '2.5rem', fontSize: '0.82rem' }}>
+              {iss.statusSummary && (
+                <div style={{ marginBottom: '0.4rem' }}>
+                  <div style={{ fontWeight: 700, marginBottom: 2 }}>Summary</div>
+                  <div dangerouslySetInnerHTML={{ __html: iss.statusSummary }} style={{ color: 'var(--text-muted)' }} />
+                </div>
+              )}
+              {iss.actionPlan && (
+                <div style={{ marginBottom: '0.4rem' }}>
+                  <div style={{ fontWeight: 700, marginBottom: 2 }}>Action Plan</div>
+                  <div dangerouslySetInnerHTML={{ __html: iss.actionPlan }} style={{ color: 'var(--text-muted)' }} />
+                </div>
+              )}
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                Created by {iss.createUserName} · {iss.createDateTime}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function LandscapeWeeklyTab({ entries }) {
+  const PULSE = { G: { label: 'Good', color: '#137333' }, Y: { label: 'Attention', color: '#b06000' }, R: { label: 'At risk', color: '#c5221f' }, S: { label: 'Stable', color: '#1a73e8' } }
+  const [expanded, setExpanded] = useState(null)
+
+  return (
+    <div className="cdv-section">
+      {entries.map(e => {
+        const pulse = PULSE[e.customerPulse] || { label: e.customerPulse, color: '#888' }
+        return (
+          <div key={e.ID} style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer' }}
+                 onClick={() => setExpanded(ex => ex === e.ID ? null : e.ID)}>
+              <span style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{e.statusDate}</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: pulse.color }}>{pulse.label}</span>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                {e.statusText?.substring(0, 100)}…
+              </span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: 4 }}>▶</span>
+            </div>
+            {expanded === e.ID && (
+              <div style={{ marginTop: '0.4rem', paddingLeft: '1rem', fontSize: '0.82rem', color: '#333', whiteSpace: 'pre-wrap' }}>
+                {e.statusText}
+                <div style={{ marginTop: '0.25rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                  — {e.createUserName} · {e.createDateTime}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ── ContractsTab ──────────────────────────────────────────────────────────── */
+function ContractsTab({ engagements, documents }) {
+  const docsByEngagement = documents.reduce((acc, d) => {
+    if (!acc[d.engagementId]) acc[d.engagementId] = []
+    acc[d.engagementId].push(d)
+    return acc
+  }, {})
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+      {/* CR Summary table */}
+      <section>
+        <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          CR Summary
+        </h3>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="ls-table" style={{ width: '100%', fontSize: '0.8rem' }}>
+            <thead>
+              <tr>
+                <th>CR #</th>
+                <th>Engagement</th>
+                <th>SID</th>
+                <th>Issue / Description</th>
+                <th style={{ textAlign: 'right' }}>Start</th>
+                <th style={{ textAlign: 'right' }}>End</th>
+                <th style={{ textAlign: 'right' }}>Duration</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {engagements.map(eng => (
+                <tr key={eng.ID}>
+                  <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{eng.crNumber || '—'}</td>
+                  <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{eng.engagementId}</td>
+                  <td style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--accent-blue)' }}>{eng.sidAffected || '—'}</td>
+                  <td style={{ maxWidth: '300px', color: 'var(--text-muted)', fontSize: '0.75rem' }}>{eng.issueDescription || '—'}</td>
+                  <td style={{ textAlign: 'right', fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{eng.startDate || '—'}</td>
+                  <td style={{ textAlign: 'right', fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{eng.endDate || '—'}</td>
+                  <td style={{ textAlign: 'right' }}>{eng.duration != null ? `${eng.duration}m` : '—'}</td>
+                  <td>
+                    {eng.contractStatus ? (
+                      <span style={{
+                        padding: '2px 6px', borderRadius: '3px', fontSize: '0.7rem', fontWeight: 600,
+                        background: eng.contractStatus === 'Active' ? 'var(--status-in-progress-bg, #e8f4fd)' :
+                                    eng.contractStatus === 'Executed' ? 'var(--status-done-bg, #e8f5e9)' :
+                                    eng.contractStatus === 'Draft' ? 'var(--status-new-bg, #fff3e0)' : '#f0f0f0',
+                        color: eng.contractStatus === 'Active' ? 'var(--accent-blue, #1a73e8)' :
+                               eng.contractStatus === 'Executed' ? '#2e7d32' :
+                               eng.contractStatus === 'Draft' ? '#e65100' : '#666',
+                      }}>
+                        {eng.contractStatus}
+                      </span>
+                    ) : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Documents grouped by engagement */}
+      <section>
+        <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Documents
+        </h3>
+        {engagements.map(eng => {
+          const docs = docsByEngagement[eng.engagementId] || []
+          if (docs.length === 0) return null
+          return (
+            <div key={eng.engagementId} style={{ marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, padding: '4px 8px', background: 'var(--surface-hover, #f5f5f5)', borderRadius: '4px', marginBottom: '4px' }}>
+                {eng.crNumber ? `${eng.crNumber} — ` : ''}Engagement {eng.engagementId}
+                {eng.cmsContractId && (
+                  <a href={eng.cmsContractUrl} target="_blank" rel="noreferrer"
+                     style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--accent-blue)', textDecoration: 'none' }}>
+                    CMS {eng.cmsContractId} ↗
+                  </a>
+                )}
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table className="ls-table" style={{ width: '100%', fontSize: '0.75rem' }}>
+                  <thead>
+                    <tr>
+                      <th>Source</th>
+                      <th>File Name</th>
+                      <th>Subject / Category</th>
+                      <th>Release</th>
+                      <th>e-Signature</th>
+                      <th>Uploaded By</th>
+                      <th style={{ textAlign: 'right' }}>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {docs.map((doc, i) => (
+                      <tr key={i}>
+                        <td>
+                          <span style={{
+                            padding: '1px 5px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 600,
+                            background: doc.sourceSystem === 'DED' ? '#e3f2fd' : '#f3e5f5',
+                            color: doc.sourceSystem === 'DED' ? '#1565c0' : '#6a1b9a',
+                          }}>
+                            {doc.sourceSystem}
+                          </span>
+                        </td>
+                        <td>
+                          {doc.proxyUrl ? (
+                            <a href={doc.proxyUrl} target="_blank" rel="noreferrer"
+                               style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}
+                               title={doc.fileName}>
+                              {doc.fileName.length > 50 ? doc.fileName.slice(0, 47) + '…' : doc.fileName}
+                            </a>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>{doc.fileName}</span>
+                          )}
+                        </td>
+                        <td style={{ color: 'var(--text-muted)' }}>{doc.subject || doc.docCategory || '—'}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{doc.docRelease || '—'}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{doc.eSignatureStatus || '—'}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{doc.uploadedBy || '—'}</td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{doc.uploadDate || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )
+        })}
+      </section>
+    </div>
+  )
+}
+
 /* ── Main component ────────────────────────────────────────────────────────── */
 export default function ClientDetailView({ customer, cdmEmail, onStartChat, refreshToken = 0 }) {
-  const [requests,    setRequests]    = useState([])
-  const [sessions,    setSessions]    = useState([])
-  const [meetingNote, setMeetingNote] = useState(null)
-  const [selectedReq, setSelectedReq] = useState(null)
-  const [loading,     setLoading]     = useState(true)
-  const [summaryOpen, setSummaryOpen] = useState(true)
+  const [requests,         setRequests]         = useState([])
+  const [sessions,         setSessions]         = useState([])
+  const [meetingNote,      setMeetingNote]      = useState(null)
+  const [selectedReq,      setSelectedReq]      = useState(null)
+  const [loading,          setLoading]          = useState(true)
+  const [summaryOpen,      setSummaryOpen]      = useState(true)
+  const [lsPhases,         setLsPhases]         = useState([])
+  const [lsWeekly,         setLsWeekly]         = useState([])
+  const [lsTopIssues,      setLsTopIssues]      = useState([])
+  const [lsSystems,        setLsSystems]        = useState([])
+  const [lsComponents,     setLsComponents]     = useState([])
+  const [contracts,        setContracts]        = useState([])
+  const [contractDocs,     setContractDocs]     = useState([])
 
   useEffect(() => {
     if (!customer) return
@@ -427,7 +852,14 @@ export default function ClientDetailView({ customer, cdmEmail, onStartChat, refr
       getActiveRequests(),
       getConversationSessions(customer.ID),
       getMeetingNotes(customer.ID),
-    ]).then(([allReqs, sess, notes]) => {
+      getLandscapePhases(customer.ID),
+      getLandscapeWeeklyStatus(customer.ID),
+      getLandscapeTopIssues(customer.ID),
+      getLandscapeSystems(customer.ID),
+      getLandscapeComponents(customer.ID),
+      getContractEngagements(customer.ID),
+      getContractDocuments(customer.ID),
+    ]).then(([allReqs, sess, notes, phases, weekly, topIssues, systems, components, ctrEngagements, ctrDocs]) => {
       const clientReqs = allReqs.filter(r =>
         r.customerAccountId === customer.customerId ||
         r.customerAccountId === customer.ID ||
@@ -436,6 +868,13 @@ export default function ClientDetailView({ customer, cdmEmail, onStartChat, refr
       setRequests(clientReqs)
       setSessions(sess)
       setMeetingNote(notes[0] || null)
+      setLsPhases(phases)
+      setLsWeekly(weekly)
+      setLsTopIssues(topIssues)
+      setLsSystems(systems)
+      setLsComponents(components)
+      setContracts(ctrEngagements)
+      setContractDocs(ctrDocs)
     }).catch(() => {}).finally(() => setLoading(false))
   }, [customer, refreshToken])
 
@@ -569,7 +1008,7 @@ export default function ClientDetailView({ customer, cdmEmail, onStartChat, refr
           tabLayout="Inline"
           contentBackgroundDesign="Transparent"
           headerBackgroundDesign="Transparent"
-          style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
+          style={{ flex: 1, minHeight: 0 }}
         >
           <Tab
             text={`Requests${counts.open > 0 ? ` (${counts.open})` : ''}`}
@@ -589,6 +1028,54 @@ export default function ClientDetailView({ customer, cdmEmail, onStartChat, refr
               <div className="cdv-tab-content">{t.content}</div>
             </Tab>
           ))}
+
+          {lsSystems.length > 0 && (
+            <Tab text={`Systems (${lsSystems.length})`}>
+              <div className="cdv-tab-content">
+                <LandscapeSystemsTab systems={lsSystems} components={lsComponents} customer={customer} />
+              </div>
+            </Tab>
+          )}
+
+          {(lsSystems.length > 0 || lsComponents.length > 0) && (
+            <Tab text={`Components (${lsComponents.length})`}>
+              <div className="cdv-tab-content">
+                <LandscapeComponentsTab components={lsComponents} systems={lsSystems} />
+              </div>
+            </Tab>
+          )}
+
+          {lsPhases.length > 0 && (
+            <Tab text={`Phases (${lsPhases.length})`}>
+              <div className="cdv-tab-content">
+                <LandscapePhasesTab phases={lsPhases} />
+              </div>
+            </Tab>
+          )}
+
+          {lsTopIssues.length > 0 && (
+            <Tab text={`Issues (${lsTopIssues.length})`}>
+              <div className="cdv-tab-content">
+                <LandscapeTopIssuesTab issues={lsTopIssues} />
+              </div>
+            </Tab>
+          )}
+
+          {lsWeekly.length > 0 && (
+            <Tab text={`Weekly (${lsWeekly.length})`}>
+              <div className="cdv-tab-content">
+                <LandscapeWeeklyTab entries={lsWeekly} />
+              </div>
+            </Tab>
+          )}
+
+          {contracts.length > 0 && (
+            <Tab text={`Contracts (${contracts.length})`}>
+              <div className="cdv-tab-content">
+                <ContractsTab engagements={contracts} documents={contractDocs} />
+              </div>
+            </Tab>
+          )}
         </TabContainer>
       </div>
 

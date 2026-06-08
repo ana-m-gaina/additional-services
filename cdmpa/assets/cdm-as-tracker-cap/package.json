@@ -9,7 +9,9 @@
     "@cap-js/hana": "^2.8.0",
     "@sap/cds": "^9",
     "express": "^4",
-    "http-proxy-middleware": "^3.0.5"
+    "http-proxy-middleware": "^3.0.5",
+    "pdf-parse": "^1.1.4",
+    "playwright": "^1.60.0"
   },
   "devDependencies": {
     "@cap-js/cds-test": "^1",

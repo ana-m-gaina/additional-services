@@ -1,0 +1,723 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#F7F6F2;--surface:#FFFFFF;--border:#E8E6DF;--border-md:#D3D1C7;
+--text:#1C1B18;--text-2:#6B6962;--text-3:#9C9A92;
+--blue-bg:#E6F1FB;--blue:#185FA5;--blue-dark:#0C447C;
+--green-bg:#EAF3DE;--green:#3B6D11;
+--amber-bg:#FAEEDA;--amber:#854F0B;
+--red-bg:#FCEBEB;--red:#A32D2D;
+--r-sm:6px;--r-md:10px;--r-lg:14px;
+--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;min-height:700px}
+.app{display:grid;grid-template-columns:52px 210px 1fr 300px;height:700px;overflow:hidden}
+
+.icon-rail{grid-row:1;background:#1C1B18;display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:4px;z-index:10;grid-column:1;grid-row:1/-1}
+.ir-logo{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:11px;font-weight:500;color:#fff}
+.ir-btn{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#888780;border:none;background:transparent;transition:all .15s}
+.ir-btn:hover{background:#2C2C2A;color:#D3D1C7}
+.ir-btn.active{background:var(--blue);color:#fff}
+.ir-spacer{flex:1}
+.ir-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#fff;cursor:pointer}
+
+.left-rail{grid-column:2;grid-row:1/-1;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.lr-header{padding:14px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.lr-title{font-size:12px;font-weight:500;color:var(--text)}
+.add-cust-btn{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--blue);cursor:pointer;padding:4px 8px;border:1px solid var(--border-md);border-radius:var(--r-sm);background:var(--surface);font-family:var(--font);transition:all .12s}
+.add-cust-btn:hover{background:var(--blue-bg)}
+.lr-body{flex:1;overflow-y:auto;padding:6px 0 12px}
+
+.sec-group{margin-bottom:4px}
+.sec-lbl{font-size:10px;font-weight:500;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;padding:10px 14px 4px;display:flex;align-items:center;justify-content:space-between}
+.sec-count{font-size:10px;color:var(--text-3);font-weight:400;letter-spacing:0}
+
+.cust-item{display:flex;align-items:flex-start;gap:8px;padding:7px 14px;cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+.cust-item:hover{background:var(--bg)}
+.cust-item.active{background:var(--blue-bg);border-left-color:var(--blue)}
+.ci-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-meta{display:flex;align-items:center;gap:5px;margin-top:2px}
+.ci-type{font-size:10px;color:var(--text-3)}
+.ci-badge{font-size:9px;padding:1px 5px;border-radius:99px;white-space:nowrap}
+
+.nav-section{border-top:1px solid var(--border);padding-top:6px;margin-top:4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;border-left:2px solid transparent;transition:background .12s}
+.nav-item:hover{background:var(--bg)}
+.nav-item i{font-size:14px;color:var(--text-3);width:16px;flex-shrink:0}
+.nav-item span{font-size:12px;color:var(--text-2)}
+.nav-chevron{margin-left:auto;font-size:11px;color:var(--text-3);transition:transform .2s}
+.nav-item.open .nav-chevron{transform:rotate(180deg)}
+.nav-drawer{overflow:hidden;max-height:0;transition:max-height .22s ease;background:var(--bg)}
+.nav-drawer.open{max-height:320px}
+
+.topbar{grid-column:3;background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;display:flex;align-items:center;justify-content:space-between;height:48px}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-cust{font-size:14px;font-weight:500;color:var(--text)}
+.tb-type{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--blue-bg);color:var(--blue-dark)}
+.tb-cid{font-size:11px;font-family:var(--mono);color:var(--text-3);background:var(--bg);padding:2px 7px;border-radius:4px}
+.tb-right{display:flex;align-items:center;gap:8px}
+.tb-btn{display:flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border:1px solid var(--border-md);border-radius:var(--r-sm);background:var(--surface);color:var(--text-2);cursor:pointer;font-family:var(--font);transition:all .12s}
+.tb-btn:hover{background:var(--bg)}
+.tb-btn i{font-size:13px}
+
+.main{grid-column:3;background:var(--bg);overflow-y:auto;padding:16px}
+.screen{display:none}.screen.active{display:flex;flex-direction:column;gap:14px}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.stat-l{font-size:11px;color:var(--text-3);margin-bottom:5px}
+.stat-v{font-size:22px;font-weight:500;line-height:1}
+.stat-s{font-size:11px;color:var(--text-3);margin-top:3px}
+
+.banner{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--r-md);border-left:3px solid}
+.banner.danger{background:var(--red-bg);border-color:#E24B4A}
+.banner.warn{background:var(--amber-bg);border-color:#EF9F27}
+.banner i{font-size:15px;flex-shrink:0;margin-top:1px}
+.banner.danger i{color:var(--red)}.banner.warn i{color:var(--amber)}
+.bn-text{font-size:12px;line-height:1.5}
+.bn-text strong{font-weight:500;display:block;margin-bottom:1px}
+.banner.danger .bn-text,.banner.danger .bn-text strong{color:var(--red)}
+.banner.warn .bn-text,.banner.warn .bn-text strong{color:var(--amber)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-ttl{font-size:11px;font-weight:500;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase}
+.card-act{font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;font-family:var(--font);padding:0}
+
+.action-list{display:flex;flex-direction:column;gap:8px}
+.ai-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg);border-radius:var(--r-md);border-left:3px solid transparent;cursor:pointer;transition:background .12s}
+.ai-item:hover{background:#EEECEA}
+.ai-item.danger{border-left-color:#E24B4A}
+.ai-item.warn{border-left-color:#EF9F27}
+.ai-item.info{border-left-color:#378ADD}
+.ai-icon{width:28px;height:28px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.ic-r{background:var(--red-bg);color:var(--red)}.ic-a{background:var(--amber-bg);color:var(--amber)}
+.ic-b{background:var(--blue-bg);color:var(--blue)}.ic-g{background:var(--green-bg);color:var(--green)}
+.ai-body{flex:1;min-width:0}
+.ai-ttl{font-size:13px;font-weight:500;color:var(--text)}
+.ai-det{font-size:11px;color:var(--text-3);margin-top:2px}
+.ai-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.ai-age{font-size:10px;color:var(--text-3)}
+.ai-btn{font-size:11px;padding:3px 8px;border:1px solid var(--border-md);border-radius:var(--r-sm);background:var(--surface);color:var(--text-2);cursor:pointer;white-space:nowrap;font-family:var(--font)}
+.ai-btn:hover{background:var(--bg)}
+
+.tl{display:flex;flex-direction:column}
+.tl-item{display:flex;gap:10px;padding:9px 0;position:relative}
+.tl-item:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;bottom:-9px;width:1px;background:var(--border)}
+.tl-dot{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;z-index:1;position:relative}
+.tl-body{flex:1;padding-top:4px}
+.tl-ttl{font-size:12px;font-weight:500;color:var(--text)}
+.tl-date{font-size:11px;color:var(--text-3);margin-top:2px}
+.tl-tag{display:inline-flex;font-size:10px;padding:2px 7px;border-radius:99px;margin-top:4px}
+.tag-drift{background:var(--amber-bg);color:var(--amber)}
+.tag-cr{background:var(--red-bg);color:var(--red)}
+.tag-ok{background:var(--green-bg);color:var(--green)}
+.tag-up{background:var(--blue-bg);color:var(--blue)}
+
+.ls-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
+.ls-item:last-child{border-bottom:none}
+.ls-l{display:flex;align-items:center;gap:8px}
+.ls-type{font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}
+.lt-p{background:var(--blue-bg);color:var(--blue-dark)}
+.lt-q{background:var(--amber-bg);color:var(--amber)}
+.lt-d{background:var(--green-bg);color:var(--green)}
+.ls-name{font-size:12px;font-weight:500;color:var(--text)}
+.ls-r{text-align:right}
+.ls-mem{font-size:10px;color:var(--text-3);margin-top:1px}
+.mismatch{font-size:9px;color:var(--red);background:var(--red-bg);padding:1px 5px;border-radius:3px;margin-top:2px;display:inline-block}
+
+.right-panel{grid-column:4;grid-row:1/-1;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.rp-tabs{display:flex;border-bottom:1px solid var(--border)}
+.rp-tab{flex:1;padding:10px 6px;font-size:11px;text-align:center;cursor:pointer;color:var(--text-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s}
+.rp-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
+.rp-tab:hover:not(.active){color:var(--text)}
+.rp-panel{display:none;padding:14px;flex:1}
+.rp-panel.active{display:block}
+.rp-sec{font-size:10px;font-weight:500;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.rp-sec-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.rp-sec-act{font-size:10px;color:var(--blue);cursor:pointer}
+
+.chat-area{display:flex;flex-direction:column;height:580px}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.bubble{max-width:90%;padding:8px 12px;border-radius:var(--r-md);font-size:12px;line-height:1.5}
+.b-user{background:var(--blue);color:#fff;align-self:flex-end;border-radius:var(--r-md) var(--r-md) 4px var(--r-md)}
+.b-ai{background:var(--bg);color:var(--text);align-self:flex-start;border:1px solid var(--border);border-radius:var(--r-md) var(--r-md) var(--r-md) 4px}
+.chat-inp-area{border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;align-items:flex-end}
+.chat-inp{flex:1;border:1px solid var(--border-md);border-radius:var(--r-md);padding:7px 10px;font-size:12px;color:var(--text);background:var(--bg);font-family:var(--font);resize:none;outline:none;min-height:34px}
+.chat-inp:focus{border-color:var(--blue);background:var(--surface)}
+.chat-send{width:32px;height:32px;border-radius:var(--r-sm);background:var(--blue);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.chat-send:hover{background:var(--blue-dark)}
+.chat-send i{font-size:14px;color:#fff}
+
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.upload-zone{border:1.5px dashed var(--border-md);border-radius:var(--r-lg);padding:24px 16px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface)}
+.upload-zone:hover{border-color:var(--blue);background:var(--blue-bg)}
+.upload-zone i{font-size:22px;color:var(--text-3);margin-bottom:6px}
+.upload-zone:hover i{color:var(--blue)}
+.uz-ttl{font-size:12px;font-weight:500;color:var(--text);margin-bottom:3px}
+.uz-sub{font-size:10px;color:var(--text-3)}
+.doc-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:var(--r-md);border:1px solid var(--border);margin-bottom:8px}
+.doc-icon{width:30px;height:30px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.doc-body{flex:1;min-width:0}
+.doc-name{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-meta{font-size:10px;color:var(--text-3);margin-top:1px}
+.doc-status{font-size:10px;padding:2px 7px;border-radius:99px;white-space:nowrap}
+.ds-ok{background:var(--green-bg);color:var(--green)}
+.ds-proc{background:var(--blue-bg);color:var(--blue)}
+
+.ops-btn{width:100%;padding:9px 12px;border:1px solid var(--border-md);border-radius:var(--r-md);background:var(--surface);color:var(--text);font-size:12px;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .12s;margin-bottom:8px;text-align:left}
+.ops-btn:hover{background:var(--bg)}
+.ops-btn i{font-size:14px;color:var(--text-3)}
+
+.sent-btn-row{display:flex;gap:6px;margin-bottom:10px}
+.sent-btn{flex:1;padding:7px;border-radius:var(--r-sm);border:1.5px solid var(--border-md);font-size:11px;cursor:pointer;font-family:var(--font);background:var(--surface);transition:all .15s;font-weight:500}
+.sent-btn.s-green.picked{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.sent-btn.s-amber.picked{border-color:#EF9F27;background:var(--amber-bg);color:var(--amber)}
+.sent-btn.s-red.picked{border-color:#E24B4A;background:var(--red-bg);color:var(--red)}
+
+.sent-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.sent-item:last-child{border-bottom:none}
+.sent-flag{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.sent-date{font-size:10px;color:var(--text-3);white-space:nowrap}
+.sent-note{font-size:12px;color:var(--text-2);flex:1}
+.sent-tag{font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap}
+
+.war-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border-radius:var(--r-md);margin-bottom:8px}
+.war-age{font-size:20px;font-weight:500;min-width:40px}
+.war-body{flex:1}
+.war-ttl{font-size:13px;font-weight:500;color:var(--text)}
+.war-det{font-size:11px;color:var(--text-3);margin-top:2px}
+.war-btn{font-size:11px;padding:4px 10px;border:1px solid var(--border-md);border-radius:var(--r-sm);background:var(--surface);color:var(--text-2);cursor:pointer;font-family:var(--font)}
+.war-btn:hover{background:var(--bg)}
+
+.churn-block{margin-bottom:12px}
+.churn-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.churn-bar-track{height:5px;background:var(--border);border-radius:3px;margin-bottom:6px}
+.churn-bar-fill{height:5px;border-radius:3px}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+
+.pricing-wrap{padding:8px 14px 10px}
+.pricing-iw{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border-md);border-radius:var(--r-sm);padding:6px 10px;margin-bottom:8px}
+.pricing-iw i{font-size:13px;color:var(--text-3)}
+.pricing-inp{border:none;background:transparent;font-size:12px;color:var(--text);flex:1;outline:none;font-family:var(--font)}
+.pricing-inp::placeholder{color:var(--text-3)}
+.pc{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:9px 11px;margin-bottom:7px}
+.pc-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px}
+.pc-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:2px}
+.pc-val{font-family:var(--mono);font-weight:500;color:var(--text)}
+.pc-copy{margin-top:6px;font-size:11px;padding:3px 8px;border:1px solid var(--border-md);border-radius:var(--r-sm);background:var(--surface);color:var(--blue);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:var(--font)}
+
+.check-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.check-item:last-child{border-bottom:none}
+.check-box{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--border-md);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.check-box.done{background:var(--green);border-color:var(--green)}
+.check-txt{font-size:12px;color:var(--text-2);line-height:1.4}
+.check-txt.done{color:var(--text-3);text-decoration:line-through}
+
+.modal-overlay{position:absolute;inset:0;background:rgba(28,27,24,.45);display:flex;align-items:center;justify-content:center;z-index:100;border-radius:4px}
+.modal{background:var(--surface);border-radius:var(--r-lg);padding:20px;width:320px;border:1px solid var(--border)}
+.modal-ttl{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--text-3);margin-bottom:16px}
+.form-row{margin-bottom:12px}
+.form-lbl{font-size:11px;color:var(--text-3);margin-bottom:5px;display:block}
+.form-inp{width:100%;border:1px solid var(--border-md);border-radius:var(--r-sm);padding:7px 10px;font-size:12px;color:var(--text);background:var(--bg);font-family:var(--font);outline:none}
+.form-inp:focus{border-color:var(--blue);background:var(--surface)}
+.form-select{width:100%;border:1px solid var(--border-md);border-radius:var(--r-sm);padding:7px 10px;font-size:12px;color:var(--text);background:var(--bg);font-family:var(--font);outline:none;cursor:pointer}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.btn-primary{flex:1;padding:8px;border-radius:var(--r-sm);background:var(--blue);color:#fff;border:none;font-size:12px;font-family:var(--font);cursor:pointer;font-weight:500}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-cancel{flex:1;padding:8px;border-radius:var(--r-sm);background:var(--surface);color:var(--text-2);border:1px solid var(--border-md);font-size:12px;font-family:var(--font);cursor:pointer}
+.btn-cancel:hover{background:var(--bg)}
+
+.decomm-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.decomm-item:last-child{border-bottom:none}
+.di-name{font-size:12px;font-weight:500;color:var(--text)}
+.di-meta{font-size:10px;color:var(--text-3);margin-top:1px}
+</style>
+
+<h2 class="sr-only">Beacon CDM v1 webapp — customer delivery manager dashboard with five screens, customer sections, and AI assistant.</h2>
+
+<div class="app" style="position:relative" id="app-root">
+
+<div class="icon-rail">
+  <div class="ir-logo">B</div>
+  <button class="ir-btn active" onclick="setScreen('dashboard')" title="Dashboard" aria-label="Dashboard"><i class="ti ti-layout-dashboard" aria-hidden="true"></i></button>
+  <button class="ir-btn" onclick="setScreen('docs')" title="Documents" aria-label="Documents"><i class="ti ti-files" aria-hidden="true"></i></button>
+  <button class="ir-btn" onclick="setScreen('ops')" title="Ops tools" aria-label="Ops tools"><i class="ti ti-checklist" aria-hidden="true"></i></button>
+  <button class="ir-btn" onclick="setScreen('war')" title="Work at risk" aria-label="Work at risk"><i class="ti ti-alert-triangle" aria-hidden="true"></i></button>
+  <button class="ir-btn" onclick="setScreen('churn')" title="Customer health" aria-label="Customer health"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i></button>
+  <div class="ir-spacer"></div>
+  <div class="ir-avatar" title="Profile">AG</div>
+</div>
+
+<div class="left-rail">
+  <div class="lr-header">
+    <span class="lr-title">My customers</span>
+    <button class="add-cust-btn" onclick="openModal()"><i class="ti ti-plus" style="font-size:12px" aria-hidden="true"></i> Add</button>
+  </div>
+  <div class="lr-body" id="lr-body">
+
+    <div class="sec-group">
+      <div class="sec-lbl">At risk <span class="sec-count">1</span></div>
+      <div class="cust-item active" onclick="setCust(this,'Müller AG','Migration','CTR-2022-04471','#E24B4A','At risk','#A32D2D')">
+        <div class="ci-dot" style="background:#E24B4A"></div>
+        <div class="ci-info">
+          <div class="ci-name">Müller AG</div>
+          <div class="ci-meta"><span class="ci-type">Migration</span><span class="ci-badge" style="background:#FCEBEB;color:#A32D2D">2d late</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-group">
+      <div class="sec-lbl">Needs attention <span class="sec-count">2</span></div>
+      <div class="cust-item" onclick="setCust(this,'Nordic Retail Group','Conversion','CTR-2023-00812','#EF9F27','Attention','#854F0B')">
+        <div class="ci-dot" style="background:#EF9F27"></div>
+        <div class="ci-info">
+          <div class="ci-name">Nordic Retail Group</div>
+          <div class="ci-meta"><span class="ci-type">Conversion</span><span class="ci-badge" style="background:#FAEEDA;color:#854F0B">8d left</span></div>
+        </div>
+      </div>
+      <div class="cust-item" onclick="setCust(this,'Apex Pharma','Upgrade','CTR-2023-01156','#EF9F27','Attention','#854F0B')">
+        <div class="ci-dot" style="background:#EF9F27"></div>
+        <div class="ci-info">
+          <div class="ci-name">Apex Pharma</div>
+          <div class="ci-meta"><span class="ci-type">Upgrade</span><span class="ci-badge" style="background:#FAEEDA;color:#854F0B">15d left</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-group">
+      <div class="sec-lbl">On track <span class="sec-count">2</span></div>
+      <div class="cust-item" onclick="setCust(this,'Iberia Logistics','Steady-state','CTR-2021-03344','#639922','On track','#3B6D11')">
+        <div class="ci-dot" style="background:#639922"></div>
+        <div class="ci-info">
+          <div class="ci-name">Iberia Logistics</div>
+          <div class="ci-meta"><span class="ci-type">Steady-state</span></div>
+        </div>
+      </div>
+      <div class="cust-item" onclick="setCust(this,'Centrale BV','New contract','CTR-2024-00201','#639922','On track','#3B6D11')">
+        <div class="ci-dot" style="background:#639922"></div>
+        <div class="ci-info">
+          <div class="ci-name">Centrale BV</div>
+          <div class="ci-meta"><span class="ci-type">New contract</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="sec-lbl" style="padding-top:8px">Quick nav</div>
+      <div class="nav-item" id="nav-pricing" onclick="toggleDrawer('pricing')">
+        <i class="ti ti-currency-euro" aria-hidden="true"></i><span>Pricing lookup</span><i class="ti ti-chevron-down nav-chevron" aria-hidden="true"></i>
+      </div>
+      <div class="nav-drawer" id="drawer-pricing">
+        <div class="pricing-wrap">
+          <div class="pricing-iw"><i class="ti ti-search" aria-hidden="true"></i><input class="pricing-inp" placeholder="Search R&R catalogue…" oninput="filterP(this.value)"/></div>
+          <div id="pRes"><div style="font-size:11px;color:var(--text-3)">Type to search…</div></div>
+        </div>
+      </div>
+      <div class="nav-item" id="nav-mig" onclick="toggleDrawer('mig')">
+        <i class="ti ti-checklist" aria-hidden="true"></i><span>Migration checklist</span><i class="ti ti-chevron-down nav-chevron" aria-hidden="true"></i>
+      </div>
+      <div class="nav-drawer" id="drawer-mig">
+        <div style="padding:6px 14px 10px" id="mig-checks"></div>
+      </div>
+      <div class="nav-item" id="nav-conv" onclick="toggleDrawer('conv')">
+        <i class="ti ti-refresh" aria-hidden="true"></i><span>Conversion checklist</span><i class="ti ti-chevron-down nav-chevron" aria-hidden="true"></i>
+      </div>
+      <div class="nav-drawer" id="drawer-conv">
+        <div style="padding:6px 14px 10px" id="conv-checks"></div>
+      </div>
+      <div class="nav-item" onclick="setScreen('ops')">
+        <i class="ti ti-presentation" aria-hidden="true"></i><span>Ops meeting prep</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="grid-column:3;grid-row:1;display:contents">
+  <div class="topbar">
+    <div class="tb-left">
+      <span class="tb-cust" id="tb-name">Müller AG</span>
+      <span class="tb-type" id="tb-type">Migration</span>
+      <span class="tb-cid" id="tb-id">CTR-2022-04471</span>
+    </div>
+    <div class="tb-right">
+      <div style="display:flex;align-items:center;gap:5px">
+        <div class="ci-dot" id="tb-dot" style="background:#E24B4A"></div>
+        <span style="font-size:11px;font-weight:500" id="tb-rag-lbl" style="color:#A32D2D">At risk</span>
+      </div>
+      <button class="tb-btn" onclick="setScreen('docs')"><i class="ti ti-upload" aria-hidden="true"></i> Upload docs</button>
+      <button class="tb-btn" onclick="setRPTab('chat')"><i class="ti ti-sparkles" aria-hidden="true"></i> Ask Beacon</button>
+    </div>
+  </div>
+
+  <div class="main" id="main-area">
+
+    <div class="screen active" id="screen-dashboard">
+      <div class="stat-row">
+        <div class="stat"><div class="stat-l">Open incidents</div><div class="stat-v" style="color:#A32D2D">3</div><div class="stat-s" style="color:#A32D2D">1 breaching SLA</div></div>
+        <div class="stat"><div class="stat-l">Open cases</div><div class="stat-v" style="color:#854F0B">5</div><div class="stat-s">2 awaiting response</div></div>
+        <div class="stat"><div class="stat-l">Milestones</div><div class="stat-v">7</div><div class="stat-s" style="color:#854F0B">2 drifted</div></div>
+        <div class="stat"><div class="stat-l">Next ops meeting</div><div class="stat-v" style="font-size:15px;padding-top:4px">Tue 27 May</div><div class="stat-s" style="color:#854F0B">3 open actions</div></div>
+      </div>
+      <div class="banner danger"><i class="ti ti-alert-triangle" aria-hidden="true"></i><div class="bn-text"><strong>CR mislabeling detected</strong>CR-2024-0091 is "Memory Upgrade" in DED but "Additional HANA License" in CMS. Review before next customer contact.</div></div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Today's actions</span><button class="card-act">Mark all reviewed</button></div>
+        <div class="action-list">
+          <div class="ai-item danger"><div class="ai-icon ic-r"><i class="ti ti-alert-circle" aria-hidden="true"></i></div><div class="ai-body"><div class="ai-ttl">INC-88421 breaching SLA in 4 hours</div><div class="ai-det">S/4HANA PROD · L2 Support · Müller AG</div></div><div class="ai-right"><span class="ai-age">4h left</span><button class="ai-btn" onclick="askBeacon('Draft escalation for INC-88421 at Müller AG — breaching SLA in 4 hours')">Escalate ↗</button></div></div>
+          <div class="ai-item warn"><div class="ai-icon ic-a"><i class="ti ti-calendar-event" aria-hidden="true"></i></div><div class="ai-body"><div class="ai-ttl">Migration go-live drifted +12 days</div><div class="ai-det">Contract 15 May · Estimate 27 May · PM: Karin Wolff</div></div><div class="ai-right"><span class="ai-age">2d ago</span><button class="ai-btn" onclick="askBeacon('Draft customer update for Müller AG about migration date drift of 12 days')">Draft update ↗</button></div></div>
+          <div class="ai-item warn"><div class="ai-icon ic-a"><i class="ti ti-file-dollar" aria-hidden="true"></i></div><div class="ai-body"><div class="ai-ttl">Apex Pharma — upgrade fee not communicated</div><div class="ai-det">EHP upgrade due Jun 10 · Check R&R before customer contact</div></div><div class="ai-right"><span class="ai-age">15d out</span><button class="ai-btn" onclick="askBeacon('Look up EHP upgrade service fees in R&R for Apex Pharma and draft communication')">Check fees ↗</button></div></div>
+          <div class="ai-item info"><div class="ai-icon ic-b"><i class="ti ti-presentation" aria-hidden="true"></i></div><div class="ai-body"><div class="ai-ttl">Ops prep due — Nordic Retail Group</div><div class="ai-det">Meeting Thu 29 May · Engagement summary + action tracker needed</div></div><div class="ai-right"><span class="ai-age">2d out</span><button class="ai-btn" onclick="setScreen('ops')">Prep now ↗</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-docs">
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Upload documents — <span id="docs-cust-name">Müller AG</span></span><button class="card-act">Clear all</button></div>
+        <div class="upload-grid">
+          <div class="upload-zone" onclick="fakeUpload('contract')"><i class="ti ti-file-text" aria-hidden="true"></i><div class="uz-ttl">Customer contract</div><div class="uz-sub">PDF or Word · dates, scope, SLA</div></div>
+          <div class="upload-zone" onclick="fakeUpload('cr')"><i class="ti ti-file-plus" aria-hidden="true"></i><div class="uz-ttl">Change requests</div><div class="uz-sub">All signed CRs · Beacon extracts labels</div></div>
+          <div class="upload-zone" onclick="fakeUpload('ded')"><i class="ti ti-table" aria-hidden="true"></i><div class="uz-ttl">DED landscape export</div><div class="uz-sub">Excel or CSV · systems, RAM, dates</div></div>
+          <div class="upload-zone" onclick="fakeUpload('sr')"><i class="ti ti-ticket" aria-hidden="true"></i><div class="uz-ttl">Service requests</div><div class="uz-sub">Optional · open SRs and incidents</div></div>
+        </div>
+        <div id="doc-list">
+          <div class="doc-item"><div class="doc-icon" style="background:var(--green-bg);color:var(--green)"><i class="ti ti-file-check" aria-hidden="true"></i></div><div class="doc-body"><div class="doc-name">Müller_AG_Contract_2022.pdf</div><div class="doc-meta">Uploaded 12 May · 48 pages · Extracted</div></div><span class="doc-status ds-ok">Extracted</span></div>
+          <div class="doc-item" style="margin-top:8px"><div class="doc-icon" style="background:var(--green-bg);color:var(--green)"><i class="ti ti-file-check" aria-hidden="true"></i></div><div class="doc-body"><div class="doc-name">CR-2024-0091_signed.pdf</div><div class="doc-meta">Uploaded 3 Apr · Label mismatch flagged</div></div><span class="doc-status ds-ok">Extracted</span></div>
+          <div class="doc-item" style="margin-top:8px"><div class="doc-icon" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-table" aria-hidden="true"></i></div><div class="doc-body"><div class="doc-name">DED_Landscape_May.xlsx</div><div class="doc-meta">Uploaded 20 May · 3 systems · PQA mismatch on QAS</div></div><span class="doc-status ds-ok">Extracted</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Extraction summary — what Beacon found</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="background:var(--bg);border-radius:var(--r-md);padding:10px 12px"><div style="font-size:10px;color:var(--text-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">From contract</div><div style="font-size:12px;color:var(--text-2);line-height:1.9">Go-live: <strong style="color:var(--text)">15 May 2024</strong><br>Value: <strong style="color:var(--text)">€420,000</strong><br>Hypercare: <strong style="color:var(--text)">30 days post go-live</strong><br>SLA tier: <strong style="color:var(--text)">Premium</strong></div></div>
+          <div style="background:var(--bg);border-radius:var(--r-md);padding:10px 12px"><div style="font-size:10px;color:var(--text-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">From DED export</div><div style="font-size:12px;color:var(--text-2);line-height:1.9">Systems: <strong style="color:var(--text)">PRD, QAS, DEV</strong><br>PRD RAM: <strong style="color:var(--text)">512 GB</strong><br>QAS RAM: <strong style="color:var(--text)">256 GB</strong><br>Flag: <strong style="color:#A32D2D">QAS PQA mismatch</strong></div></div>
+          <div style="background:var(--red-bg);border-radius:var(--r-md);padding:10px 12px;grid-column:1/-1"><div style="font-size:10px;color:var(--red);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">CR flag</div><div style="font-size:12px;color:var(--red);line-height:1.6">CR-2024-0091: DED label "<strong>Memory Upgrade</strong>" does not match CR document "<strong>Additional HANA License</strong>". Review before next customer communication.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-ops">
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Ops meeting prep</span></div>
+        <button class="ops-btn" onclick="askBeacon('Generate full ops meeting OneNote draft including engagement summary, weekly status, open action tracker, and next steps')"><i class="ti ti-sparkles" aria-hidden="true"></i>Auto-draft full OneNote template ↗</button>
+        <button class="ops-btn" onclick="askBeacon('List all open action items from the last ops meeting')"><i class="ti ti-list-check" aria-hidden="true"></i>Pull open action items ↗</button>
+        <button class="ops-btn" onclick="askBeacon('Summarise last 4 weeks of activity for the engagement summary')"><i class="ti ti-file-description" aria-hidden="true"></i>Generate engagement summary ↗</button>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Post-meeting — sentiment log</span></div>
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:10px">How did the customer feel in today's meeting?</div>
+        <div class="sent-btn-row">
+          <button class="sent-btn s-green" onclick="pickSent(this)">🟢 Positive</button>
+          <button class="sent-btn s-amber" onclick="pickSent(this)">🟡 Neutral</button>
+          <button class="sent-btn s-red" onclick="pickSent(this)">🔴 Frustrated</button>
+        </div>
+        <textarea style="width:100%;border:1px solid var(--border-md);border-radius:var(--r-sm);padding:8px 10px;font-size:12px;color:var(--text);background:var(--bg);font-family:var(--font);resize:vertical;min-height:52px;outline:none" placeholder="Optional note — key signals, topics raised, follow-ups…"></textarea>
+        <button style="margin-top:8px;padding:6px 14px;border:1px solid var(--border-md);border-radius:var(--r-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:var(--font);cursor:pointer;border-radius:var(--r-sm)">Save</button>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Sentiment history</span></div>
+        <div class="sent-item"><div class="sent-flag" style="background:#EF9F27"></div><span class="sent-date">20 May</span><span class="sent-note">Concerned about migration delay. PM joined. Action agreed.</span><span class="sent-tag" style="background:var(--amber-bg);color:var(--amber)">Neutral</span></div>
+        <div class="sent-item"><div class="sent-flag" style="background:#E24B4A"></div><span class="sent-date">6 May</span><span class="sent-note">INC-88421 raised. Frustrated with L2 response time.</span><span class="sent-tag" style="background:var(--red-bg);color:var(--red)">Frustrated</span></div>
+        <div class="sent-item"><div class="sent-flag" style="background:#639922"></div><span class="sent-date">22 Apr</span><span class="sent-note">Good meeting. QAS delivered on time. Happy with progress.</span><span class="sent-tag" style="background:var(--green-bg);color:var(--green)">Positive</span></div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-war">
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Work at risk — 15-day threshold · You own closure</span><button style="font-size:12px;padding:4px 10px;border:1px solid var(--border-md);border-radius:var(--r-sm);background:var(--surface);color:var(--text-2);cursor:pointer;font-family:var(--font)">+ Add WaR</button></div>
+        <div class="war-item"><div class="war-age" style="color:#A32D2D">47d</div><div class="war-body"><div class="war-ttl">Müller AG — HANA memory pre-contract</div><div class="war-det">Started 10 Apr · Est. €42,000 · 32d past threshold</div></div><button class="war-btn" onclick="askBeacon('Steps to escalate Müller AG HANA memory WaR at 47 days?')">Escalate ↗</button></div>
+        <div class="war-item"><div class="war-age" style="color:#A32D2D">23d</div><div class="war-body"><div class="war-ttl">Nordic Retail — conversion scoping</div><div class="war-det">Started 4 May · Est. €28,000 · 8d past threshold</div></div><button class="war-btn" onclick="askBeacon('Draft follow-up to close Nordic Retail WaR at 23 days')">Follow up ↗</button></div>
+        <div class="war-item"><div class="war-age" style="color:#639922">8d</div><div class="war-body"><div class="war-ttl">Centrale BV — system build pre-sign</div><div class="war-det">Started 19 May · Est. €15,000 · 7d to threshold</div></div><button class="war-btn" onclick="askBeacon('Review Centrale BV WaR — 7 days to threshold')">Review ↗</button></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Decommission tracker</span><button style="font-size:12px;padding:4px 10px;border:1px solid var(--border-md);border-radius:var(--r-sm);background:var(--surface);color:var(--text-2);cursor:pointer;font-family:var(--font)">+ Add</button></div>
+        <div class="decomm-item"><div><div class="di-name">Müller AG — legacy PRD pre-migration</div><div class="di-meta">Due 1 Jun · Still running · Owner: Karin Wolff</div></div><span style="font-size:11px;font-weight:500;color:#A32D2D">Overdue</span></div>
+        <div class="decomm-item"><div><div class="di-name">Centrale BV — old DEV environment</div><div class="di-meta">Due 15 Jun · Not yet scheduled</div></div><span style="font-size:11px;font-weight:500;color:#854F0B">Schedule now</span></div>
+        <div class="decomm-item"><div><div class="di-name">Iberia Logistics — QAS post-upgrade</div><div class="di-meta">Due 30 Jul · On track</div></div><span style="font-size:11px;font-weight:500;color:#3B6D11">On track</span></div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-churn">
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Customer health scores</span></div>
+        <div class="churn-block"><div class="churn-top"><span style="font-size:13px;font-weight:500">Müller AG</span><span style="font-size:12px;font-weight:500;color:#A32D2D">High risk · 81/100</span></div><div class="churn-bar-track"><div class="churn-bar-fill" style="width:81%;background:#E24B4A"></div></div><div class="tags"><span class="ci-badge" style="background:#FCEBEB;color:#A32D2D;font-size:10px;padding:2px 7px;border-radius:99px">SLA breach</span><span class="ci-badge" style="background:#FCEBEB;color:#A32D2D;font-size:10px;padding:2px 7px;border-radius:99px">2 escalations</span><span class="ci-badge" style="background:#FAEEDA;color:#854F0B;font-size:10px;padding:2px 7px;border-radius:99px">Drift +12d</span></div></div>
+        <div class="churn-block"><div class="churn-top"><span style="font-size:13px;font-weight:500">Nordic Retail</span><span style="font-size:12px;font-weight:500;color:#854F0B">Medium · 41/100</span></div><div class="churn-bar-track"><div class="churn-bar-fill" style="width:41%;background:#EF9F27"></div></div><div class="tags"><span class="ci-badge" style="background:#FAEEDA;color:#854F0B;font-size:10px;padding:2px 7px;border-radius:99px">1 escalation</span><span class="ci-badge" style="background:#FAEEDA;color:#854F0B;font-size:10px;padding:2px 7px;border-radius:99px">Deadline pressure</span></div></div>
+        <div class="churn-block"><div class="churn-top"><span style="font-size:13px;font-weight:500">Apex Pharma</span><span style="font-size:12px;font-weight:500;color:#854F0B">Medium · 29/100</span></div><div class="churn-bar-track"><div class="churn-bar-fill" style="width:29%;background:#EF9F27"></div></div><div class="tags"><span class="ci-badge" style="background:#FAEEDA;color:#854F0B;font-size:10px;padding:2px 7px;border-radius:99px">Upgrade fee pending</span></div></div>
+        <div class="churn-block"><div class="churn-top"><span style="font-size:13px;font-weight:500">Iberia Logistics</span><span style="font-size:12px;font-weight:500;color:#3B6D11">Low · 9/100</span></div><div class="churn-bar-track"><div class="churn-bar-fill" style="width:9%;background:#639922"></div></div><div class="tags"><span class="ci-badge" style="background:#EAF3DE;color:#3B6D11;font-size:10px;padding:2px 7px;border-radius:99px">Zero escalations 6mo</span></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-ttl">Last CSAT — biannual</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--red-bg);border-radius:var(--r-md);padding:10px 12px"><div style="font-size:11px;color:var(--red);margin-bottom:4px">Müller AG</div><div style="font-size:18px;font-weight:500;color:var(--red)">2.1<span style="font-size:11px;font-weight:400">/5</span></div><div style="font-size:10px;color:var(--red);margin-top:2px">Nov 2023 · Next: May 2024</div></div>
+          <div style="background:var(--amber-bg);border-radius:var(--r-md);padding:10px 12px"><div style="font-size:11px;color:var(--amber);margin-bottom:4px">Nordic Retail</div><div style="font-size:18px;font-weight:500;color:var(--amber)">3.8<span style="font-size:11px;font-weight:400">/5</span></div><div style="font-size:10px;color:var(--amber);margin-top:2px">Nov 2023 · Next: May 2024</div></div>
+          <div style="background:var(--green-bg);border-radius:var(--r-md);padding:10px 12px"><div style="font-size:11px;color:var(--green);margin-bottom:4px">Apex Pharma</div><div style="font-size:18px;font-weight:500;color:var(--green)">4.1<span style="font-size:11px;font-weight:400">/5</span></div><div style="font-size:10px;color:var(--green);margin-top:2px">Nov 2023 · Next: May 2024</div></div>
+          <div style="background:var(--green-bg);border-radius:var(--r-md);padding:10px 12px"><div style="font-size:11px;color:var(--green);margin-bottom:4px">Iberia Logistics</div><div style="font-size:18px;font-weight:500;color:var(--green)">4.6<span style="font-size:11px;font-weight:400">/5</span></div><div style="font-size:10px;color:var(--green);margin-top:2px">Nov 2023 · Next: May 2024</div></div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-3);padding:8px 10px;background:var(--bg);border-radius:var(--r-sm)">CSAT received twice a year. Use the sentiment log in Ops tools between surveys.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="rp-tabs">
+    <div class="rp-tab active" onclick="setRPTab('landscape')" id="rpt-landscape">Landscape</div>
+    <div class="rp-tab" onclick="setRPTab('timeline')" id="rpt-timeline">Timeline</div>
+    <div class="rp-tab" onclick="setRPTab('chat')" id="rpt-chat">Beacon AI</div>
+  </div>
+
+  <div class="rp-panel active" id="rpp-landscape">
+    <div class="rp-sec-row"><span class="rp-sec">Systems</span><span class="rp-sec-act">Sync PQA</span></div>
+    <div class="ls-item"><div class="ls-l"><span class="ls-type lt-p">PRD</span><span class="ls-name">S/4HANA 2023</span></div><div class="ls-r"><div style="font-size:11px;color:var(--green)">● Live</div><div class="ls-mem">512 GB RAM</div></div></div>
+    <div class="ls-item"><div class="ls-l"><span class="ls-type lt-q">QAS</span><span class="ls-name">S/4HANA 2023</span></div><div class="ls-r"><div style="font-size:11px;color:var(--green)">● Live</div><div class="ls-mem">256 GB RAM</div><div class="mismatch">PQA mismatch</div></div></div>
+    <div class="ls-item"><div class="ls-l"><span class="ls-type lt-d">DEV</span><span class="ls-name">S/4HANA 2023</span></div><div class="ls-r"><div style="font-size:11px;color:var(--green)">● Live</div><div class="ls-mem">128 GB RAM</div></div></div>
+    <div style="height:1px;background:var(--border);margin:14px 0"></div>
+    <div class="rp-sec">Contract snapshot</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text-3)">Go-live (contract)</span><span style="font-weight:500">15 May 2024</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text-3)">Go-live (estimate)</span><span style="font-weight:500;color:#854F0B">27 May 2024</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text-3)">Hypercare end</span><span style="font-weight:500">26 Jun 2024</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text-3)">Renewal</span><span style="font-weight:500">Jan 2027</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text-3)">Contract value</span><span style="font-weight:500">€420,000</span></div>
+    </div>
+  </div>
+
+  <div class="rp-panel" id="rpp-timeline">
+    <div class="rp-sec-row"><span class="rp-sec">Contract timeline</span><span class="rp-sec-act">View all</span></div>
+    <div class="tl">
+      <div class="tl-item"><div class="tl-dot ic-b"><i class="ti ti-check" style="font-size:11px;color:#185FA5" aria-hidden="true"></i></div><div class="tl-body"><div class="tl-ttl">DEV system build</div><div class="tl-date">Delivered 3 Feb · Contract 31 Jan</div><span class="tl-tag tag-drift">+3d drift</span></div></div>
+      <div class="tl-item"><div class="tl-dot ic-b"><i class="ti ti-check" style="font-size:11px;color:#185FA5" aria-hidden="true"></i></div><div class="tl-body"><div class="tl-ttl">QAS system build</div><div class="tl-date">Delivered 14 Mar · Contract 15 Mar</div><span class="tl-tag tag-ok">On time</span></div></div>
+      <div class="tl-item"><div class="tl-dot ic-a"><i class="ti ti-loader" style="font-size:11px;color:#854F0B" aria-hidden="true"></i></div><div class="tl-body"><div class="tl-ttl">Migration go-live — PROD</div><div class="tl-date">Contract 15 May · Estimate 27 May</div><span class="tl-tag tag-drift">+12d drift</span></div></div>
+      <div class="tl-item"><div class="tl-dot ic-r"><i class="ti ti-alert-triangle" style="font-size:11px;color:#A32D2D" aria-hidden="true"></i></div><div class="tl-body"><div class="tl-ttl">CR-2024-0091 — HANA license</div><div class="tl-date">Signed 2 Apr · Effective 1 Jun</div><span class="tl-tag tag-cr">DED mismatch</span></div></div>
+      <div class="tl-item"><div class="tl-dot ic-b"><i class="ti ti-arrow-up" style="font-size:11px;color:#185FA5" aria-hidden="true"></i></div><div class="tl-body"><div class="tl-ttl">Memory upgrade — PROD</div><div class="tl-date">Scheduled 1 Aug · Cost impact</div><span class="tl-tag tag-up">Upcoming · check fees</span></div></div>
+    </div>
+  </div>
+
+  <div class="rp-panel" id="rpp-chat">
+    <div class="chat-area">
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="bubble b-ai">Hi — I'm <strong>Beacon</strong>. Upload your documents and I'll extract the contract data, flag mismatches, and help you draft anything you need. What can I help with?</div>
+      </div>
+      <div class="chat-inp-area">
+        <textarea class="chat-inp" id="chat-inp" placeholder="Ask Beacon anything…" rows="1" onkeydown="chatKey(event)"></textarea>
+        <button class="chat-send" onclick="sendChat()" aria-label="Send message"><i class="ti ti-send" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-overlay" style="display:none;position:absolute;inset:0;background:rgba(28,27,24,.45);display:none;align-items:center;justify-content:center;z-index:200">
+  <div class="modal">
+    <div class="modal-ttl">Add new customer</div>
+    <div class="modal-sub">Enter the basics — upload documents after to let Beacon extract the rest.</div>
+    <div class="form-row"><label class="form-lbl">Customer name</label><input class="form-inp" id="new-name" placeholder="e.g. Siemens AG"/></div>
+    <div class="form-row"><label class="form-lbl">Contract ID</label><input class="form-inp" id="new-id" placeholder="e.g. CTR-2024-00301"/></div>
+    <div class="form-row"><label class="form-lbl">Engagement type</label>
+      <select class="form-select" id="new-type">
+        <option value="Migration">Migration</option>
+        <option value="Conversion">Conversion</option>
+        <option value="Upgrade">Upgrade</option>
+        <option value="Steady-state">Steady-state</option>
+        <option value="New contract">New contract</option>
+      </select>
+    </div>
+    <div class="form-row"><label class="form-lbl">Status</label>
+      <select class="form-select" id="new-status">
+        <option value="on-track">On track</option>
+        <option value="attention">Needs attention</option>
+        <option value="risk">At risk</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="addCustomer()">Add customer</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const svcs=[
+  {n:'Memory upgrade — HANA',id:'SVC-MEM-H-04',p:'€4,200 / 128 GB'},
+  {n:'Additional HANA license',id:'SVC-HANA-LIC-02',p:'€12,500 / year'},
+  {n:'EHP upgrade support',id:'SVC-EHP-UPG-01',p:'€8,000 / engagement'},
+  {n:'Conversion support (S/4)',id:'SVC-CONV-S4-03',p:'€15,000 / engagement'},
+  {n:'Additional ABAP runtime',id:'SVC-ABAP-RT-05',p:'€2,100 / unit'},
+  {n:'Network bandwidth add-on',id:'SVC-NET-BW-01',p:'€900 / 100 Mbps'},
+];
+const migChecks=['Kickoff call with migration PM','Contract milestones reviewed in CMS','DEV system build confirmed','QAS system build confirmed','PROD go-live date confirmed with PM','DED updated with go-live date','Hypercare period confirmed','Post-migration ops meeting scheduled'];
+const convChecks=['Project Lead assigned','Upgrade Expert assigned','Conversion scope reviewed vs contract','Sandbox system available','Customer readiness confirmed','Go-live date locked in DED'];
+const migDone=[true,true,true,true,false,false,false,false];
+const convDone=[false,false,false,false,false,false];
+
+function renderChecks(id,items,done){
+  document.getElementById(id).innerHTML=items.map((t,i)=>`<div class="check-item"><div class="check-box${done[i]?' done':''}" onclick="toggleCheck(this)" ${done[i]?'style="background:var(--green);border-color:var(--green)"':''}>${done[i]?'<i class="ti ti-check" style="font-size:9px;color:#fff" aria-hidden="true"></i>':''}</div><span class="check-txt${done[i]?' done':''}">${t}</span></div>`).join('');
+}
+renderChecks('mig-checks',migChecks,migDone);
+renderChecks('conv-checks',convChecks,convDone);
+
+function toggleCheck(box){
+  const done=box.classList.contains('done');
+  const txt=box.parentElement.querySelector('.check-txt');
+  if(done){box.classList.remove('done');box.style.background='';box.style.borderColor='';box.innerHTML='';txt.classList.remove('done');}
+  else{box.classList.add('done');box.style.background='var(--green)';box.style.borderColor='var(--green)';box.innerHTML='<i class="ti ti-check" style="font-size:9px;color:#fff" aria-hidden="true"></i>';txt.classList.add('done');}
+}
+
+function setScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  const order=['dashboard','docs','ops','war','churn'];
+  document.querySelectorAll('.ir-btn').forEach((b,i)=>b.classList.toggle('active',order[i]===id));
+}
+
+function setRPTab(id){
+  document.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.rp-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('rpt-'+id).classList.add('active');
+  document.getElementById('rpp-'+id).classList.add('active');
+}
+
+function toggleDrawer(id){
+  const d=document.getElementById('drawer-'+id);
+  const n=document.getElementById('nav-'+id);
+  const open=d.classList.contains('open');
+  document.querySelectorAll('.nav-drawer').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('open'));
+  if(!open){d.classList.add('open');n.classList.add('open');}
+}
+
+function filterP(v){
+  const r=document.getElementById('pRes');
+  if(!v||v.length<2){r.innerHTML='<div style="font-size:11px;color:var(--text-3)">Type to search…</div>';return;}
+  const m=svcs.filter(s=>s.n.toLowerCase().includes(v.toLowerCase())||s.id.toLowerCase().includes(v.toLowerCase()));
+  if(!m.length){r.innerHTML='<div style="font-size:11px;color:var(--text-3)">No match in R&R</div>';return;}
+  r.innerHTML=m.map(s=>`<div class="pc"><div class="pc-name">${s.n}</div><div class="pc-row"><span>Service ID</span><span class="pc-val">${s.id}</span></div><div class="pc-row"><span>Price</span><span class="pc-val">${s.p}</span></div><button class="pc-copy" onclick="copyIt('${s.id} · ${s.p}',this)"><i class='ti ti-copy' style='font-size:11px' aria-hidden='true'></i> Copy</button></div>`).join('');
+}
+
+function copyIt(t,btn){
+  navigator.clipboard&&navigator.clipboard.writeText(t).catch(()=>{});
+  btn.textContent='Copied!';
+  setTimeout(()=>{btn.innerHTML="<i class='ti ti-copy' style='font-size:11px'></i> Copy";},1500);
+}
+
+function setCust(el,name,type,id,dot,rag,ragColor){
+  document.querySelectorAll('.cust-item').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tb-name').textContent=name;
+  document.getElementById('tb-type').textContent=type;
+  document.getElementById('tb-id').textContent=id;
+  document.getElementById('tb-dot').style.background=dot;
+  document.getElementById('tb-rag-lbl').textContent=rag;
+  document.getElementById('tb-rag-lbl').style.color=ragColor;
+  document.getElementById('docs-cust-name').textContent=name;
+}
+
+function openModal(){
+  const m=document.getElementById('modal-overlay');
+  m.style.display='flex';
+}
+function closeModal(){
+  document.getElementById('modal-overlay').style.display='none';
+  document.getElementById('new-name').value='';
+  document.getElementById('new-id').value='';
+}
+
+function addCustomer(){
+  const name=document.getElementById('new-name').value.trim();
+  const cid=document.getElementById('new-id').value.trim();
+  const type=document.getElementById('new-type').value;
+  const status=document.getElementById('new-status').value;
+  if(!name){document.getElementById('new-name').focus();return;}
+  const dotMap={'on-track':'#639922','attention':'#EF9F27','risk':'#E24B4A'};
+  const sectionMap={'on-track':'On track','attention':'Needs attention','risk':'At risk'};
+  const dot=dotMap[status];
+  const sectionLabel=sectionMap[status];
+  const body=document.getElementById('lr-body');
+  const sections=body.querySelectorAll('.sec-group');
+  let targetSection=null;
+  sections.forEach(s=>{
+    const lbl=s.querySelector('.sec-lbl');
+    if(lbl&&lbl.textContent.includes(sectionLabel))targetSection=s;
+  });
+  const itemHTML=`<div class="cust-item" onclick="setCust(this,'${name}','${type}','${cid||'CTR-TBD'}','${dot}','${sectionLabel}','${dot}')"><div class="ci-dot" style="background:${dot}"></div><div class="ci-info"><div class="ci-name">${name}</div><div class="ci-meta"><span class="ci-type">${type}</span></div></div></div>`;
+  if(targetSection){
+    targetSection.insertAdjacentHTML('beforeend',itemHTML);
+    const cnt=targetSection.querySelector('.sec-count');
+    if(cnt)cnt.textContent=parseInt(cnt.textContent||0)+1;
+  } else {
+    const newSection=document.createElement('div');
+    newSection.className='sec-group';
+    newSection.innerHTML=`<div class="sec-lbl">${sectionLabel} <span class="sec-count">1</span></div>${itemHTML}`;
+    body.querySelector('.nav-section').insertAdjacentElement('beforebegin',newSection);
+  }
+  closeModal();
+  const newItem=body.querySelector(`.cust-item:last-of-type`);
+  if(newItem){newItem.click();}
+}
+
+function fakeUpload(type){
+  const names={contract:'Contract_upload.pdf',cr:'ChangeRequest_upload.pdf',ded:'DED_Landscape_upload.xlsx',sr:'ServiceRequests_upload.csv'};
+  const list=document.getElementById('doc-list');
+  const item=document.createElement('div');
+  item.className='doc-item';item.style.marginTop='8px';
+  item.innerHTML=`<div class="doc-icon" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-loader" aria-hidden="true"></i></div><div class="doc-body"><div class="doc-name">${names[type]}</div><div class="doc-meta">Uploading… Beacon extracting data</div></div><span class="doc-status ds-proc">Processing</span>`;
+  list.appendChild(item);
+  setTimeout(()=>{
+    item.querySelector('.doc-icon').innerHTML='<i class="ti ti-file-check" aria-hidden="true"></i>';
+    item.querySelector('.doc-icon').style.background='var(--green-bg)';
+    item.querySelector('.doc-icon').style.color='var(--green)';
+    item.querySelector('.doc-meta').textContent='Extracted · Ready';
+    item.querySelector('.doc-status').textContent='Extracted';
+    item.querySelector('.doc-status').className='doc-status ds-ok';
+  },2200);
+}
+
+function pickSent(btn){
+  document.querySelectorAll('.sent-btn').forEach(b=>b.classList.remove('picked'));
+  btn.classList.add('picked');
+}
+
+function askBeacon(msg){
+  setRPTab('chat');
+  addMsg(msg,'user');
+  const replies={
+    'escalation':'Escalation draft ready:\n\nSubject: URGENT — SLA Breach INC-88421 Müller AG\n\nDear [L2 Lead], INC-88421 is breaching Premium SLA in under 4 hours. Immediate action required. Please confirm by 14:00 today.',
+    'migration date drift':'Draft for Müller AG:\n\nDear [Contact], I wanted to proactively update you on our go-live timeline. Due to [reason], we\'ve revised the estimate to 27 May — 12 days from the original date. I\'ll send a formal update by end of week.',
+    'EHP upgrade':'From R&R: EHP Upgrade Support — SVC-EHP-UPG-01 · €8,000 per engagement. Shall I draft the customer communication with this included?',
+  };
+  setTimeout(()=>{
+    const key=Object.keys(replies).find(k=>msg.toLowerCase().includes(k.toLowerCase()));
+    addMsg(key?replies[key]:'I\'m working from your uploaded documents. What would you like me to draft or find?','ai');
+  },800);
+}
+
+function addMsg(text,role){
+  const msgs=document.getElementById('chat-msgs');
+  const div=document.createElement('div');
+  div.className='bubble b-'+role;
+  div.textContent=text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function sendChat(){
+  const inp=document.getElementById('chat-inp');
+  const v=inp.value.trim();
+  if(!v)return;
+  addMsg(v,'user');
+  inp.value='';
+  setTimeout(()=>addMsg('Working from your uploaded documents for the active customer. What else can I help you prepare?','ai'),700);
+}
+
+function chatKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+}
+</script>

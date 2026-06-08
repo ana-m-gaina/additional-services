@@ -133,4 +133,15 @@ service CDMService @(path: '/CDMService') {
     risksJson       : String,
     decisionsJson   : String
   ) returns String;
+
+  // ── DED Landscape data ────────────────────────────────────────────────────
+  entity LandscapePhases       as projection on db.LandscapePhase;
+  entity LandscapeWeeklyStatus as projection on db.LandscapeWeeklyStatus;
+  entity LandscapeTopIssues    as projection on db.LandscapeTopIssue;
+  entity LandscapeSystems      as projection on db.LandscapeSystem;
+  entity LandscapeComponents   as projection on db.LandscapeComponent;
+
+  // ── Contract engagements + documents ─────────────────────────────────────
+  entity ContractEngagements   as projection on db.ContractEngagement;
+  entity ContractDocuments     as projection on db.ContractDocument;
 }
