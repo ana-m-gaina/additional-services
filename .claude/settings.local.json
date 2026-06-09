@@ -93,7 +93,8 @@
       "Bash(unzip -p 'C:/Users/I759703/OneDrive - SAP SE/Documents/GitHub/additional-services/specs/contracts/reports/Allianz_PQA_Export_89982.xlsx' xl/worksheets/sheet__TRACKED_VAR__.xml)",
       "Bash(uvicorn app.main:app --reload --port 8000)",
       "Bash(python -m http.server 9999)",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "Bash(git push *)"
     ]
   },
   "enableAllProjectMcpServers": true,
