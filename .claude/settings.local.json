@@ -94,7 +94,8 @@
       "Bash(uvicorn app.main:app --reload --port 8000)",
       "Bash(python -m http.server 9999)",
       "Skill(update-config)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git config *)"
     ]
   },
   "enableAllProjectMcpServers": true,
